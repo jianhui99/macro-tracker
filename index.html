@@ -380,7 +380,6 @@
                     <div id="tab-temporary" class="diary-tab" onclick="switchDiaryTab('temporary')">临时快捷记账（不入库）</div>
                 </div>
 
-                <!-- 模式 A：从仓库选择（优化级联分组） -->
                 <div id="diary-form-warehouse" class="form-row">
                     <div class="form-group flex-child" style="flex: 2;">
                         <label>选择食物</label>
@@ -395,7 +394,6 @@
                     </div>
                 </div>
 
-                <!-- 模式 B：临时记账 -->
                 <div id="diary-form-temporary" class="form-row" style="display: none;">
                     <div class="form-group flex-child" style="min-width: 160px; flex: 2;">
                         <label>临时食物/场景名称</label>
@@ -502,21 +500,28 @@
         </div>
 
         <div id="page-summary" class="page">
-            <h2>数据汇总 (最近 7 天)</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+                <h2>月度热量合规日历</h2>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <button class="btn btn-secondary" style="height: 36px; padding: 0 12px;" onclick="changeSummaryMonth(-1)"><span class="material-icons-outlined">chevron_left</span></button>
+                    <span id="summary-month-label" style="font-size: 16px; font-weight: 500; min-width: 80px; text-align: center;">-</span>
+                    <button class="btn btn-secondary" style="height: 36px; padding: 0 12px;" onclick="changeSummaryMonth(1)"><span class="material-icons-outlined">chevron_right</span></button>
+                </div>
+            </div>
+
+            <div class="card" style="padding: 12px 24px; margin-bottom: 16px; display: flex; gap: 24px; align-items: center; flex-wrap: wrap; font-size: 13px;">
+                <span style="font-weight: 500; color: var(--md-on-surface-variant);">状态图例：</span>
+                <div style="display: flex; align-items: center; gap: 6px;"><div style="width: 16px; height: 16px; background: #e6f4ea; border: 1px solid #34a853; border-radius: 4px;"></div><span style="color:#34a853;">完美减脂 (-300 ~ +50 kcal)</span></div>
+                <div style="display: flex; align-items: center; gap: 6px;"><div style="width: 16px; height: 16px; background: #fce8e6; border: 1px solid #ea4335; border-radius: 4px;"></div><span style="color:#ea4335;">热量超标 (> +50 kcal)</span></div>
+                <div style="display: flex; align-items: center; gap: 6px;"><div style="width: 16px; height: 16px; background: #fef7e0; border: 1px solid #f9ab00; border-radius: 4px;"></div><span style="color:#f9ab00;">缺口过大 (< -300 kcal)</span></div>
+                <div style="display: flex; align-items: center; gap: 6px;"><div style="width: 16px; height: 16px; background: var(--md-surface); border: 1px solid var(--md-border); border-radius: 4px;"></div><span style="color:var(--md-on-surface-variant);">无记录 / 未来</span></div>
+            </div>
+
             <div class="card">
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>日期</th>
-                            <th>总热量 (kcal)</th>
-                            <th>总蛋白质 (g)</th>
-                            <th>总碳水 (g)</th>
-                            <th>总脂肪 (g)</th>
-                            <th>状态评估</th>
-                        </tr>
-                    </thead>
-                    <tbody id="summary-table-body"></tbody>
-                </table>
+                <div style="display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-weight: 500; color: var(--md-on-surface-variant); margin-bottom: 12px; font-size: 14px;">
+                    <div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div>
+                </div>
+                <div id="calendar-grid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px;"></div>
             </div>
         </div>
 
@@ -558,7 +563,6 @@
         </div>
     </main>
 
-    <!-- 饮食明细编辑弹窗 -->
     <div id="edit-modal" class="modal">
         <div class="modal-content">
             <h3 style="font-weight: 500; margin-bottom: 16px;" id="modal-food-title">编辑进食数据</h3>
@@ -582,7 +586,6 @@
         </div>
     </div>
 
-    <!-- 仓库基准数据修改弹窗 -->
     <div id="warehouse-modal" class="modal">
         <div class="modal-content">
             <h3 style="font-weight: 500; margin-bottom: 16px;" id="w-modal-title">编辑食品基准数据</h3>
@@ -628,6 +631,7 @@
 
         let currentEditIndex = null;
         let currentWarehouseEditId = null;
+        let summaryCurrentDate = new Date(); // 汇总日历当前选中月份的核心控制实例
 
         function loadState() {
             const saved = localStorage.getItem('macro_tracker_state');
@@ -693,9 +697,10 @@
             loadDiary();
         }
 
-        // --- 2. 食品仓库与下拉选择逻辑优化 ---
+        // --- 2. 食品仓库与下拉选择逻辑 ---
         function renderWarehouse() {
             const tbody = document.getElementById('warehouse-table-body');
+            if (!tbody) return;
             tbody.innerHTML = '';
             
             const groups = {};
@@ -734,22 +739,25 @@
             
             // 2. 刷新大类联想输入 datalist
             const datalist = document.getElementById('exist-categories');
-            datalist.innerHTML = '';
-            Object.keys(groups).forEach(cat => {
-                datalist.innerHTML += `<option value="${cat}">`;
-            });
-
-            // 3. 【重点优化】按大类分类聚合，生成带有 optgroup 的饮食下拉列表
-            const select = document.getElementById('diary-food-select');
-            select.innerHTML = '';
-            
-            for (const cat in groups) {
-                let groupHtml = `<optgroup label="📂 ${cat}">`;
-                groups[cat].forEach(food => {
-                    groupHtml += `<option value="${food.id}">${food.name} (基准: ${food.unit})</option>`;
+            if (datalist) {
+                datalist.innerHTML = '';
+                Object.keys(groups).forEach(cat => {
+                    datalist.innerHTML += `<option value="${cat}">`;
                 });
-                groupHtml += `</optgroup>`;
-                select.innerHTML += groupHtml;
+            }
+
+            // 3. 按大类分类聚合，生成带有 optgroup 的饮食下拉列表
+            const select = document.getElementById('diary-food-select');
+            if (select) {
+                select.innerHTML = '';
+                for (const cat in groups) {
+                    let groupHtml = `<optgroup label="📂 ${cat}">`;
+                    groups[cat].forEach(food => {
+                        groupHtml += `<option value="${food.id}">${food.name} (基准: ${food.unit})</option>`;
+                    });
+                    groupHtml += `</optgroup>`;
+                    select.innerHTML += groupHtml;
+                }
             }
         }
 
@@ -1054,6 +1062,7 @@
 
         function updateCardDisplay(elementId, current, target) {
             const el = document.getElementById(elementId);
+            if(!el) return;
             el.innerHTML = `${Math.round(current)} <span style="font-size:18px; font-weight:400; color:var(--md-on-surface-variant)">/ ${target}</span>`;
             if (current > target) {
                 el.classList.add('alert-over');
@@ -1062,38 +1071,93 @@
             }
         }
 
+        // --- 4. 数据汇总日历核心控制逻辑 ---
+        function changeSummaryMonth(offset) {
+            summaryCurrentDate.setMonth(summaryCurrentDate.getMonth() + offset);
+            renderSummary();
+        }
+
         function renderSummary() {
-            const tbody = document.getElementById('summary-table-body');
-            tbody.innerHTML = '';
+            const grid = document.getElementById('calendar-grid');
+            const monthLabel = document.getElementById('summary-month-label');
+            if (!grid || !monthLabel) return;
+
+            const year = summaryCurrentDate.getFullYear();
+            const month = summaryCurrentDate.getMonth(); // 0 - 11
+            
+            // 更新月份视图大标签
+            monthLabel.innerText = `${year}年 ${(month + 1).toString().padStart(2, '0')}月`;
+
+            // 核心推算：取当前月份的第一天、总天数、上个月的总天数
+            const firstDayIndex = new Date(year, month, 1).getDay();
+            const totalDays = new Date(year, month + 1, 0).getDate();
+            const prevTotalDays = new Date(year, month, 0).getDate();
+
+            grid.innerHTML = '';
             const targets = calculateTargets();
 
-            for (let i = 0; i < 7; i++) {
-                const d = new Date();
-                d.setDate(d.getDate() - i);
-                const dateStr = d.toISOString().split('T')[0];
+            // 1. 填补上个月月末漏出来的灰色“残余空位”
+            for (let i = firstDayIndex - 1; i >= 0; i--) {
+                const dNum = prevTotalDays - i;
+                grid.innerHTML += `<div style="background: #f1f3f4; border: 1px dashed #dadce0; border-radius: 8px; min-height: 85px; padding: 6px; color: #c2c4c7; font-size: 12px; cursor: not-allowed; opacity: 0.5;">${dNum}</div>`;
+            }
+
+            // 2. 核心遍历：渲染本月天数状态格
+            for (let day = 1; day <= totalDays; day++) {
+                const dateStr = `${year}-${(month + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
                 const dayEntries = state.diary[dateStr] || [];
 
                 let tk = 0, tp = 0, tc = 0, tf = 0;
                 dayEntries.forEach(e => { tk += e.kcal; tp += e.protein; tc += e.carbs; tf += e.fat; });
 
-                let statusText = "<span style='color: #34a853; font-weight:500;'>进行中/未记录</span>";
-                if(tk > 0) {
+                // 默认样式：当天未记录状态 (浅色底，微细边)
+                let bgStyle = "background: var(--md-surface); border: 1px solid var(--md-border); color: var(--md-on-surface);";
+                let statusBadge = "";
+                let titleHover = "暂无数据";
+
+                if (tk > 0) {
                     const diff = tk - targets.kcal;
-                    if(diff > 50) statusText = `<span style='color: #ea4335; font-weight:500;'>超标 ${Math.round(diff)} kcal</span>`;
-                    else if (diff < -300) statusText = "<span style='color: #f9ab00; font-weight:500;'>热量缺口过大</span>";
-                    else statusText = "<span style='color: #34a853; font-weight:500;'>完美减脂状态</span>";
+                    titleHover = `当天数据明细:\n🔥 热量: ${Math.round(tk)} / ${targets.kcal} kcal\n🥩 蛋白质: ${Math.round(tp)}g\n🍚 碳水: ${Math.round(tc)}g\n🥑 脂肪: ${Math.round(tf)}g`;
+                    
+                    if (diff > 50) {
+                        // 红色：超标
+                        bgStyle = "background: #fce8e6; border: 1px solid #ea4335; color: #c5221f;";
+                        statusBadge = `<div style="font-size:11px; margin-top:4px; font-weight:700;">超标 ${Math.round(diff)}k</div>`;
+                    } else if (diff < -300) {
+                        // 黄色：缺口过大
+                        bgStyle = "background: #fef7e0; border: 1px solid #f9ab00; color: #b06000;";
+                        statusBadge = `<div style="font-size:11px; margin-top:4px; font-weight:700;">缺口过大</div>`;
+                    } else {
+                        // 绿色：达标
+                        bgStyle = "background: #e6f4ea; border: 1px solid #34a853; color: #137333;";
+                        statusBadge = `<div style="font-size:11px; margin-top:4px; font-weight:700;">🎉 达标</div>`;
+                    }
                 }
 
-                tbody.innerHTML += `
-                    <tr>
-                        <td>${dateStr} ${i===0?'(今天)':''}</td>
-                        <td class="${tk > targets.kcal ? 'alert-over':''}">${Math.round(tk)}</td>
-                        <td>${Math.round(tp)}g</td>
-                        <td>${Math.round(tc)}g</td>
-                        <td>${Math.round(tf)}g</td>
-                        <td>${statusText}</td>
-                    </tr>
+                // 高亮框住“今天”
+                const todayStr = new Date().toISOString().split('T')[0];
+                if (dateStr === todayStr) {
+                    bgStyle += "box-shadow: 0 0 0 3px var(--md-primary); font-weight: 700;";
+                }
+
+                grid.innerHTML += `
+                    <div title="${titleHover}" style="${bgStyle} border-radius: 8px; min-height: 85px; padding: 8px; display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.15s, box-shadow 0.15s;" 
+                         onmouseover="this.style.transform='scale(1.03)';" 
+                         onmouseout="this.style.transform='scale(1)';">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-size: 14px;">${day}</span>
+                            ${tk > 0 ? `<span style="font-size:10px; opacity:0.85;">${Math.round(tk)}k</span>` : ''}
+                        </div>
+                        ${statusBadge}
+                    </div>
                 `;
+            }
+
+            // 3. 补齐本月月末漏出来的下个月空位，凑成完满的网格切面
+            const totalRendered = firstDayIndex + totalDays;
+            const nextRemaining = (7 - (totalRendered % 7)) % 7;
+            for (let i = 1; i <= nextRemaining; i++) {
+                grid.innerHTML += `<div style="background: #f1f3f4; border: 1px dashed #dadce0; border-radius: 8px; min-height: 85px; padding: 6px; color: #c2c4c7; font-size: 12px; cursor: not-allowed; opacity: 0.5;">${i}</div>`;
             }
         }
 
