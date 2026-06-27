@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MacroTracker - Google Material Design V3</title>
+    <title>MacroTracker</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
-    
+
     <style>
         :root {
             --md-primary: #1a73e8;
@@ -18,19 +18,14 @@
             --md-on-surface: #202124;
             --md-on-surface-variant: #5f6368;
             --md-border: #dadce0;
-            
+
             --kcal-color: #1a73e8;
             --protein-color: #ea4335;
             --carbs-color: #f9ab00;
             --fat-color: #34a853;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Roboto', sans-serif;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Roboto', sans-serif; }
 
         body {
             background-color: var(--md-bg);
@@ -40,7 +35,7 @@
             overflow: hidden;
         }
 
-        /* Sidebar Navigation */
+        /* ── Sidebar ── */
         nav {
             width: 256px;
             background-color: var(--md-surface);
@@ -49,6 +44,7 @@
             display: flex;
             flex-direction: column;
             gap: 8px;
+            flex-shrink: 0;
         }
 
         .brand {
@@ -70,43 +66,27 @@
             border-radius: 24px;
             color: var(--md-on-surface-variant);
             font-weight: 500;
-            transition: all 0.2s;
+            transition: background-color 0.2s, color 0.2s;
+            user-select: none;
+        }
+        .nav-item:hover { background-color: #f1f3f4; }
+        .nav-item.active { background-color: var(--md-primary-variant); color: var(--md-primary); }
+        .nav-item:focus-visible { outline: 2px solid var(--md-primary); outline-offset: 2px; border-radius: 24px; }
+
+        /* ── Main ── */
+        main { flex: 1; padding: 32px; overflow-y: auto; }
+
+        /* ── Pages + fade-in transition ── */
+        .page { display: none; max-width: 1000px; margin: 0 auto; }
+        .page.active { display: block; animation: fadeIn 0.2s ease; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to   { opacity: 1; transform: translateY(0); }
         }
 
-        .nav-item:hover {
-            background-color: #f1f3f4;
-        }
+        h2 { font-size: 24px; font-weight: 500; margin-bottom: 24px; color: var(--md-on-surface); }
 
-        .nav-item.active {
-            background-color: var(--md-primary-variant);
-            color: var(--md-primary);
-        }
-
-        /* Main Content Area */
-        main {
-            flex: 1;
-            padding: 32px;
-            overflow-y: auto;
-        }
-
-        .page {
-            display: none;
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-
-        .page.active {
-            display: block;
-        }
-
-        h2 {
-            font-size: 24px;
-            font-weight: 400;
-            margin-bottom: 24px;
-            color: var(--md-on-surface);
-        }
-
-        /* Material Card Style */
         .card {
             background: var(--md-surface);
             border: 1px solid var(--md-border);
@@ -115,7 +95,7 @@
             margin-bottom: 24px;
         }
 
-        /* Summary Dashboard Cards */
+        /* ── Dashboard cards + progress bars ── */
         .dashboard-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -130,36 +110,39 @@
             padding: 20px;
             display: flex;
             flex-direction: column;
-            gap: 8px;
-            position: relative;
+            gap: 5px;
         }
-
-        .dash-card.kcal { border-left: 5px solid var(--kcal-color); }
+        .dash-card.kcal    { border-left: 5px solid var(--kcal-color); }
         .dash-card.protein { border-left: 5px solid var(--protein-color); }
-        .dash-card.carbs { border-left: 5px solid var(--carbs-color); }
-        .dash-card.fat { border-left: 5px solid var(--fat-color); }
+        .dash-card.carbs   { border-left: 5px solid var(--carbs-color); }
+        .dash-card.fat     { border-left: 5px solid var(--fat-color); }
 
-        .dash-label { font-size: 14px; color: var(--md-on-surface-variant); font-weight: 500; }
-        .dash-value { font-size: 28px; font-weight: 700; }
-        .dash-target { font-size: 12px; color: var(--md-on-surface-variant); }
+        .dash-label  { font-size: 12px; font-weight: 500; color: var(--md-on-surface-variant); text-transform: uppercase; letter-spacing: 0.5px; }
+        .dash-value  { font-size: 26px; font-weight: 700; }
+        .dash-target { font-size: 11px; color: var(--md-on-surface-variant); }
 
-        /* Forms Styling */
-        .form-group {
-            margin-bottom: 16px;
-            display: flex;
-            flex-direction: column;
+        .progress-track {
+            height: 5px;
+            background: #e8eaed;
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 2px 0;
         }
+        .progress-fill {
+            height: 100%;
+            border-radius: 3px;
+            width: 0%;
+            transition: width 0.5s ease, background-color 0.3s ease;
+        }
+
+        /* ── Forms ── */
+        .form-group { margin-bottom: 16px; display: flex; flex-direction: column; }
         .form-group label {
             display: block;
             font-size: 14px;
             font-weight: 500;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             color: var(--md-on-surface-variant);
-            height: 20px; 
-            line-height: 20px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
         }
         .form-control {
             width: 100%;
@@ -168,25 +151,27 @@
             border-radius: 4px;
             font-size: 16px;
             background: var(--md-bg);
-            transition: border-color 0.2s;
-            height: 48px; 
+            transition: border-color 0.2s, box-shadow 0.2s;
+            height: 48px;
         }
         .form-control:focus {
             outline: none;
             border-color: var(--md-primary);
             background: var(--md-surface);
+            box-shadow: 0 0 0 3px rgba(26,115,232,0.15);
         }
 
-        /* Container alignment for forms */
-        .form-row {
-            display: flex;
+        .form-row { display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 8px; }
+        .flex-child { flex: 1; min-width: 120px; }
+
+        /* ── Warehouse form 2-column grid ── */
+        .warehouse-form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
             gap: 16px;
-            align-items: flex-end; 
-            flex-wrap: wrap;
-            margin-bottom: 8px;
         }
 
-        /* Button Styling */
+        /* ── Buttons ── */
         .btn {
             background-color: var(--md-primary);
             color: white;
@@ -196,33 +181,34 @@
             font-size: 14px;
             font-weight: 500;
             cursor: pointer;
-            transition: box-shadow 0.2s;
+            transition: box-shadow 0.2s, background-color 0.15s;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
-            height: 48px; 
+            height: 48px;
         }
-        .btn:hover {
-            box-shadow: 0 1px 3px rgba(60,64,67,0.3), 0 4px 8px 3px rgba(60,64,67,0.15);
-        }
-        .btn-secondary {
-            background-color: transparent;
-            color: var(--md-primary);
-            border: 1px solid var(--md-border);
-        }
-        .btn-secondary:hover {
-            background-color: var(--md-primary-variant);
-            box-shadow: none;
-        }
+        .btn:hover { box-shadow: 0 1px 3px rgba(60,64,67,0.3), 0 4px 8px 3px rgba(60,64,67,0.15); }
+        .btn:focus-visible { outline: 2px solid var(--md-primary); outline-offset: 2px; }
+        .btn-secondary { background-color: transparent; color: var(--md-primary); border: 1px solid var(--md-border); }
+        .btn-secondary:hover { background-color: var(--md-primary-variant); box-shadow: none; }
+        .btn-danger { background-color: #ea4335; }
+        .btn-danger:hover { box-shadow: 0 1px 3px rgba(234,67,53,0.3), 0 4px 8px 3px rgba(234,67,53,0.15); }
 
-        /* Tabs styling inside Diary */
-        .diary-tabs {
+        /* ── Meal selector row ── */
+        .meal-selector-row {
             display: flex;
-            gap: 16px;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            padding-bottom: 16px;
             border-bottom: 1px solid var(--md-border);
-            margin-bottom: 20px;
         }
+        .meal-selector-row label { font-size: 14px; font-weight: 500; color: var(--md-on-surface-variant); white-space: nowrap; }
+        .meal-selector-row select { width: auto; min-width: 150px; height: 40px; padding: 8px 12px; font-size: 14px; }
+
+        /* ── Diary tabs ── */
+        .diary-tabs { display: flex; gap: 16px; border-bottom: 1px solid var(--md-border); margin-bottom: 20px; }
         .diary-tab {
             padding: 8px 16px;
             cursor: pointer;
@@ -230,24 +216,17 @@
             font-weight: 500;
             color: var(--md-on-surface-variant);
             border-bottom: 2px solid transparent;
+            transition: color 0.2s;
         }
-        .diary-tab.active {
-            color: var(--md-primary);
-            border-bottom-color: var(--md-primary);
-        }
+        .diary-tab:hover { color: var(--md-primary); }
+        .diary-tab.active { color: var(--md-primary); border-bottom-color: var(--md-primary); }
+        .diary-tab:focus-visible { outline: 2px solid var(--md-primary); outline-offset: 2px; }
 
-        /* Flex Layout Utilities */
-        .flex-child { flex: 1; min-width: 120px; }
-
-        /* Tables / Lists */
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 16px;
-        }
+        /* ── Tables ── */
+        .data-table { width: 100%; border-collapse: collapse; }
         .data-table th, .data-table td {
             text-align: left;
-            padding: 14px 16px;
+            padding: 12px 16px;
             border-bottom: 1px solid var(--md-border);
             font-size: 14px;
         }
@@ -257,97 +236,208 @@
             background-color: #f1f3f4;
         }
 
-        .category-header {
-            background-color: #f8f9fa;
+        .category-header td {
+            background: #f8f9fa;
             font-weight: 700;
             color: var(--md-primary);
+            padding: 8px 16px;
+        }
+        .meal-header td {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: var(--md-on-surface);
+            font-size: 13px;
+            padding: 10px 16px;
+            border-top: 2px solid var(--md-border);
+        }
+        .meal-subtotal td {
+            background: #fafafa;
+            font-size: 12px;
+            color: var(--md-on-surface-variant);
+            padding: 6px 16px;
+            font-style: italic;
         }
 
-        .actions-cell {
-            display: flex;
-            gap: 16px;
-            align-items: center;
+        /* ── Empty state ── */
+        .empty-state {
+            text-align: center;
+            padding: 48px 0;
+            color: var(--md-on-surface-variant);
+            font-size: 14px;
         }
+        .empty-state .material-icons-outlined { font-size: 52px; display: block; margin-bottom: 12px; opacity: 0.3; }
 
+        /* ── Action icons ── */
+        .actions-cell { display: flex; gap: 12px; align-items: center; }
         .action-icon {
             cursor: pointer;
             color: var(--md-on-surface-variant);
             user-select: none;
+            border-radius: 50%;
+            padding: 4px;
+            transition: color 0.15s, background 0.15s;
         }
-        .action-icon:hover { color: var(--md-primary); }
-        .action-icon.delete:hover { color: #ea4335; }
+        .action-icon:hover { color: var(--md-primary); background: var(--md-primary-variant); }
+        .action-icon.delete:hover { color: #ea4335; background: #fce8e6; }
+        .action-icon:focus-visible { outline: 2px solid var(--md-primary); outline-offset: 2px; border-radius: 50%; }
 
-        /* Over-limit warning */
-        .alert-over {
-            color: #d93025;
-            font-weight: bold;
+        .alert-over { color: #d93025; font-weight: bold; }
+
+        /* ── Monthly stats ── */
+        .monthly-stats {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            font-size: 14px;
+            color: var(--md-on-surface-variant);
+            align-items: center;
         }
+        .monthly-stats strong { color: var(--md-on-surface); }
 
-        /* Modal dialog for editing */
+        /* ── Modals ── */
         .modal {
             display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.4);
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.45);
             z-index: 1000;
             align-items: center;
             justify-content: center;
         }
-        .modal.active {
-            display: flex;
-        }
+        .modal.active { display: flex; }
         .modal-content {
             background-color: var(--md-surface);
-            border-radius: 8px;
-            padding: 24px;
+            border-radius: 12px;
+            padding: 28px;
             width: 100%;
             max-width: 450px;
-            border: 1px solid var(--md-border);
-            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+            animation: modalIn 0.18s ease;
         }
+        @keyframes modalIn {
+            from { transform: scale(0.94); opacity: 0; }
+            to   { transform: scale(1);    opacity: 1; }
+        }
+        .modal-title { font-size: 18px; font-weight: 500; margin-bottom: 20px; }
 
-        /* Group select custom style inside dropdown */
-        optgroup {
-            font-weight: 700;
-            color: var(--md-primary);
-            background: #f1f3f4;
-            font-style: normal;
+        /* ── Toast notifications ── */
+        #toast-container {
+            position: fixed;
+            bottom: 32px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            align-items: center;
+            pointer-events: none;
         }
-        optgroup option {
-            font-weight: normal;
-            color: var(--md-on-surface);
-            background: var(--md-surface);
+        .toast {
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: white;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+            opacity: 0;
+            transform: translateY(12px);
+            transition: opacity 0.25s ease, transform 0.25s ease;
+            white-space: nowrap;
+            max-width: 90vw;
+        }
+        .toast.show { opacity: 1; transform: translateY(0); }
+
+        /* ── Optgroup ── */
+        optgroup { font-weight: 700; color: var(--md-primary); background: #f1f3f4; font-style: normal; }
+        optgroup option { font-weight: normal; color: var(--md-on-surface); background: var(--md-surface); }
+
+        /* ── Mobile responsive ── */
+        @media (max-width: 768px) {
+            body { flex-direction: column; height: auto; min-height: 100vh; overflow: auto; }
+            nav {
+                width: 100%;
+                flex-direction: row;
+                padding: 0 8px;
+                border-right: none;
+                border-bottom: 1px solid var(--md-border);
+                overflow-x: auto;
+                gap: 0;
+                position: sticky;
+                top: 0;
+                z-index: 100;
+            }
+            .brand { padding: 10px 8px; font-size: 18px; flex-shrink: 0; }
+            .nav-item {
+                flex-direction: column;
+                gap: 2px;
+                padding: 8px 10px;
+                font-size: 10px;
+                border-radius: 8px;
+                min-width: 52px;
+                text-align: center;
+                flex-shrink: 0;
+            }
+            main { padding: 16px; overflow-y: visible; height: auto; }
+            .dashboard-grid { grid-template-columns: repeat(2, 1fr); }
+            .form-row { flex-direction: column; }
+            .warehouse-form-grid { grid-template-columns: 1fr; }
+            .data-table th:nth-child(5),
+            .data-table td:nth-child(5),
+            .data-table th:nth-child(6),
+            .data-table td:nth-child(6) { display: none; }
         }
     </style>
 </head>
 <body>
 
+    <!-- Toast container -->
+    <div id="toast-container"></div>
+
+    <!-- Custom confirm dialog -->
+    <div id="confirm-dialog" class="modal" onclick="if(event.target===this)resolveConfirm(false)">
+        <div class="modal-content" style="max-width: 340px;">
+            <p class="modal-title" id="confirm-message" style="font-size: 16px; font-weight: 400;"></p>
+            <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                <button class="btn btn-secondary" onclick="resolveConfirm(false)">取消</button>
+                <button class="btn btn-danger" onclick="resolveConfirm(true)">确认删除</button>
+            </div>
+        </div>
+    </div>
+
     <nav>
         <div class="brand">
-            <span class="material-icons-outlined">analytics</span>
+            <span class="material-icons-outlined">local_dining</span>
             <span>MacroTracker</span>
         </div>
-        <div class="nav-item active" onclick="switchPage('diary')">
+        <div class="nav-item active" data-page="diary" tabindex="0" role="button"
+             onclick="switchPage('diary', this)"
+             onkeydown="if(event.key==='Enter'||event.key===' ')switchPage('diary',this)">
             <span class="material-icons-outlined">restaurant</span> 饮食日记
         </div>
-        <div class="nav-item" onclick="switchPage('warehouse')">
+        <div class="nav-item" data-page="warehouse" tabindex="0" role="button"
+             onclick="switchPage('warehouse', this)"
+             onkeydown="if(event.key==='Enter'||event.key===' ')switchPage('warehouse',this)">
             <span class="material-icons-outlined">inventory_2</span> 食品仓库
         </div>
-        <div class="nav-item" onclick="switchPage('summary')">
+        <div class="nav-item" data-page="summary" tabindex="0" role="button"
+             onclick="switchPage('summary', this)"
+             onkeydown="if(event.key==='Enter'||event.key===' ')switchPage('summary',this)">
             <span class="material-icons-outlined">bar_chart</span> 数据汇总
         </div>
-        <div class="nav-item" onclick="switchPage('settings')">
+        <div class="nav-item" data-page="settings" tabindex="0" role="button"
+             onclick="switchPage('settings', this)"
+             onkeydown="if(event.key==='Enter'||event.key===' ')switchPage('settings',this)">
             <span class="material-icons-outlined">person</span> 身体设定
         </div>
     </nav>
 
     <main>
+        <!-- ── Diary Page ── -->
         <div id="page-diary" class="page active">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-                <h2>饮食日记</h2>
+                <h2 style="margin-bottom: 0;">饮食日记</h2>
                 <input type="date" id="diary-date" class="form-control" style="width: auto;" onchange="loadDiary()">
             </div>
 
@@ -355,29 +445,48 @@
                 <div class="dash-card kcal">
                     <span class="dash-label">热量摄入</span>
                     <span id="dash-kcal-val" class="dash-value">0 / 0</span>
-                    <span class="dash-target">kcal (减脂目标已自动-550)</span>
+                    <div class="progress-track"><div id="dash-kcal-bar" class="progress-fill" style="background: var(--kcal-color);"></div></div>
+                    <span class="dash-target">kcal · 减脂目标 (TDEE − 550)</span>
                 </div>
                 <div class="dash-card protein">
                     <span class="dash-label">蛋白质</span>
                     <span id="dash-p-val" class="dash-value">0 / 0</span>
-                    <span class="dash-target">g</span>
+                    <div class="progress-track"><div id="dash-p-bar" class="progress-fill" style="background: var(--protein-color);"></div></div>
+                    <span class="dash-target">g · 2.1 g × 体重</span>
                 </div>
                 <div class="dash-card carbs">
                     <span class="dash-label">碳水化合物</span>
                     <span id="dash-c-val" class="dash-value">0 / 0</span>
-                    <span class="dash-target">g</span>
+                    <div class="progress-track"><div id="dash-c-bar" class="progress-fill" style="background: var(--carbs-color);"></div></div>
+                    <span class="dash-target">g · 剩余热量分配</span>
                 </div>
                 <div class="dash-card fat">
                     <span class="dash-label">脂肪</span>
                     <span id="dash-f-val" class="dash-value">0 / 0</span>
-                    <span class="dash-target">g</span>
+                    <div class="progress-track"><div id="dash-f-bar" class="progress-fill" style="background: var(--fat-color);"></div></div>
+                    <span class="dash-target">g · 总热量 × 25%</span>
                 </div>
             </div>
 
             <div class="card">
+                <!-- Meal type selector (shared between both tabs) -->
+                <div class="meal-selector-row">
+                    <label>用餐类型</label>
+                    <select id="diary-meal" class="form-control">
+                        <option value="breakfast">🌅 早餐</option>
+                        <option value="lunch">☀️ 午餐</option>
+                        <option value="dinner">🌙 晚餐</option>
+                        <option value="snack">🍎 加餐</option>
+                    </select>
+                </div>
+
                 <div class="diary-tabs">
-                    <div id="tab-warehouse" class="diary-tab active" onclick="switchDiaryTab('warehouse')">从仓库中选择</div>
-                    <div id="tab-temporary" class="diary-tab" onclick="switchDiaryTab('temporary')">临时快捷记账（不入库）</div>
+                    <div id="tab-warehouse" class="diary-tab active" role="tab" tabindex="0"
+                         onclick="switchDiaryTab('warehouse')"
+                         onkeydown="if(event.key==='Enter')switchDiaryTab('warehouse')">从仓库中选择</div>
+                    <div id="tab-temporary" class="diary-tab" role="tab" tabindex="0"
+                         onclick="switchDiaryTab('temporary')"
+                         onkeydown="if(event.key==='Enter')switchDiaryTab('temporary')">临时快捷记账（不入库）</div>
                 </div>
 
                 <div id="diary-form-warehouse" class="form-row">
@@ -387,10 +496,12 @@
                     </div>
                     <div class="form-group" style="width: 180px;">
                         <label>分量/重量</label>
-                        <input type="number" id="diary-food-amount" class="form-control" placeholder="如 100" value="100">
+                        <input type="number" id="diary-food-amount" class="form-control" placeholder="如 100" value="100" min="0">
                     </div>
                     <div class="form-group">
-                        <button class="btn" onclick="addDiaryEntry()">添加记录</button>
+                        <button class="btn" onclick="addDiaryEntry()">
+                            <span class="material-icons-outlined" style="font-size:18px;">add</span> 添加记录
+                        </button>
                     </div>
                 </div>
 
@@ -401,28 +512,30 @@
                     </div>
                     <div class="form-group flex-child">
                         <label>预估热量 (kcal)</label>
-                        <input type="number" id="temp-food-kcal" class="form-control" placeholder="必填">
+                        <input type="number" id="temp-food-kcal" class="form-control" placeholder="必填" min="0">
                     </div>
                     <div class="form-group flex-child">
                         <label>蛋白质 (g)</label>
-                        <input type="number" id="temp-food-protein" class="form-control" placeholder="选填" value="0">
+                        <input type="number" id="temp-food-protein" class="form-control" placeholder="选填" value="0" min="0">
                     </div>
                     <div class="form-group flex-child">
                         <label>碳水 (g)</label>
-                        <input type="number" id="temp-food-carbs" class="form-control" placeholder="选填" value="0">
+                        <input type="number" id="temp-food-carbs" class="form-control" placeholder="选填" value="0" min="0">
                     </div>
                     <div class="form-group flex-child">
                         <label>脂肪 (g)</label>
-                        <input type="number" id="temp-food-fat" class="form-control" placeholder="选填" value="0">
+                        <input type="number" id="temp-food-fat" class="form-control" placeholder="选填" value="0" min="0">
                     </div>
                     <div class="form-group">
-                        <button class="btn" onclick="addTemporaryDiaryEntry()">添加记录</button>
+                        <button class="btn" onclick="addTemporaryDiaryEntry()">
+                            <span class="material-icons-outlined" style="font-size:18px;">add</span> 添加记录
+                        </button>
                     </div>
                 </div>
             </div>
 
             <div class="card">
-                <h3 style="font-weight: 500; margin-bottom: 16px;">今日进食明细</h3>
+                <h3 style="font-weight: 500; margin-bottom: 0;">今日进食明细</h3>
                 <table class="data-table">
                     <thead>
                         <tr>
@@ -440,42 +553,45 @@
             </div>
         </div>
 
+        <!-- ── Warehouse Page ── -->
         <div id="page-warehouse" class="page">
             <h2>食品仓库</h2>
             <div class="card">
-                <h3 style="font-weight: 500; margin-bottom: 16px;">添加新食品基准</h3>
-                <div class="form-row">
-                    <div class="form-group flex-child" style="min-width: 140px;">
+                <h3 style="font-weight: 500; margin-bottom: 20px;">添加新食品基准</h3>
+                <div class="warehouse-form-grid">
+                    <div class="form-group">
                         <label>食物大类分类</label>
                         <input type="text" id="food-category" class="form-control" placeholder="如：蛋畜类、坚果、补剂" list="exist-categories">
                         <datalist id="exist-categories"></datalist>
                     </div>
-                    <div class="form-group flex-child" style="min-width: 160px; flex: 2;">
+                    <div class="form-group">
                         <label>精细商品/具体名称</label>
                         <input type="text" id="food-name" class="form-control" placeholder="如：鸡蛋 A 厂、黄油坚果">
                     </div>
-                    <div class="form-group flex-child" style="min-width: 120px;">
-                        <label>单位单位</label>
-                        <input type="text" id="food-unit" class="form-control" placeholder="100g">
-                    </div>
-                    <div class="form-group flex-child">
-                        <label>热量 (kcal)</label>
-                        <input type="number" id="food-kcal" class="form-control">
-                    </div>
-                    <div class="form-group flex-child">
-                        <label>蛋白质 (g)</label>
-                        <input type="number" id="food-protein" class="form-control">
-                    </div>
-                    <div class="form-group flex-child">
-                        <label>碳水 (g)</label>
-                        <input type="number" id="food-carbs" class="form-control">
-                    </div>
-                    <div class="form-group flex-child">
-                        <label>脂肪 (g)</label>
-                        <input type="number" id="food-fat" class="form-control">
+                    <div class="form-group">
+                        <label>计量单位</label>
+                        <input type="text" id="food-unit" class="form-control" placeholder="如：100g / 1粒 / 1scoop">
                     </div>
                     <div class="form-group">
-                        <button class="btn" onclick="addCustomFood()">入库新食品</button>
+                        <label>热量 (kcal)</label>
+                        <input type="number" id="food-kcal" class="form-control" placeholder="0" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>蛋白质 (g)</label>
+                        <input type="number" id="food-protein" class="form-control" placeholder="0" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>碳水 (g)</label>
+                        <input type="number" id="food-carbs" class="form-control" placeholder="0" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>脂肪 (g)</label>
+                        <input type="number" id="food-fat" class="form-control" placeholder="0" min="0">
+                    </div>
+                    <div style="display: flex; align-items: flex-end; margin-bottom: 16px;">
+                        <button class="btn" style="width: 100%;" onclick="addCustomFood()">
+                            <span class="material-icons-outlined" style="font-size:18px;">add_circle</span> 入库新食品
+                        </button>
                     </div>
                 </div>
             </div>
@@ -499,36 +615,52 @@
             </div>
         </div>
 
+        <!-- ── Summary Page ── -->
         <div id="page-summary" class="page">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-                <h2>月度热量合规日历</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h2 style="margin-bottom: 0;">月度合规日历</h2>
                 <div style="display: flex; gap: 8px; align-items: center;">
-                    <button class="btn btn-secondary" style="height: 36px; padding: 0 12px;" onclick="changeSummaryMonth(-1)"><span class="material-icons-outlined">chevron_left</span></button>
-                    <span id="summary-month-label" style="font-size: 16px; font-weight: 500; min-width: 80px; text-align: center;">-</span>
-                    <button class="btn btn-secondary" style="height: 36px; padding: 0 12px;" onclick="changeSummaryMonth(1)"><span class="material-icons-outlined">chevron_right</span></button>
+                    <button class="btn btn-secondary" style="height: 36px; padding: 0 12px;"
+                            onclick="changeSummaryMonth(-1)" aria-label="上个月">
+                        <span class="material-icons-outlined">chevron_left</span>
+                    </button>
+                    <span id="summary-month-label" style="font-size: 16px; font-weight: 500; min-width: 100px; text-align: center;">-</span>
+                    <button class="btn btn-secondary" style="height: 36px; padding: 0 12px;"
+                            onclick="changeSummaryMonth(1)" aria-label="下个月">
+                        <span class="material-icons-outlined">chevron_right</span>
+                    </button>
                 </div>
             </div>
 
-            <div class="card" style="padding: 12px 24px; margin-bottom: 16px; display: flex; gap: 24px; align-items: center; flex-wrap: wrap; font-size: 13px;">
+            <!-- Monthly aggregate stats -->
+            <div class="card" style="padding: 16px 24px; margin-bottom: 16px;">
+                <div id="monthly-stats" class="monthly-stats">
+                    <span>加载中...</span>
+                </div>
+            </div>
+
+            <!-- Legend -->
+            <div class="card" style="padding: 12px 24px; margin-bottom: 16px; display: flex; gap: 20px; align-items: center; flex-wrap: wrap; font-size: 13px;">
                 <span style="font-weight: 500; color: var(--md-on-surface-variant);">状态图例：</span>
-                <div style="display: flex; align-items: center; gap: 6px;"><div style="width: 16px; height: 16px; background: #e6f4ea; border: 1px solid #34a853; border-radius: 4px;"></div><span style="color:#34a853;">完美减脂 (-300 ~ +50 kcal)</span></div>
-                <div style="display: flex; align-items: center; gap: 6px;"><div style="width: 16px; height: 16px; background: #fce8e6; border: 1px solid #ea4335; border-radius: 4px;"></div><span style="color:#ea4335;">热量超标 (> +50 kcal)</span></div>
-                <div style="display: flex; align-items: center; gap: 6px;"><div style="width: 16px; height: 16px; background: #fef7e0; border: 1px solid #f9ab00; border-radius: 4px;"></div><span style="color:#f9ab00;">缺口过大 (< -300 kcal)</span></div>
-                <div style="display: flex; align-items: center; gap: 6px;"><div style="width: 16px; height: 16px; background: var(--md-surface); border: 1px solid var(--md-border); border-radius: 4px;"></div><span style="color:var(--md-on-surface-variant);">无记录 / 未来</span></div>
+                <div style="display: flex; align-items: center; gap: 6px;"><div style="width: 14px; height: 14px; background: #e6f4ea; border: 1px solid #34a853; border-radius: 3px;"></div><span style="color:#137333;">达标 (−300 ~ +50 kcal)</span></div>
+                <div style="display: flex; align-items: center; gap: 6px;"><div style="width: 14px; height: 14px; background: #fce8e6; border: 1px solid #ea4335; border-radius: 3px;"></div><span style="color:#c5221f;">超标 (> +50 kcal)</span></div>
+                <div style="display: flex; align-items: center; gap: 6px;"><div style="width: 14px; height: 14px; background: #fef7e0; border: 1px solid #f9ab00; border-radius: 3px;"></div><span style="color:#b06000;">缺口过大 (< −300 kcal)</span></div>
+                <div style="display: flex; align-items: center; gap: 6px;"><div style="width: 14px; height: 14px; background: var(--md-surface); border: 1px solid var(--md-border); border-radius: 3px;"></div><span style="color:var(--md-on-surface-variant);">无记录 / 未来</span></div>
             </div>
 
             <div class="card">
                 <div style="display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-weight: 500; color: var(--md-on-surface-variant); margin-bottom: 12px; font-size: 14px;">
                     <div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div>
                 </div>
-                <div id="calendar-grid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px;"></div>
+                <div id="calendar-grid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px;"></div>
             </div>
         </div>
 
+        <!-- ── Settings Page ── -->
         <div id="page-settings" class="page">
             <h2>用户身体数据设定</h2>
             <div class="card">
-                <div class="form-row">
+                <div class="form-row" style="margin-bottom: 8px;">
                     <div class="form-group flex-child">
                         <label>身高 (cm)</label>
                         <input type="number" id="user-height" class="form-control" value="183">
@@ -537,7 +669,20 @@
                         <label>体重 (kg)</label>
                         <input type="number" id="user-weight" class="form-control" value="91">
                     </div>
-                    <div class="form-group flex-child" style="flex: 2;">
+                    <div class="form-group flex-child">
+                        <label>年龄</label>
+                        <input type="number" id="user-age" class="form-control" value="27" min="10" max="100">
+                    </div>
+                    <div class="form-group flex-child">
+                        <label>性别</label>
+                        <select id="user-gender" class="form-control">
+                            <option value="male">男</option>
+                            <option value="female">女</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group flex-child" style="flex: 3;">
                         <label>日常活动量系数</label>
                         <select id="user-activity" class="form-control">
                             <option value="1.2">久坐不动 (基本不运动)</option>
@@ -546,7 +691,7 @@
                             <option value="1.725">重度活动 (每周运动 6-7 天)</option>
                         </select>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group" style="display: flex; align-items: flex-end;">
                         <button class="btn" onclick="saveSettings()">保存并重新计算 TDEE</button>
                     </div>
                 </div>
@@ -554,30 +699,47 @@
 
             <div class="card" style="background-color: var(--md-primary-variant); border-color: transparent;">
                 <h3 style="font-weight: 500; margin-bottom: 12px; color: var(--md-primary);">计算逻辑明细</h3>
-                <p style="font-size: 14px; line-height: 1.6; color: var(--md-on-surface-variant);">
-                    本页面采用 <b>Mifflin-St Jeor 公式</b> 计算基础代谢率 (BMR)，并根据活动系数得出 TDEE (每日摄入维持项)。<br>
-                    由于您的目标是<b>减脂</b>，系统已为您在 TDEE 基础上自动<b>核减 550 kcal</b> 作为每日摄入目标值。<br>
-                    三大宏量营养素配比：蛋白质按 2.1g/kg 体重留足，脂肪按总热量的 25% 分配，其余热量分配给碳水化合物。
+                <p style="font-size: 14px; line-height: 1.7; color: var(--md-on-surface-variant);">
+                    采用 <b>Mifflin-St Jeor 公式</b> 计算 BMR：男性 <code>10×体重 + 6.25×身高 − 5×年龄 + 5</code>，女性末项改为 <code>−161</code>。<br>
+                    TDEE = BMR × 活动量系数。减脂目标 = TDEE − 550 kcal。<br>
+                    宏量配比：蛋白质 2.1 g/kg 体重，脂肪占总热量 25%，其余分配给碳水化合物。
                 </p>
+            </div>
+
+            <div class="card">
+                <h3 style="font-weight: 500; margin-bottom: 16px;">数据管理</h3>
+                <button class="btn btn-secondary" onclick="exportData()">
+                    <span class="material-icons-outlined" style="font-size:18px;">download</span> 导出数据 (JSON)
+                </button>
             </div>
         </div>
     </main>
 
-    <div id="edit-modal" class="modal">
+    <!-- ── Edit Diary Entry Modal ── -->
+    <div id="edit-modal" class="modal" onclick="if(event.target===this)closeModal()">
         <div class="modal-content">
-            <h3 style="font-weight: 500; margin-bottom: 16px;" id="modal-food-title">编辑进食数据</h3>
+            <h3 class="modal-title" id="modal-food-title">编辑进食数据</h3>
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label>用餐类型</label>
+                <select id="modal-meal" class="form-control">
+                    <option value="breakfast">🌅 早餐</option>
+                    <option value="lunch">☀️ 午餐</option>
+                    <option value="dinner">🌙 晚餐</option>
+                    <option value="snack">🍎 加餐</option>
+                </select>
+            </div>
             <div id="modal-field-container-standard">
                 <div class="form-group" style="margin-bottom: 24px;">
                     <label id="modal-amount-label">新的分量/重量</label>
-                    <input type="number" id="modal-food-amount" class="form-control">
+                    <input type="number" id="modal-food-amount" class="form-control" min="0">
                 </div>
             </div>
             <div id="modal-field-container-temp" style="display: none;">
                 <div class="form-group"><label>临时食物/场景名称</label><input type="text" id="m-temp-name" class="form-control"></div>
-                <div class="form-group"><label>热量 (kcal)</label><input type="number" id="m-temp-kcal" class="form-control"></div>
-                <div class="form-group"><label>蛋白质 (g)</label><input type="number" id="m-temp-protein" class="form-control"></div>
-                <div class="form-group"><label>碳水 (g)</label><input type="number" id="m-temp-carbs" class="form-control"></div>
-                <div class="form-group"><label>脂肪 (g)</label><input type="number" id="m-temp-fat" class="form-control"></div>
+                <div class="form-group"><label>热量 (kcal)</label><input type="number" id="m-temp-kcal" class="form-control" min="0"></div>
+                <div class="form-group"><label>蛋白质 (g)</label><input type="number" id="m-temp-protein" class="form-control" min="0"></div>
+                <div class="form-group"><label>碳水 (g)</label><input type="number" id="m-temp-carbs" class="form-control" min="0"></div>
+                <div class="form-group"><label>脂肪 (g)</label><input type="number" id="m-temp-fat" class="form-control" min="0"></div>
             </div>
             <div style="display: flex; justify-content: flex-end; gap: 8px;">
                 <button class="btn btn-secondary" onclick="closeModal()">取消</button>
@@ -586,24 +748,25 @@
         </div>
     </div>
 
-    <div id="warehouse-modal" class="modal">
+    <!-- ── Edit Warehouse Item Modal ── -->
+    <div id="warehouse-modal" class="modal" onclick="if(event.target===this)closeWarehouseModal()">
         <div class="modal-content">
-            <h3 style="font-weight: 500; margin-bottom: 16px;" id="w-modal-title">编辑食品基准数据</h3>
+            <h3 class="modal-title" id="w-modal-title">编辑食品基准数据</h3>
             <div style="display: flex; gap: 12px; margin-bottom: 8px;">
                 <div class="form-group flex-child"><label>大类分类</label><input type="text" id="w-modal-cat" class="form-control"></div>
                 <div class="form-group flex-child"><label>商品精细名称</label><input type="text" id="w-modal-name" class="form-control"></div>
             </div>
             <div class="form-group">
-                <label>单位 (如100g/1scoop)</label>
+                <label>计量单位 (如 100g / 1scoop)</label>
                 <input type="text" id="w-modal-unit" class="form-control">
             </div>
             <div style="display: flex; gap: 12px; margin-bottom: 8px;">
-                <div class="form-group flex-child"><label>热量(kcal)</label><input type="number" id="w-modal-kcal" class="form-control"></div>
-                <div class="form-group flex-child"><label>蛋白质(g)</label><input type="number" id="w-modal-protein" class="form-control"></div>
+                <div class="form-group flex-child"><label>热量 (kcal)</label><input type="number" id="w-modal-kcal" class="form-control" min="0"></div>
+                <div class="form-group flex-child"><label>蛋白质 (g)</label><input type="number" id="w-modal-protein" class="form-control" min="0"></div>
             </div>
-            <div style="display: flex; gap: 12px; margin-bottom: 24px;">
-                <div class="form-group flex-child"><label>碳水(g)</label><input type="number" id="w-modal-carbs" class="form-control"></div>
-                <div class="form-group flex-child"><label>脂肪(g)</label><input type="number" id="w-modal-fat" class="form-control"></div>
+            <div style="display: flex; gap: 12px; margin-bottom: 20px;">
+                <div class="form-group flex-child"><label>碳水 (g)</label><input type="number" id="w-modal-carbs" class="form-control" min="0"></div>
+                <div class="form-group flex-child"><label>脂肪 (g)</label><input type="number" id="w-modal-fat" class="form-control" min="0"></div>
             </div>
             <div style="display: flex; justify-content: flex-end; gap: 8px;">
                 <button class="btn btn-secondary" onclick="closeWarehouseModal()">取消</button>
@@ -613,40 +776,84 @@
     </div>
 
     <script>
-        // --- 1. 数据结构初始化 ---
+        // ── Default food data ──
         const DEFAULT_FOODS = [
-            { id: "1", category: "补剂", name: "蛋白粉", unit: "1 scoop", kcal: 122, protein: 24, carbs: 3, fat: 1.5 },
-            { id: "2", category: "蛋畜类", name: "鸡蛋 (A 牌大号)", unit: "1 粒", kcal: 140, protein: 13, carbs: 2.5, fat: 8.5 },
-            { id: "2_b", category: "蛋畜类", name: "鸡蛋 (B 牌普通)", unit: "1 粒", kcal: 130, protein: 12, carbs: 2.0, fat: 7.8 },
-            { id: "3", category: "蛋畜类", name: "鸡胸肉", unit: "100g", kcal: 120, protein: 23, carbs: 0, fat: 1 },
-            { id: "4", category: "主食谷物", name: "米饭", unit: "100g", kcal: 120, protein: 2, carbs: 25, fat: 0.3 },
-            { id: "5", category: "主食谷物", name: "燕麦", unit: "35g", kcal: 133, protein: 4.3, carbs: 20.3, fat: 3.2 }
+            { id: "1",   category: "补剂",   name: "蛋白粉",          unit: "1 scoop", kcal: 122, protein: 24,  carbs: 3,    fat: 1.5 },
+            { id: "2",   category: "蛋畜类", name: "鸡蛋 (A 牌大号)", unit: "1 粒",    kcal: 140, protein: 13,  carbs: 2.5,  fat: 8.5 },
+            { id: "2_b", category: "蛋畜类", name: "鸡蛋 (B 牌普通)", unit: "1 粒",    kcal: 130, protein: 12,  carbs: 2.0,  fat: 7.8 },
+            { id: "3",   category: "蛋畜类", name: "鸡胸肉",          unit: "100g",    kcal: 120, protein: 23,  carbs: 0,    fat: 1   },
+            { id: "4",   category: "主食谷物",name: "米饭",           unit: "100g",    kcal: 120, protein: 2,   carbs: 25,   fat: 0.3 },
+            { id: "5",   category: "主食谷物",name: "燕麦",           unit: "35g",     kcal: 133, protein: 4.3, carbs: 20.3, fat: 3.2 }
         ];
 
         let state = {
-            user: { height: 183, weight: 91, activity: 1.55 },
+            user: { height: 183, weight: 91, activity: 1.55, age: 27, gender: 'male' },
             foods: [...DEFAULT_FOODS],
             diary: {}
         };
 
         let currentEditIndex = null;
         let currentWarehouseEditId = null;
-        let summaryCurrentDate = new Date(); // 汇总日历当前选中月份的核心控制实例
+        let summaryCurrentDate = new Date();
 
+        // ── Toast system ──
+        function showToast(message, type = 'success') {
+            const colors = { success: '#34a853', error: '#ea4335', info: '#1a73e8', warning: '#f9ab00' };
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.style.background = colors[type] || colors.info;
+            toast.textContent = message;
+            container.appendChild(toast);
+            // Double rAF ensures the element is painted before transition starts
+            requestAnimationFrame(() => requestAnimationFrame(() => toast.classList.add('show')));
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // ── Custom confirm dialog ──
+        let confirmResolve = null;
+        function showConfirm(message) {
+            return new Promise(resolve => {
+                document.getElementById('confirm-message').textContent = message;
+                document.getElementById('confirm-dialog').classList.add('active');
+                confirmResolve = resolve;
+            });
+        }
+        function resolveConfirm(result) {
+            document.getElementById('confirm-dialog').classList.remove('active');
+            if (confirmResolve) { confirmResolve(result); confirmResolve = null; }
+        }
+
+        // ESC closes any open modal
+        document.addEventListener('keydown', e => {
+            if (e.key !== 'Escape') return;
+            closeModal();
+            closeWarehouseModal();
+            resolveConfirm(false);
+        });
+
+        // ── State persistence ──
         function loadState() {
             const saved = localStorage.getItem('macro_tracker_state');
             if (saved) {
                 const parsed = JSON.parse(saved);
-                if(parsed.foods) {
-                    parsed.foods.forEach(f => { if(!f.category) f.category = "未分类"; });
-                }
+                if (parsed.foods) parsed.foods.forEach(f => { if (!f.category) f.category = "未分类"; });
+                // Migrate: fill missing user fields added after initial release
+                if (!parsed.user) parsed.user = {};
+                if (parsed.user.age == null)    parsed.user.age    = 27;
+                if (parsed.user.gender == null) parsed.user.gender = 'male';
                 state = parsed;
             } else {
                 saveState();
             }
-            document.getElementById('diary-date').value = new Date().toISOString().split('T')[0];
-            document.getElementById('user-height').value = state.user.height;
-            document.getElementById('user-weight').value = state.user.weight;
+            document.getElementById('diary-date').value    = new Date().toISOString().split('T')[0];
+            document.getElementById('user-height').value   = state.user.height;
+            document.getElementById('user-weight').value   = state.user.weight;
+            document.getElementById('user-age').value      = state.user.age;
+            document.getElementById('user-gender').value   = state.user.gender;
             document.getElementById('user-activity').value = state.user.activity;
         }
 
@@ -654,99 +861,129 @@
             localStorage.setItem('macro_tracker_state', JSON.stringify(state));
         }
 
+        // ── TDEE / macro targets (Mifflin-St Jeor, age + gender fixed) ──
         function calculateTargets() {
-            const { height, weight, activity } = state.user;
-            const bmr = 10 * weight + 6.25 * height - 5 * 27 + 5; 
-            const tdee = bmr * parseFloat(activity);
+            const { height, weight, activity, age = 27, gender = 'male' } = state.user;
+            const genderConst = gender === 'male' ? 5 : -161;
+            const bmr        = 10 * weight + 6.25 * height - 5 * age + genderConst;
+            const tdee       = bmr * parseFloat(activity);
             const targetKcal = Math.round(tdee - 550);
-            
-            const targetProtein = Math.round(weight * 2.1); 
-            const targetFat = Math.round((targetKcal * 0.25) / 9); 
-            const targetCarbs = Math.round((targetKcal - (targetProtein * 4) - (targetFat * 9)) / 4);
-
+            const targetProtein = Math.round(weight * 2.1);
+            const targetFat     = Math.round((targetKcal * 0.25) / 9);
+            const targetCarbs   = Math.round((targetKcal - targetProtein * 4 - targetFat * 9) / 4);
             return { kcal: targetKcal, protein: targetProtein, carbs: targetCarbs, fat: targetFat };
         }
 
-        function switchPage(pageId) {
+        // ── Page navigation (no implicit event global) ──
+        function switchPage(pageId, navEl) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            
-            document.getElementById(`page-${pageId}`).classList.add('active');
-            event.currentTarget.classList.add('active');
 
-            if (pageId === 'diary') loadDiary();
+            document.getElementById(`page-${pageId}`).classList.add('active');
+
+            if (navEl) {
+                navEl.classList.add('active');
+            } else {
+                const found = document.querySelector(`.nav-item[data-page="${pageId}"]`);
+                if (found) found.classList.add('active');
+            }
+
+            if (pageId === 'diary')     loadDiary();
             if (pageId === 'warehouse') renderWarehouse();
-            if (pageId === 'summary') renderSummary();
+            if (pageId === 'summary')   renderSummary();
         }
 
         function switchDiaryTab(mode) {
             document.querySelectorAll('.diary-tab').forEach(t => t.classList.remove('active'));
-            document.getElementById(`diary-form-warehouse`).style.display = 'none';
-            document.getElementById(`diary-form-temporary`).style.display = 'none';
-
+            document.getElementById('diary-form-warehouse').style.display  = 'none';
+            document.getElementById('diary-form-temporary').style.display  = 'none';
             document.getElementById(`tab-${mode}`).classList.add('active');
-            document.getElementById(`diary-form-${mode}`).style.display = 'flex';
+            document.getElementById(`diary-form-${mode}`).style.display    = 'flex';
         }
 
+        // ── Calendar: clicking a past/present day navigates to its diary ──
+        function navigateToDay(dateStr) {
+            document.getElementById('diary-date').value = dateStr;
+            switchPage('diary');
+        }
+
+        // ── Settings ──
         function saveSettings() {
-            state.user.height = parseFloat(document.getElementById('user-height').value);
-            state.user.weight = parseFloat(document.getElementById('user-weight').value);
+            state.user.height   = parseFloat(document.getElementById('user-height').value)   || 170;
+            state.user.weight   = parseFloat(document.getElementById('user-weight').value)   || 70;
+            state.user.age      = parseInt(document.getElementById('user-age').value)         || 25;
+            state.user.gender   = document.getElementById('user-gender').value;
             state.user.activity = document.getElementById('user-activity').value;
             saveState();
-            alert('身体数据同步成功，目标卡片已动态调整。');
+            showToast('身体数据已保存，目标已重新计算 ✓');
             loadDiary();
         }
 
-        // --- 2. 食品仓库与下拉选择逻辑 ---
+        // ── Data export ──
+        function exportData() {
+            const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+            const url  = URL.createObjectURL(blob);
+            const a    = document.createElement('a');
+            a.href     = url;
+            a.download = `macro-tracker-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('数据已导出 ✓');
+        }
+
+        // ── Warehouse ──
         function renderWarehouse() {
             const tbody = document.getElementById('warehouse-table-body');
             if (!tbody) return;
             tbody.innerHTML = '';
-            
+
             const groups = {};
             state.foods.forEach(food => {
                 const cat = food.category || "未分类";
-                if(!groups[cat]) groups[cat] = [];
+                if (!groups[cat]) groups[cat] = [];
                 groups[cat].push(food);
             });
 
-            // 1. 渲染仓库数据表
             for (const cat in groups) {
                 tbody.innerHTML += `
-                    <tr>
-                        <td colspan="7" class="category-header"><span class="material-icons-outlined" style="font-size:16px;vertical-align:middle;margin-right:4px;">folder</span>${cat}</td>
+                    <tr class="category-header">
+                        <td colspan="7"><span class="material-icons-outlined" style="font-size:15px;vertical-align:middle;margin-right:4px;">folder</span>${cat}</td>
                     </tr>
                 `;
                 groups[cat].forEach(food => {
                     tbody.innerHTML += `
                         <tr>
-                            <td style="padding-left: 24px;"><b>${food.name}</b></td>
-                            <td>每一单位 (${food.unit})</td>
+                            <td style="padding-left: 28px;"><b>${food.name}</b></td>
+                            <td>每 ${food.unit}</td>
                             <td>${food.kcal} kcal</td>
                             <td>${food.protein}g</td>
                             <td>${food.carbs}g</td>
                             <td>${food.fat}g</td>
                             <td>
                                 <div class="actions-cell">
-                                    <span class="material-icons-outlined action-icon" onclick="openWarehouseModal('${food.id}')">edit</span>
-                                    <span class="material-icons-outlined action-icon delete" onclick="deleteWarehouseItem('${food.id}')">delete</span>
+                                    <span class="material-icons-outlined action-icon" tabindex="0" role="button" aria-label="编辑 ${food.name}"
+                                          onclick="openWarehouseModal('${food.id}')"
+                                          onkeydown="if(event.key==='Enter')openWarehouseModal('${food.id}')">edit</span>
+                                    <span class="material-icons-outlined action-icon delete" tabindex="0" role="button" aria-label="删除 ${food.name}"
+                                          onclick="deleteWarehouseItem('${food.id}')"
+                                          onkeydown="if(event.key==='Enter')deleteWarehouseItem('${food.id}')">delete</span>
                                 </div>
                             </td>
                         </tr>
                     `;
                 });
             }
-            
-            // 2. 刷新大类联想输入 datalist
+
+            // Refresh category datalist
             const datalist = document.getElementById('exist-categories');
             if (datalist) {
                 datalist.innerHTML = '';
-                Object.keys(groups).forEach(cat => {
-                    datalist.innerHTML += `<option value="${cat}">`;
-                });
+                Object.keys(groups).forEach(cat => { datalist.innerHTML += `<option value="${cat}">`; });
             }
 
-            // 3. 按大类分类聚合，生成带有 optgroup 的饮食下拉列表
+            // Rebuild diary food select with optgroups
             const select = document.getElementById('diary-food-select');
             if (select) {
                 select.innerHTML = '';
@@ -763,41 +1000,34 @@
 
         function addCustomFood() {
             const category = document.getElementById('food-category').value.trim() || "未分类";
-            const name = document.getElementById('food-name').value.trim();
-            const unit = document.getElementById('food-unit').value || "100g";
-            const kcal = parseFloat(document.getElementById('food-kcal').value) || 0;
-            const protein = parseFloat(document.getElementById('food-protein').value) || 0;
-            const carbs = parseFloat(document.getElementById('food-carbs').value) || 0;
-            const fat = parseFloat(document.getElementById('food-fat').value) || 0;
+            const name     = document.getElementById('food-name').value.trim();
+            const unit     = document.getElementById('food-unit').value.trim() || "100g";
+            const kcal     = parseFloat(document.getElementById('food-kcal').value)    || 0;
+            const protein  = parseFloat(document.getElementById('food-protein').value) || 0;
+            const carbs    = parseFloat(document.getElementById('food-carbs').value)   || 0;
+            const fat      = parseFloat(document.getElementById('food-fat').value)     || 0;
 
-            if(!name) return alert('请输入食物商品精细名称');
+            if (!name) { showToast('请输入食物商品名称', 'error'); return; }
 
-            const newFood = { id: Date.now().toString(), category, name, unit, kcal, protein, carbs, fat };
-            state.foods.push(newFood);
+            state.foods.push({ id: Date.now().toString(), category, name, unit, kcal, protein, carbs, fat });
             saveState();
             renderWarehouse();
-            
-            document.getElementById('food-name').value = '';
-            document.getElementById('food-unit').value = '';
-            document.getElementById('food-kcal').value = '';
-            document.getElementById('food-protein').value = '';
-            document.getElementById('food-carbs').value = '';
-            document.getElementById('food-fat').value = '';
+            ['food-name','food-unit','food-kcal','food-protein','food-carbs','food-fat']
+                .forEach(id => document.getElementById(id).value = '');
+            showToast(`「${name}」已成功入库 ✓`);
         }
 
         function openWarehouseModal(foodId) {
             const food = state.foods.find(f => f.id === foodId);
             if (!food) return;
-
             currentWarehouseEditId = foodId;
-            document.getElementById('w-modal-cat').value = food.category || "未分类";
-            document.getElementById('w-modal-name').value = food.name;
-            document.getElementById('w-modal-unit').value = food.unit;
-            document.getElementById('w-modal-kcal').value = food.kcal;
+            document.getElementById('w-modal-cat').value     = food.category || "未分类";
+            document.getElementById('w-modal-name').value    = food.name;
+            document.getElementById('w-modal-unit').value    = food.unit;
+            document.getElementById('w-modal-kcal').value    = food.kcal;
             document.getElementById('w-modal-protein').value = food.protein;
-            document.getElementById('w-modal-carbs').value = food.carbs;
-            document.getElementById('w-modal-fat').value = food.fat;
-
+            document.getElementById('w-modal-carbs').value   = food.carbs;
+            document.getElementById('w-modal-fat').value     = food.fat;
             document.getElementById('warehouse-modal').classList.add('active');
         }
 
@@ -811,37 +1041,32 @@
             const food = state.foods.find(f => f.id === currentWarehouseEditId);
             if (!food) return;
 
-            const nextCat = document.getElementById('w-modal-cat').value.trim() || "未分类";
-            const nextName = document.getElementById('w-modal-name').value.trim();
-            const nextUnit = document.getElementById('w-modal-unit').value || "100g";
-            const nextKcal = parseFloat(document.getElementById('w-modal-kcal').value) || 0;
+            const nextCat     = document.getElementById('w-modal-cat').value.trim()     || "未分类";
+            const nextName    = document.getElementById('w-modal-name').value.trim();
+            const nextUnit    = document.getElementById('w-modal-unit').value.trim()    || "100g";
+            const nextKcal    = parseFloat(document.getElementById('w-modal-kcal').value)    || 0;
             const nextProtein = parseFloat(document.getElementById('w-modal-protein').value) || 0;
-            const nextCarbs = parseFloat(document.getElementById('w-modal-carbs').value) || 0;
-            const nextFat = parseFloat(document.getElementById('w-modal-fat').value) || 0;
+            const nextCarbs   = parseFloat(document.getElementById('w-modal-carbs').value)   || 0;
+            const nextFat     = parseFloat(document.getElementById('w-modal-fat').value)     || 0;
 
-            if (!nextName) return alert('名称不能为空');
+            if (!nextName) { showToast('名称不能为空', 'error'); return; }
 
-            food.category = nextCat;
-            food.name = nextName;
-            food.unit = nextUnit;
-            food.kcal = nextKcal;
-            food.protein = nextProtein;
-            food.carbs = nextCarbs;
-            food.fat = nextFat;
+            food.category = nextCat; food.name = nextName; food.unit = nextUnit;
+            food.kcal = nextKcal; food.protein = nextProtein; food.carbs = nextCarbs; food.fat = nextFat;
 
             const baseAmount = parseFloat(nextUnit) || 1;
-            const unitText = nextUnit.replace(/[0-9.]/g, '') || '单位';
+            const unitText   = nextUnit.replace(/[0-9.]/g, '') || '单位';
 
             for (const date in state.diary) {
                 state.diary[date].forEach(entry => {
                     if (entry.foodId === currentWarehouseEditId && !entry.isTemporary) {
-                        const multiplier = entry.rawAmount / baseAmount;
-                        entry.name = nextName;
-                        entry.displayAmount = entry.rawAmount + unitText;
-                        entry.kcal = nextKcal * multiplier;
-                        entry.protein = nextProtein * multiplier;
-                        entry.carbs = nextCarbs * multiplier;
-                        entry.fat = nextFat * multiplier;
+                        const multiplier      = entry.rawAmount / baseAmount;
+                        entry.name            = nextName;
+                        entry.displayAmount   = entry.rawAmount + unitText;
+                        entry.kcal            = nextKcal    * multiplier;
+                        entry.protein         = nextProtein * multiplier;
+                        entry.carbs           = nextCarbs   * multiplier;
+                        entry.fat             = nextFat     * multiplier;
                     }
                 });
             }
@@ -849,151 +1074,195 @@
             saveState();
             renderWarehouse();
             closeWarehouseModal();
-            alert('级联数据同步重算更新完成！');
+            showToast('级联数据同步重算完成 ✓');
         }
 
-        function deleteWarehouseItem(foodId) {
-            if(confirm('确定删除此基础食品吗？历史日记已生成的明细会保留为断联静态状态。')) {
-                state.foods = state.foods.filter(f => f.id !== foodId);
-                saveState();
-                renderWarehouse();
-            }
+        async function deleteWarehouseItem(foodId) {
+            const food = state.foods.find(f => f.id === foodId);
+            const ok = await showConfirm(`确定删除「${food ? food.name : '此食品'}」吗？历史日记数据将保留为静态记录。`);
+            if (!ok) return;
+            state.foods = state.foods.filter(f => f.id !== foodId);
+            saveState();
+            renderWarehouse();
+            showToast('食品已删除');
         }
 
-        // --- 3. 饮食日记逻辑 ---
+        // ── Diary (meal-grouped) ──
+        const MEAL_ORDER  = ['breakfast', 'lunch', 'dinner', 'snack'];
+        const MEAL_LABELS = { breakfast: '🌅 早餐', lunch: '☀️ 午餐', dinner: '🌙 晚餐', snack: '🍎 加餐' };
+
         function loadDiary() {
-            const date = document.getElementById('diary-date').value;
+            renderWarehouse(); // keep dropdown in sync
+
+            const date       = document.getElementById('diary-date').value;
             const dayEntries = state.diary[date] || [];
-            const tbody = document.getElementById('diary-table-body');
-            tbody.innerHTML = '';
+            const tbody      = document.getElementById('diary-table-body');
+            tbody.innerHTML  = '';
+
+            if (dayEntries.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7">
+                            <div class="empty-state">
+                                <span class="material-icons-outlined">restaurant</span>
+                                今天还没有进食记录，快去添加吧
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                renderDashboard(0, 0, 0, 0);
+                return;
+            }
+
+            // Group entries by meal; old entries without a meal default to 'snack'
+            const grouped = {};
+            MEAL_ORDER.forEach(m => grouped[m] = []);
+            dayEntries.forEach((entry, index) => {
+                grouped[entry.meal || 'snack'].push({ ...entry, _idx: index });
+            });
 
             let totalKcal = 0, totalP = 0, totalC = 0, totalF = 0;
 
-            dayEntries.forEach((entry, index) => {
-                totalKcal += entry.kcal;
-                totalP += entry.protein;
-                totalC += entry.carbs;
-                totalF += entry.fat;
+            MEAL_ORDER.forEach(meal => {
+                const entries = grouped[meal];
+                if (entries.length === 0) return;
 
-                const nameTag = entry.isTemporary ? `<span style="color:var(--md-on-surface-variant);font-style:italic;">[临] ${entry.name}</span>` : `<b>${entry.name}</b>`;
+                tbody.innerHTML += `<tr class="meal-header"><td colspan="7">${MEAL_LABELS[meal]}</td></tr>`;
+
+                let mKcal = 0, mP = 0, mC = 0, mF = 0;
+                entries.forEach(entry => {
+                    const i = entry._idx;
+                    mKcal += entry.kcal; mP += entry.protein; mC += entry.carbs; mF += entry.fat;
+                    totalKcal += entry.kcal; totalP += entry.protein; totalC += entry.carbs; totalF += entry.fat;
+
+                    const nameTag = entry.isTemporary
+                        ? `<span style="color:var(--md-on-surface-variant);font-style:italic;">[临] ${entry.name}</span>`
+                        : `<b>${entry.name}</b>`;
+
+                    tbody.innerHTML += `
+                        <tr>
+                            <td style="padding-left: 24px;">${nameTag}</td>
+                            <td>${entry.displayAmount}</td>
+                            <td>${entry.kcal.toFixed(1)}</td>
+                            <td>${entry.protein.toFixed(1)}g</td>
+                            <td>${entry.carbs.toFixed(1)}g</td>
+                            <td>${entry.fat.toFixed(1)}g</td>
+                            <td>
+                                <div class="actions-cell">
+                                    <span class="material-icons-outlined action-icon" tabindex="0" role="button" aria-label="编辑"
+                                          onclick="openEditModal(${i})"
+                                          onkeydown="if(event.key==='Enter')openEditModal(${i})">edit</span>
+                                    <span class="material-icons-outlined action-icon delete" tabindex="0" role="button" aria-label="删除"
+                                          onclick="deleteDiaryEntry(${i})"
+                                          onkeydown="if(event.key==='Enter')deleteDiaryEntry(${i})">delete</span>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                });
 
                 tbody.innerHTML += `
-                    <tr>
-                        <td>${nameTag}</td>
-                        <td>${entry.displayAmount}</td>
-                        <td>${entry.kcal.toFixed(1)}</td>
-                        <td>${entry.protein.toFixed(1)}g</td>
-                        <td>${entry.carbs.toFixed(1)}g</td>
-                        <td>${entry.fat.toFixed(1)}g</td>
-                        <td>
-                            <div class="actions-cell">
-                                <span class="material-icons-outlined action-icon" onclick="openEditModal(${index})">edit</span>
-                                <span class="material-icons-outlined action-icon delete" onclick="deleteDiaryEntry('${index}')">delete</span>
-                            </div>
-                        </td>
+                    <tr class="meal-subtotal">
+                        <td colspan="2" style="text-align:right;">小计</td>
+                        <td>${mKcal.toFixed(0)}</td>
+                        <td>${mP.toFixed(1)}g</td>
+                        <td>${mC.toFixed(1)}g</td>
+                        <td>${mF.toFixed(1)}g</td>
+                        <td></td>
                     </tr>
                 `;
             });
 
             renderDashboard(totalKcal, totalP, totalC, totalF);
-            renderWarehouse();
         }
 
         function addDiaryEntry() {
-            const date = document.getElementById('diary-date').value;
-            const foodId = document.getElementById('diary-food-select').value;
+            const date       = document.getElementById('diary-date').value;
+            const foodId     = document.getElementById('diary-food-select').value;
             const userAmount = parseFloat(document.getElementById('diary-food-amount').value) || 0;
+            const meal       = document.getElementById('diary-meal').value;
 
-            if (userAmount <= 0) return alert('请输入合理的分量');
-
+            if (userAmount <= 0) { showToast('请输入合理的分量', 'error'); return; }
             const food = state.foods.find(f => f.id === foodId);
             if (!food) return;
 
-            const baseAmount = parseFloat(food.unit) || 1; 
+            const baseAmount = parseFloat(food.unit) || 1;
             const multiplier = userAmount / baseAmount;
-            const unitText = food.unit.replace(/[0-9.]/g, '') || '单位';
+            const unitText   = food.unit.replace(/[0-9.]/g, '') || '单位';
 
             const entry = {
-                foodId: food.id,
-                isTemporary: false,
-                name: food.name,
-                rawAmount: userAmount,
+                foodId: food.id, isTemporary: false, meal,
+                name: food.name, rawAmount: userAmount,
                 displayAmount: userAmount + unitText,
-                kcal: food.kcal * multiplier,
+                kcal:    food.kcal    * multiplier,
                 protein: food.protein * multiplier,
-                carbs: food.carbs * multiplier,
-                fat: food.fat * multiplier
+                carbs:   food.carbs   * multiplier,
+                fat:     food.fat     * multiplier
             };
 
             if (!state.diary[date]) state.diary[date] = [];
             state.diary[date].push(entry);
-            
             saveState();
             loadDiary();
+            showToast(`已添加「${food.name}」✓`);
         }
 
         function addTemporaryDiaryEntry() {
-            const date = document.getElementById('diary-date').value;
-            const name = document.getElementById('temp-food-name').value.trim() || "临时聚餐/无库存食品";
-            const kcal = parseFloat(document.getElementById('temp-food-kcal').value);
+            const date    = document.getElementById('diary-date').value;
+            const name    = document.getElementById('temp-food-name').value.trim() || "临时聚餐/无库存食品";
+            const kcal    = parseFloat(document.getElementById('temp-food-kcal').value);
             const protein = parseFloat(document.getElementById('temp-food-protein').value) || 0;
-            const carbs = parseFloat(document.getElementById('temp-food-carbs').value) || 0;
-            const fat = parseFloat(document.getElementById('temp-food-fat').value) || 0;
+            const carbs   = parseFloat(document.getElementById('temp-food-carbs').value)   || 0;
+            const fat     = parseFloat(document.getElementById('temp-food-fat').value)     || 0;
+            const meal    = document.getElementById('diary-meal').value;
 
-            if (isNaN(kcal) || kcal < 0) return alert('请至少填写预估的宏量热量 (kcal)');
+            if (isNaN(kcal) || kcal < 0) { showToast('请填写预估热量 (kcal)', 'error'); return; }
 
             const entry = {
-                foodId: "temp_" + Date.now(),
-                isTemporary: true,
-                name: name,
-                rawAmount: 1,
-                displayAmount: "1次性",
-                kcal: kcal,
-                protein: protein,
-                carbs: carbs,
-                fat: fat
+                foodId: "temp_" + Date.now(), isTemporary: true, meal,
+                name, rawAmount: 1, displayAmount: "1次",
+                kcal, protein, carbs, fat
             };
 
             if (!state.diary[date]) state.diary[date] = [];
             state.diary[date].push(entry);
-
             saveState();
             loadDiary();
 
-            document.getElementById('temp-food-name').value = '';
-            document.getElementById('temp-food-kcal').value = '';
+            document.getElementById('temp-food-name').value    = '';
+            document.getElementById('temp-food-kcal').value    = '';
             document.getElementById('temp-food-protein').value = '0';
-            document.getElementById('temp-food-carbs').value = '0';
-            document.getElementById('temp-food-fat').value = '0';
+            document.getElementById('temp-food-carbs').value   = '0';
+            document.getElementById('temp-food-fat').value     = '0';
+            showToast(`已添加「${name}」✓`);
         }
 
         function openEditModal(index) {
-            const date = document.getElementById('diary-date').value;
+            const date  = document.getElementById('diary-date').value;
             const entry = state.diary[date][index];
             currentEditIndex = index;
 
+            // Pre-fill meal selector with the entry's current meal
+            document.getElementById('modal-meal').value = entry.meal || 'snack';
+
             if (entry.isTemporary) {
                 document.getElementById('modal-field-container-standard').style.display = 'none';
-                document.getElementById('modal-field-container-temp').style.display = 'block';
-                document.getElementById('modal-food-title').innerText = `修改临时记录`;
-                
-                document.getElementById('m-temp-name').value = entry.name;
-                document.getElementById('m-temp-kcal').value = entry.kcal;
+                document.getElementById('modal-field-container-temp').style.display     = 'block';
+                document.getElementById('modal-food-title').innerText = '修改临时记录';
+                document.getElementById('m-temp-name').value    = entry.name;
+                document.getElementById('m-temp-kcal').value    = entry.kcal;
                 document.getElementById('m-temp-protein').value = entry.protein;
-                document.getElementById('m-temp-carbs').value = entry.carbs;
-                document.getElementById('m-temp-fat').value = entry.fat;
+                document.getElementById('m-temp-carbs').value   = entry.carbs;
+                document.getElementById('m-temp-fat').value     = entry.fat;
             } else {
                 document.getElementById('modal-field-container-standard').style.display = 'block';
-                document.getElementById('modal-field-container-temp').style.display = 'none';
-                
-                const food = state.foods.find(f => f.id === entry.foodId) || { unit: "单位" };
+                document.getElementById('modal-field-container-temp').style.display     = 'none';
+                const food     = state.foods.find(f => f.id === entry.foodId) || { unit: "单位" };
                 const unitText = food.unit.replace(/[0-9.]/g, '') || '单位';
-                
-                document.getElementById('modal-food-title').innerText = `编辑 - ${entry.name}`;
-                document.getElementById('modal-amount-label').innerText = `新的分量/重量 (${unitText})`;
-                document.getElementById('modal-food-amount').value = entry.rawAmount || parseFloat(entry.displayAmount) || 100;
+                document.getElementById('modal-food-title').innerText    = `编辑 - ${entry.name}`;
+                document.getElementById('modal-amount-label').innerText  = `新的分量/重量 (${unitText})`;
+                document.getElementById('modal-food-amount').value       = entry.rawAmount || parseFloat(entry.displayAmount) || 100;
             }
-            
             document.getElementById('edit-modal').classList.add('active');
         }
 
@@ -1004,167 +1273,179 @@
 
         function saveDiaryEdit() {
             if (currentEditIndex === null) return;
-            const date = document.getElementById('diary-date').value;
+            const date  = document.getElementById('diary-date').value;
             const entry = state.diary[date][currentEditIndex];
+
+            // Update meal category (applies to both temporary and warehouse entries)
+            entry.meal = document.getElementById('modal-meal').value;
 
             if (entry.isTemporary) {
                 const nextK = parseFloat(document.getElementById('m-temp-kcal').value);
-                if(isNaN(nextK) || nextK < 0) return alert('热量不能为空');
-                
-                entry.name = document.getElementById('m-temp-name').value.trim() || "临时食物";
-                entry.kcal = nextK;
+                if (isNaN(nextK) || nextK < 0) { showToast('热量不能为空', 'error'); return; }
+                entry.name    = document.getElementById('m-temp-name').value.trim() || "临时食物";
+                entry.kcal    = nextK;
                 entry.protein = parseFloat(document.getElementById('m-temp-protein').value) || 0;
-                entry.carbs = parseFloat(document.getElementById('m-temp-carbs').value) || 0;
-                entry.fat = parseFloat(document.getElementById('m-temp-fat').value) || 0;
+                entry.carbs   = parseFloat(document.getElementById('m-temp-carbs').value)   || 0;
+                entry.fat     = parseFloat(document.getElementById('m-temp-fat').value)     || 0;
             } else {
                 const newUserAmount = parseFloat(document.getElementById('modal-food-amount').value) || 0;
-                if (newUserAmount <= 0) return alert('请输入合理的分量');
-                
+                if (newUserAmount <= 0) { showToast('请输入合理的分量', 'error'); return; }
                 const food = state.foods.find(f => f.id === entry.foodId);
-                if (!food) {
-                    alert('底层食品基准已被删除，无法重新计算数据');
-                    closeModal();
-                    return;
-                }
-                
-                const baseAmount = parseFloat(food.unit) || 1; 
-                const multiplier = newUserAmount / baseAmount;
-                const unitText = food.unit.replace(/[0-9.]/g, '') || '单位';
-                
-                entry.rawAmount = newUserAmount;
+                if (!food) { showToast('底层食品已删除，无法重算', 'error'); closeModal(); return; }
+                const baseAmount    = parseFloat(food.unit) || 1;
+                const multiplier    = newUserAmount / baseAmount;
+                const unitText      = food.unit.replace(/[0-9.]/g, '') || '单位';
+                entry.rawAmount     = newUserAmount;
                 entry.displayAmount = newUserAmount + unitText;
-                entry.kcal = food.kcal * multiplier;
-                entry.protein = food.protein * multiplier;
-                entry.carbs = food.carbs * multiplier;
-                entry.fat = food.fat * multiplier;
+                entry.kcal          = food.kcal    * multiplier;
+                entry.protein       = food.protein * multiplier;
+                entry.carbs         = food.carbs   * multiplier;
+                entry.fat           = food.fat     * multiplier;
             }
-            
+
             saveState();
             loadDiary();
             closeModal();
+            showToast('记录已更新 ✓');
         }
 
-        function deleteDiaryEntry(index) {
-            const date = document.getElementById('diary-date').value;
+        async function deleteDiaryEntry(index) {
+            const date  = document.getElementById('diary-date').value;
+            const entry = state.diary[date][index];
+            const ok    = await showConfirm(`确定删除「${entry ? entry.name : '此记录'}」？`);
+            if (!ok) return;
             state.diary[date].splice(index, 1);
             saveState();
             loadDiary();
+            showToast('记录已删除');
         }
 
+        // ── Dashboard with progress bars ──
         function renderDashboard(tk, tp, tc, tf) {
-            const targets = calculateTargets();
-            
-            updateCardDisplay('dash-kcal-val', tk, targets.kcal);
-            updateCardDisplay('dash-p-val', tp, targets.protein);
-            updateCardDisplay('dash-c-val', tc, targets.carbs);
-            updateCardDisplay('dash-f-val', tf, targets.fat);
+            const t = calculateTargets();
+            updateCardDisplay('dash-kcal-val', 'dash-kcal-bar', 'var(--kcal-color)',     tk, t.kcal);
+            updateCardDisplay('dash-p-val',    'dash-p-bar',    'var(--protein-color)',   tp, t.protein);
+            updateCardDisplay('dash-c-val',    'dash-c-bar',    'var(--carbs-color)',     tc, t.carbs);
+            updateCardDisplay('dash-f-val',    'dash-f-bar',    'var(--fat-color)',       tf, t.fat);
         }
 
-        function updateCardDisplay(elementId, current, target) {
-            const el = document.getElementById(elementId);
-            if(!el) return;
-            el.innerHTML = `${Math.round(current)} <span style="font-size:18px; font-weight:400; color:var(--md-on-surface-variant)">/ ${target}</span>`;
-            if (current > target) {
-                el.classList.add('alert-over');
-            } else {
-                el.classList.remove('alert-over');
+        function updateCardDisplay(valueId, barId, color, current, target) {
+            const el  = document.getElementById(valueId);
+            const bar = document.getElementById(barId);
+            if (!el) return;
+            el.innerHTML = `${Math.round(current)} <span style="font-size:16px;font-weight:400;color:var(--md-on-surface-variant)">/ ${target}</span>`;
+            const pct = target > 0 ? Math.min((current / target) * 100, 100) : 0;
+            if (bar) {
+                bar.style.width      = pct + '%';
+                bar.style.background = current > target ? '#ea4335' : color;
             }
+            el.classList.toggle('alert-over', current > target);
         }
 
-        // --- 4. 数据汇总日历核心控制逻辑 ---
+        // ── Summary calendar ──
         function changeSummaryMonth(offset) {
-            summaryCurrentDate.setMonth(summaryCurrentDate.getMonth() + offset);
+            summaryCurrentDate = new Date(summaryCurrentDate.getFullYear(), summaryCurrentDate.getMonth() + offset, 1);
             renderSummary();
         }
 
         function renderSummary() {
-            const grid = document.getElementById('calendar-grid');
+            const grid       = document.getElementById('calendar-grid');
             const monthLabel = document.getElementById('summary-month-label');
+            const statsEl    = document.getElementById('monthly-stats');
             if (!grid || !monthLabel) return;
 
-            const year = summaryCurrentDate.getFullYear();
-            const month = summaryCurrentDate.getMonth(); // 0 - 11
-            
-            // 更新月份视图大标签
+            const year  = summaryCurrentDate.getFullYear();
+            const month = summaryCurrentDate.getMonth();
             monthLabel.innerText = `${year}年 ${(month + 1).toString().padStart(2, '0')}月`;
 
-            // 核心推算：取当前月份的第一天、总天数、上个月的总天数
-            const firstDayIndex = new Date(year, month, 1).getDay();
-            const totalDays = new Date(year, month + 1, 0).getDate();
-            const prevTotalDays = new Date(year, month, 0).getDate();
+            const firstDayIndex  = new Date(year, month, 1).getDay();
+            const totalDays      = new Date(year, month + 1, 0).getDate();
+            const prevTotalDays  = new Date(year, month, 0).getDate();
+            const targets        = calculateTargets();
+            const todayStr       = new Date().toISOString().split('T')[0];
+
+            let daysRecorded = 0, daysCompliant = 0, totalKcalSum = 0;
 
             grid.innerHTML = '';
-            const targets = calculateTargets();
 
-            // 1. 填补上个月月末漏出来的灰色“残余空位”
+            // Previous month ghost cells
             for (let i = firstDayIndex - 1; i >= 0; i--) {
-                const dNum = prevTotalDays - i;
-                grid.innerHTML += `<div style="background: #f1f3f4; border: 1px dashed #dadce0; border-radius: 8px; min-height: 85px; padding: 6px; color: #c2c4c7; font-size: 12px; cursor: not-allowed; opacity: 0.5;">${dNum}</div>`;
+                grid.innerHTML += `<div style="background:#f1f3f4;border:1px dashed #dadce0;border-radius:8px;min-height:80px;padding:6px;color:#c2c4c7;font-size:12px;opacity:0.5;">${prevTotalDays - i}</div>`;
             }
 
-            // 2. 核心遍历：渲染本月天数状态格
+            // Current month cells
             for (let day = 1; day <= totalDays; day++) {
-                const dateStr = `${year}-${(month + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
-                const dayEntries = state.diary[dateStr] || [];
+                const dateStr  = `${year}-${(month + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+                const entries  = state.diary[dateStr] || [];
+                const isFuture = dateStr > todayStr;
+                const isToday  = dateStr === todayStr;
 
                 let tk = 0, tp = 0, tc = 0, tf = 0;
-                dayEntries.forEach(e => { tk += e.kcal; tp += e.protein; tc += e.carbs; tf += e.fat; });
+                entries.forEach(e => { tk += e.kcal; tp += e.protein; tc += e.carbs; tf += e.fat; });
 
-                // 默认样式：当天未记录状态 (浅色底，微细边)
-                let bgStyle = "background: var(--md-surface); border: 1px solid var(--md-border); color: var(--md-on-surface);";
-                let statusBadge = "";
-                let titleHover = "暂无数据";
+                let bgStyle    = "background:var(--md-surface);border:1px solid var(--md-border);color:var(--md-on-surface);";
+                let statusBadge = '';
 
                 if (tk > 0) {
+                    daysRecorded++;
+                    totalKcalSum += tk;
                     const diff = tk - targets.kcal;
-                    titleHover = `当天数据明细:\n🔥 热量: ${Math.round(tk)} / ${targets.kcal} kcal\n🥩 蛋白质: ${Math.round(tp)}g\n🍚 碳水: ${Math.round(tc)}g\n🥑 脂肪: ${Math.round(tf)}g`;
-                    
                     if (diff > 50) {
-                        // 红色：超标
-                        bgStyle = "background: #fce8e6; border: 1px solid #ea4335; color: #c5221f;";
-                        statusBadge = `<div style="font-size:11px; margin-top:4px; font-weight:700;">超标 ${Math.round(diff)}k</div>`;
+                        bgStyle     = "background:#fce8e6;border:1px solid #ea4335;color:#c5221f;";
+                        statusBadge = `<div style="font-size:10px;margin-top:4px;font-weight:700;">超 +${Math.round(diff)}</div>`;
                     } else if (diff < -300) {
-                        // 黄色：缺口过大
-                        bgStyle = "background: #fef7e0; border: 1px solid #f9ab00; color: #b06000;";
-                        statusBadge = `<div style="font-size:11px; margin-top:4px; font-weight:700;">缺口过大</div>`;
+                        bgStyle     = "background:#fef7e0;border:1px solid #f9ab00;color:#b06000;";
+                        statusBadge = `<div style="font-size:10px;margin-top:4px;font-weight:700;">缺口大</div>`;
                     } else {
-                        // 绿色：达标
-                        bgStyle = "background: #e6f4ea; border: 1px solid #34a853; color: #137333;";
-                        statusBadge = `<div style="font-size:11px; margin-top:4px; font-weight:700;">🎉 达标</div>`;
+                        daysCompliant++;
+                        bgStyle     = "background:#e6f4ea;border:1px solid #34a853;color:#137333;";
+                        statusBadge = `<div style="font-size:10px;margin-top:4px;font-weight:700;">✓ 达标</div>`;
                     }
                 }
 
-                // 高亮框住“今天”
-                const todayStr = new Date().toISOString().split('T')[0];
-                if (dateStr === todayStr) {
-                    bgStyle += "box-shadow: 0 0 0 3px var(--md-primary); font-weight: 700;";
-                }
+                const todayRing = isToday ? 'box-shadow:0 0 0 3px var(--md-primary);font-weight:700;' : '';
+                const baseStyle = `${bgStyle}${todayRing}border-radius:8px;min-height:80px;padding:8px;display:flex;flex-direction:column;justify-content:space-between;`;
+                const interactive = !isFuture
+                    ? `onclick="navigateToDay('${dateStr}')" style="${baseStyle}cursor:pointer;transition:transform 0.15s;" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'"`
+                    : `style="${baseStyle}"`;
 
                 grid.innerHTML += `
-                    <div title="${titleHover}" style="${bgStyle} border-radius: 8px; min-height: 85px; padding: 8px; display: flex; flex-direction: column; justify-content: space-between; transition: transform 0.15s, box-shadow 0.15s;" 
-                         onmouseover="this.style.transform='scale(1.03)';" 
-                         onmouseout="this.style.transform='scale(1)';">
-                        <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <span style="font-size: 14px;">${day}</span>
-                            ${tk > 0 ? `<span style="font-size:10px; opacity:0.85;">${Math.round(tk)}k</span>` : ''}
+                    <div ${interactive}>
+                        <div style="display:flex;justify-content:space-between;align-items:center;">
+                            <span style="font-size:13px;">${day}</span>
+                            ${tk > 0 ? `<span style="font-size:10px;opacity:0.8;">${Math.round(tk)}k</span>` : ''}
                         </div>
                         ${statusBadge}
                     </div>
                 `;
             }
 
-            // 3. 补齐本月月末漏出来的下个月空位，凑成完满的网格切面
-            const totalRendered = firstDayIndex + totalDays;
-            const nextRemaining = (7 - (totalRendered % 7)) % 7;
+            // Next month ghost cells
+            const nextRemaining = (7 - ((firstDayIndex + totalDays) % 7)) % 7;
             for (let i = 1; i <= nextRemaining; i++) {
-                grid.innerHTML += `<div style="background: #f1f3f4; border: 1px dashed #dadce0; border-radius: 8px; min-height: 85px; padding: 6px; color: #c2c4c7; font-size: 12px; cursor: not-allowed; opacity: 0.5;">${i}</div>`;
+                grid.innerHTML += `<div style="background:#f1f3f4;border:1px dashed #dadce0;border-radius:8px;min-height:80px;padding:6px;color:#c2c4c7;font-size:12px;opacity:0.5;">${i}</div>`;
             }
+
+            // Monthly aggregate stats
+            const avgKcal    = daysRecorded > 0 ? Math.round(totalKcalSum / daysRecorded) : 0;
+            const compliance = daysRecorded > 0 ? Math.round((daysCompliant / daysRecorded) * 100) : 0;
+            const compColor  = compliance >= 70 ? '#137333' : compliance >= 40 ? '#b06000' : '#c5221f';
+            statsEl.innerHTML = `
+                <span>本月已记录 <strong>${daysRecorded}</strong> / ${totalDays} 天</span>
+                <span style="color:var(--md-border)">·</span>
+                <span>达标天数 <strong style="color:#137333">${daysCompliant}</strong> 天</span>
+                <span style="color:var(--md-border)">·</span>
+                <span>平均热量 <strong>${avgKcal > 0 ? avgKcal.toLocaleString() : '—'}</strong> kcal</span>
+                <span style="color:var(--md-border)">·</span>
+                <span>合规率 <strong style="color:${compColor}">${daysRecorded > 0 ? compliance + '%' : '—'}</strong></span>
+            `;
         }
 
-        window.onload = function() {
+        // ── Init ──
+        window.onload = function () {
             loadState();
             loadDiary();
-        }
+        };
     </script>
 </body>
 </html>
