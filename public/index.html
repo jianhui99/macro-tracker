@@ -911,7 +911,7 @@
         @keyframes calIn { from { opacity: 0; transform: scale(.94); } }
 
         /* ── Settings ── */
-        .settings-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+        .settings-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 14px; }
         .settings-form { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; padding: 16px; }
         .settings-form .span-3 { grid-column: span 3; }
         .settings-foot { display: flex; align-items: center; justify-content: flex-end; gap: 12px; padding: 0 16px 16px; }
@@ -1258,6 +1258,7 @@
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .confirm-dialog { width: min(360px, calc(100vw - 32px)); }
         .confirm-dialog p { font-size: 15px; }
+        .confirm-dialog .key-error { font-size: 13px; color: var(--under); }
 
         /* ── Toasts ── */
         #toast-container {
@@ -1801,6 +1802,18 @@
         </form>
     </dialog>
 
+    <!-- ── Access key ── -->
+    <dialog id="key-dialog" class="confirm-dialog" aria-labelledby="key-title">
+        <form class="dialog-body" onsubmit="event.preventDefault(); submitKey();">
+            <h3 class="dialog-title" id="key-title">输入访问密钥</h3>
+            <label class="field"><span>密钥</span><input type="password" id="key-input" class="input" autocomplete="current-password" required></label>
+            <p id="key-error" class="key-error" role="alert" hidden>密钥不对，请重新输入</p>
+            <div class="dialog-foot">
+                <button type="submit" class="btn">进入</button>
+            </div>
+        </form>
+    </dialog>
+
     <script>
         const $ = id => document.getElementById(id);
         const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -1841,19 +1854,54 @@
         let changedEntryId = null;
         let lanePct = {};
 
+        // ── Access key ──
+        const KEY_STORAGE = 'macro_tracker_api_key';
+        let apiKey = (() => { try { return localStorage.getItem(KEY_STORAGE) || ''; } catch { return ''; } })();
+        const authHeaders = () => ({ Authorization: `Bearer ${apiKey}` });
+        let keyPrompt = null;
+        let resolveKeyPrompt = null;
+
+        // Concurrent 401s share one open dialog
+        function askForKey(rejected) {
+            if (!keyPrompt) {
+                $('key-error').hidden = !rejected;
+                $('key-input').value = '';
+                $('key-dialog').showModal();
+                keyPrompt = new Promise(resolve => { resolveKeyPrompt = resolve; });
+            }
+            return keyPrompt;
+        }
+
+        function submitKey() {
+            apiKey = $('key-input').value.trim();
+            try { localStorage.setItem(KEY_STORAGE, apiKey); } catch { /* storage unavailable */ }
+            $('key-dialog').close();
+            keyPrompt = null;
+            resolveKeyPrompt();
+        }
+
+        // The app is unusable without a key, so Esc must not dismiss the dialog
+        $('key-dialog').addEventListener('cancel', e => e.preventDefault());
+
         // ── API ──
         async function api(url, method = 'GET', body) {
+            const sentKey = apiKey;
             let res;
             try {
                 res = await fetch(url, {
                     method,
-                    headers: body ? { 'Content-Type': 'application/json' } : undefined,
+                    headers: { ...authHeaders(), ...(body && { 'Content-Type': 'application/json' }) },
                     body: body ? JSON.stringify(body) : undefined
                 });
             } catch (err) {
                 console.error(`[api] ${method} ${url} network error`, err, body);
-                showToast('连不上服务器，请确认 npm start 正在运行', 'error');
+                showToast('连不上服务器，请检查网络', 'error');
                 throw err;
+            }
+            if (res.status === 401) {
+                // A key entered while this request was in flight may already be the right one
+                if (apiKey === sentKey) await askForKey(Boolean(sentKey));
+                return api(url, method, body);
             }
             if (!res.ok) {
                 const text = await res.text().catch(() => '');
@@ -1882,7 +1930,7 @@
 
         // ── Dialogs ──
         // Clicking the backdrop lands on the <dialog> itself (content lives in an inner form)
-        document.querySelectorAll('dialog').forEach(d =>
+        document.querySelectorAll('dialog:not(#key-dialog)').forEach(d =>
             d.addEventListener('click', e => { if (e.target === d) d.close('cancel'); }));
         $('edit-dialog').addEventListener('close', () => { currentEditIndex = null; });
         $('warehouse-dialog').addEventListener('close', () => { currentWarehouseEditId = null; });
@@ -3564,7 +3612,7 @@
         async function loadQuote() {
             const card = $('quote-card');
             try {
-                const res = await fetch('/api/quote');
+                const res = await fetch('/api/quote', { headers: authHeaders() });
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const { text, author, image, source, zh } = await res.json();
                 const words = text.split(/\s+/).filter(Boolean);
@@ -3622,7 +3670,7 @@
             try {
                 await loadState();
             } catch {
-                $('diary-log').innerHTML = '<div class="empty">数据加载失败。确认服务已启动（npm start）后刷新页面。</div>';
+                $('diary-log').innerHTML = '<div class="empty">数据加载失败，请检查网络后刷新页面。</div>';
                 return;
             }
             renderFoodPicker();

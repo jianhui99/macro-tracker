@@ -55,3 +55,13 @@ CREATE TABLE IF NOT EXISTS weight_log (
     date   TEXT PRIMARY KEY,
     weight REAL NOT NULL
 );
+
+-- Defaults so a fresh database works before any data is imported
+INSERT INTO user_settings (id, height, weight, age, gender, activity) VALUES (1, 183, 91, 27, 'male', 1.55);
+INSERT INTO foods (id, category, name, unit, kcal, protein, carbs, fat) VALUES
+    ('1',   '补剂',     '蛋白粉',          '1 scoop', 122, 24,  3,    1.5),
+    ('2',   '蛋畜类',   '鸡蛋 (A 牌大号)', '1 粒',    140, 13,  2.5,  8.5),
+    ('2_b', '蛋畜类',   '鸡蛋 (B 牌普通)', '1 粒',    130, 12,  2.0,  7.8),
+    ('3',   '蛋畜类',   '鸡胸肉',          '100g',    120, 23,  0,    1),
+    ('4',   '主食谷物', '米饭',            '100g',    120, 2,   25,   0.3),
+    ('5',   '主食谷物', '燕麦',            '35g',     133, 4.3, 20.3, 3.2);

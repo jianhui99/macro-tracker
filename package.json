@@ -2,16 +2,14 @@
   "name": "macro-tracker",
   "version": "1.0.0",
   "private": true,
-  "description": "Personal diet diary webapp with a small Express + SQLite backend.",
-  "main": "server.js",
+  "description": "Personal diet diary webapp on Cloudflare Pages Functions + D1.",
   "scripts": {
-    "start": "node server.js",
-    "migrate": "node db/migrate.js"
+    "start": "wrangler pages dev",
+    "db:migrate": "wrangler d1 migrations apply macro-tracker --local",
+    "db:migrate:remote": "wrangler d1 migrations apply macro-tracker --remote",
+    "deploy": "wrangler pages deploy"
   },
-  "engines": {
-    "node": ">=22.5.0"
-  },
-  "dependencies": {
-    "express": "^4.22.2"
+  "devDependencies": {
+    "wrangler": "^4.151.1"
   }
 }

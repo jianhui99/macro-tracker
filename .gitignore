@@ -6,3 +6,5 @@ db/*.db-shm
 .playwright-mcp/
 .DS_Store
 server.log
+.wrangler/
+.dev.vars

@@ -1,0 +1,12 @@
+name = "macro-tracker"
+compatibility_date = "2026-10-01"
+pages_build_output_dir = "./public"
+
+[vars]
+TIME_ZONE = "Asia/Kuala_Lumpur"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "macro-tracker"
+database_id = "local-placeholder"
+migrations_dir = "db/migrations"
