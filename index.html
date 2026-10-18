@@ -242,6 +242,12 @@
             color: var(--md-primary);
             padding: 8px 16px;
         }
+        .category-header.collapsible { cursor: pointer; user-select: none; }
+        .category-header.collapsible:hover td { background: var(--md-primary-variant); }
+        .category-header.collapsible:focus-visible { outline: 2px solid var(--md-primary); outline-offset: -2px; }
+        .cat-chevron { font-size: 18px !important; vertical-align: middle; margin-right: 4px; transition: transform 0.15s ease; }
+        .cat-chevron.open { transform: rotate(90deg); }
+        .cat-count { font-weight: 400; font-size: 12px; color: var(--md-on-surface-variant); }
         .meal-header td {
             background: #f8f9fa;
             font-weight: 600;
@@ -280,6 +286,20 @@
         .action-icon:hover { color: var(--md-primary); background: var(--md-primary-variant); }
         .action-icon.delete:hover { color: #ea4335; background: #fce8e6; }
         .action-icon:focus-visible { outline: 2px solid var(--md-primary); outline-offset: 2px; border-radius: 50%; }
+        .action-icon.toggle-on { color: var(--md-primary); }
+
+        /* ── Inactive (disabled) warehouse items ── */
+        .inactive-row td:not(:last-child) { opacity: 0.45; }
+        .inactive-badge {
+            font-size: 11px;
+            color: var(--md-on-surface-variant);
+            border: 1px solid var(--md-border);
+            border-radius: 10px;
+            padding: 1px 8px;
+            margin-left: 8px;
+            font-weight: 400;
+            vertical-align: middle;
+        }
 
         .alert-over { color: #d93025; font-weight: bold; }
 
@@ -438,7 +458,12 @@
         <div id="page-diary" class="page active">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
                 <h2 style="margin-bottom: 0;">饮食日记</h2>
-                <input type="date" id="diary-date" class="form-control" style="width: auto;" onchange="loadDiary()">
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <button id="btn-today" class="btn btn-secondary" style="height: 40px; padding: 0 12px; visibility: hidden;" onclick="goToToday()">
+                        <span class="material-icons-outlined" style="font-size:18px;">today</span> 回到今天
+                    </button>
+                    <input type="date" id="diary-date" class="form-control" style="width: auto;" onchange="loadDiary()">
+                </div>
             </div>
 
             <div class="dashboard-grid">
@@ -489,49 +514,55 @@
                          onkeydown="if(event.key==='Enter')switchDiaryTab('temporary')">临时快捷记账（不入库）</div>
                 </div>
 
-                <div id="diary-form-warehouse" class="form-row">
+                <form id="diary-form-warehouse" class="form-row" onsubmit="event.preventDefault(); addDiaryEntry();">
+                    <div class="form-group" style="width: 200px;">
+                        <label>搜索食物</label>
+                        <input type="text" id="diary-food-search" class="form-control" placeholder="按名称/分类过滤"
+                               oninput="rebuildDiarySelect()"
+                               onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('diary-food-amount').focus();}">
+                    </div>
                     <div class="form-group flex-child" style="flex: 2;">
                         <label>选择食物</label>
-                        <select id="diary-food-select" class="form-control"></select>
+                        <select id="diary-food-select" class="form-control" onchange="prefillAmount()"></select>
                     </div>
                     <div class="form-group" style="width: 180px;">
                         <label>分量/重量</label>
-                        <input type="number" id="diary-food-amount" class="form-control" placeholder="如 100" value="100" min="0">
+                        <input type="number" id="diary-food-amount" class="form-control" placeholder="如 100" value="100" min="0" step="any" onfocus="this.select()">
                     </div>
                     <div class="form-group">
-                        <button class="btn" onclick="addDiaryEntry()">
+                        <button type="submit" class="btn">
                             <span class="material-icons-outlined" style="font-size:18px;">add</span> 添加记录
                         </button>
                     </div>
-                </div>
+                </form>
 
-                <div id="diary-form-temporary" class="form-row" style="display: none;">
+                <form id="diary-form-temporary" class="form-row" style="display: none;" onsubmit="event.preventDefault(); addTemporaryDiaryEntry();">
                     <div class="form-group flex-child" style="min-width: 160px; flex: 2;">
                         <label>临时食物/场景名称</label>
                         <input type="text" id="temp-food-name" class="form-control" placeholder="临时食物">
                     </div>
                     <div class="form-group flex-child">
                         <label>预估热量 (kcal)</label>
-                        <input type="number" id="temp-food-kcal" class="form-control" placeholder="必填" min="0">
+                        <input type="number" id="temp-food-kcal" class="form-control" placeholder="必填" min="0" step="any">
                     </div>
                     <div class="form-group flex-child">
                         <label>蛋白质 (g)</label>
-                        <input type="number" id="temp-food-protein" class="form-control" placeholder="选填" value="0" min="0">
+                        <input type="number" id="temp-food-protein" class="form-control" placeholder="选填" min="0" step="any">
                     </div>
                     <div class="form-group flex-child">
                         <label>碳水 (g)</label>
-                        <input type="number" id="temp-food-carbs" class="form-control" placeholder="选填" value="0" min="0">
+                        <input type="number" id="temp-food-carbs" class="form-control" placeholder="选填" min="0" step="any">
                     </div>
                     <div class="form-group flex-child">
                         <label>脂肪 (g)</label>
-                        <input type="number" id="temp-food-fat" class="form-control" placeholder="选填" value="0" min="0">
+                        <input type="number" id="temp-food-fat" class="form-control" placeholder="选填" min="0" step="any">
                     </div>
                     <div class="form-group">
-                        <button class="btn" onclick="addTemporaryDiaryEntry()">
+                        <button type="submit" class="btn">
                             <span class="material-icons-outlined" style="font-size:18px;">add</span> 添加记录
                         </button>
                     </div>
-                </div>
+                </form>
             </div>
 
             <div class="card">
@@ -558,7 +589,7 @@
             <h2>食品仓库</h2>
             <div class="card">
                 <h3 style="font-weight: 500; margin-bottom: 20px;">添加新食品基准</h3>
-                <div class="warehouse-form-grid">
+                <form class="warehouse-form-grid" onsubmit="event.preventDefault(); addCustomFood();">
                     <div class="form-group">
                         <label>食物大类分类</label>
                         <input type="text" id="food-category" class="form-control" placeholder="如：蛋畜类、坚果、补剂" list="exist-categories">
@@ -574,30 +605,36 @@
                     </div>
                     <div class="form-group">
                         <label>热量 (kcal)</label>
-                        <input type="number" id="food-kcal" class="form-control" placeholder="0" min="0">
+                        <input type="number" id="food-kcal" class="form-control" placeholder="0" min="0" step="any">
                     </div>
                     <div class="form-group">
                         <label>蛋白质 (g)</label>
-                        <input type="number" id="food-protein" class="form-control" placeholder="0" min="0">
+                        <input type="number" id="food-protein" class="form-control" placeholder="0" min="0" step="any">
                     </div>
                     <div class="form-group">
                         <label>碳水 (g)</label>
-                        <input type="number" id="food-carbs" class="form-control" placeholder="0" min="0">
+                        <input type="number" id="food-carbs" class="form-control" placeholder="0" min="0" step="any">
                     </div>
                     <div class="form-group">
                         <label>脂肪 (g)</label>
-                        <input type="number" id="food-fat" class="form-control" placeholder="0" min="0">
+                        <input type="number" id="food-fat" class="form-control" placeholder="0" min="0" step="any">
                     </div>
                     <div style="display: flex; align-items: flex-end; margin-bottom: 16px;">
-                        <button class="btn" style="width: 100%;" onclick="addCustomFood()">
+                        <button type="submit" class="btn" style="width: 100%;">
                             <span class="material-icons-outlined" style="font-size:18px;">add_circle</span> 入库新食品
                         </button>
                     </div>
-                </div>
+                </form>
             </div>
 
             <div class="card">
-                <h3 style="font-weight: 500; margin-bottom: 16px;">我的仓库库存 (按大类分组)</h3>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <h3 style="font-weight: 500; margin-bottom: 0;">我的仓库库存 (按大类分组)</h3>
+                    <button id="collapse-all-btn" class="btn btn-secondary" style="height: 36px; padding: 0 12px; font-size: 13px;" onclick="toggleAllCategories()">
+                        <span id="collapse-all-icon" class="material-icons-outlined" style="font-size:18px;">unfold_less</span>
+                        <span id="collapse-all-label">全部收起</span>
+                    </button>
+                </div>
                 <table class="data-table">
                     <thead>
                         <tr>
@@ -663,11 +700,11 @@
                 <div class="form-row" style="margin-bottom: 8px;">
                     <div class="form-group flex-child">
                         <label>身高 (cm)</label>
-                        <input type="number" id="user-height" class="form-control" value="183">
+                        <input type="number" id="user-height" class="form-control" value="183" step="any">
                     </div>
                     <div class="form-group flex-child">
                         <label>体重 (kg)</label>
-                        <input type="number" id="user-weight" class="form-control" value="91">
+                        <input type="number" id="user-weight" class="form-control" value="91" step="any">
                     </div>
                     <div class="form-group flex-child">
                         <label>年龄</label>
@@ -731,15 +768,15 @@
             <div id="modal-field-container-standard">
                 <div class="form-group" style="margin-bottom: 24px;">
                     <label id="modal-amount-label">新的分量/重量</label>
-                    <input type="number" id="modal-food-amount" class="form-control" min="0">
+                    <input type="number" id="modal-food-amount" class="form-control" min="0" step="any">
                 </div>
             </div>
             <div id="modal-field-container-temp" style="display: none;">
                 <div class="form-group"><label>临时食物/场景名称</label><input type="text" id="m-temp-name" class="form-control"></div>
-                <div class="form-group"><label>热量 (kcal)</label><input type="number" id="m-temp-kcal" class="form-control" min="0"></div>
-                <div class="form-group"><label>蛋白质 (g)</label><input type="number" id="m-temp-protein" class="form-control" min="0"></div>
-                <div class="form-group"><label>碳水 (g)</label><input type="number" id="m-temp-carbs" class="form-control" min="0"></div>
-                <div class="form-group"><label>脂肪 (g)</label><input type="number" id="m-temp-fat" class="form-control" min="0"></div>
+                <div class="form-group"><label>热量 (kcal)</label><input type="number" id="m-temp-kcal" class="form-control" min="0" step="any"></div>
+                <div class="form-group"><label>蛋白质 (g)</label><input type="number" id="m-temp-protein" class="form-control" min="0" step="any"></div>
+                <div class="form-group"><label>碳水 (g)</label><input type="number" id="m-temp-carbs" class="form-control" min="0" step="any"></div>
+                <div class="form-group"><label>脂肪 (g)</label><input type="number" id="m-temp-fat" class="form-control" min="0" step="any"></div>
             </div>
             <div style="display: flex; justify-content: flex-end; gap: 8px;">
                 <button class="btn btn-secondary" onclick="closeModal()">取消</button>
@@ -761,12 +798,12 @@
                 <input type="text" id="w-modal-unit" class="form-control">
             </div>
             <div style="display: flex; gap: 12px; margin-bottom: 8px;">
-                <div class="form-group flex-child"><label>热量 (kcal)</label><input type="number" id="w-modal-kcal" class="form-control" min="0"></div>
-                <div class="form-group flex-child"><label>蛋白质 (g)</label><input type="number" id="w-modal-protein" class="form-control" min="0"></div>
+                <div class="form-group flex-child"><label>热量 (kcal)</label><input type="number" id="w-modal-kcal" class="form-control" min="0" step="any"></div>
+                <div class="form-group flex-child"><label>蛋白质 (g)</label><input type="number" id="w-modal-protein" class="form-control" min="0" step="any"></div>
             </div>
             <div style="display: flex; gap: 12px; margin-bottom: 20px;">
-                <div class="form-group flex-child"><label>碳水 (g)</label><input type="number" id="w-modal-carbs" class="form-control" min="0"></div>
-                <div class="form-group flex-child"><label>脂肪 (g)</label><input type="number" id="w-modal-fat" class="form-control" min="0"></div>
+                <div class="form-group flex-child"><label>碳水 (g)</label><input type="number" id="w-modal-carbs" class="form-control" min="0" step="any"></div>
+                <div class="form-group flex-child"><label>脂肪 (g)</label><input type="number" id="w-modal-fat" class="form-control" min="0" step="any"></div>
             </div>
             <div style="display: flex; justify-content: flex-end; gap: 8px;">
                 <button class="btn btn-secondary" onclick="closeWarehouseModal()">取消</button>
@@ -836,29 +873,17 @@
         });
 
         // ── State persistence ──
-        function loadState() {
-            const saved = localStorage.getItem('macro_tracker_state');
-            if (saved) {
-                const parsed = JSON.parse(saved);
-                if (parsed.foods) parsed.foods.forEach(f => { if (!f.category) f.category = "未分类"; });
-                // Migrate: fill missing user fields added after initial release
-                if (!parsed.user) parsed.user = {};
-                if (parsed.user.age == null)    parsed.user.age    = 27;
-                if (parsed.user.gender == null) parsed.user.gender = 'male';
-                state = parsed;
-            } else {
-                saveState();
-            }
+        // ── State persistence (backed by the SQLite-based API in server.js) ──
+        async function loadState() {
+            const res = await fetch('/api/state');
+            state = await res.json();
+
             document.getElementById('diary-date').value    = new Date().toISOString().split('T')[0];
             document.getElementById('user-height').value   = state.user.height;
             document.getElementById('user-weight').value   = state.user.weight;
             document.getElementById('user-age').value      = state.user.age;
             document.getElementById('user-gender').value   = state.user.gender;
             document.getElementById('user-activity').value = state.user.activity;
-        }
-
-        function saveState() {
-            localStorage.setItem('macro_tracker_state', JSON.stringify(state));
         }
 
         // ── TDEE / macro targets (Mifflin-St Jeor, age + gender fixed) ──
@@ -908,13 +933,18 @@
         }
 
         // ── Settings ──
-        function saveSettings() {
-            state.user.height   = parseFloat(document.getElementById('user-height').value)   || 170;
-            state.user.weight   = parseFloat(document.getElementById('user-weight').value)   || 70;
-            state.user.age      = parseInt(document.getElementById('user-age').value)         || 25;
-            state.user.gender   = document.getElementById('user-gender').value;
-            state.user.activity = document.getElementById('user-activity').value;
-            saveState();
+        async function saveSettings() {
+            const payload = {
+                height:   parseFloat(document.getElementById('user-height').value)   || 170,
+                weight:   parseFloat(document.getElementById('user-weight').value)   || 70,
+                age:      parseInt(document.getElementById('user-age').value)         || 25,
+                gender:   document.getElementById('user-gender').value,
+                activity: document.getElementById('user-activity').value
+            };
+            const res = await fetch('/api/user', {
+                method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+            });
+            state.user = await res.json();
             showToast('身体数据已保存，目标已重新计算 ✓');
             loadDiary();
         }
@@ -934,28 +964,65 @@
         }
 
         // ── Warehouse ──
-        function renderWarehouse() {
-            const tbody = document.getElementById('warehouse-table-body');
-            if (!tbody) return;
-            tbody.innerHTML = '';
+        // Collapsed category names live outside `state` so exports stay pure data
+        let collapsedCats = new Set();
+        try {
+            collapsedCats = new Set(JSON.parse(localStorage.getItem('macro_tracker_collapsed') || '[]'));
+        } catch (e) { collapsedCats = new Set(); }
 
+        function saveCollapsedCats() {
+            localStorage.setItem('macro_tracker_collapsed', JSON.stringify([...collapsedCats]));
+        }
+
+        function toggleCategory(cat) {
+            collapsedCats.has(cat) ? collapsedCats.delete(cat) : collapsedCats.add(cat);
+            saveCollapsedCats();
+            renderWarehouse();
+        }
+
+        function toggleAllCategories() {
+            const allCats = [...new Set(state.foods.map(f => f.category || "未分类"))];
+            const anyExpanded = allCats.some(c => !collapsedCats.has(c));
+            collapsedCats = anyExpanded ? new Set(allCats) : new Set();
+            saveCollapsedCats();
+            renderWarehouse();
+        }
+
+        function groupFoodsByCategory() {
             const groups = {};
             state.foods.forEach(food => {
                 const cat = food.category || "未分类";
                 if (!groups[cat]) groups[cat] = [];
                 groups[cat].push(food);
             });
+            return groups;
+        }
+
+        function renderWarehouse() {
+            const tbody = document.getElementById('warehouse-table-body');
+            if (!tbody) return;
+
+            const groups = groupFoodsByCategory();
+            let html = '';
 
             for (const cat in groups) {
-                tbody.innerHTML += `
-                    <tr class="category-header">
-                        <td colspan="7"><span class="material-icons-outlined" style="font-size:15px;vertical-align:middle;margin-right:4px;">folder</span>${cat}</td>
+                const isCollapsed = collapsedCats.has(cat);
+                // Category names are user input: pass them URI-encoded so quotes can't break the
+                // inline handler (encodeURIComponent leaves single quotes alone, so encode those too)
+                const catEnc = encodeURIComponent(cat).replace(/'/g, '%27');
+                html += `
+                    <tr class="category-header collapsible" tabindex="0" role="button" aria-expanded="${!isCollapsed}"
+                        onclick="toggleCategory(decodeURIComponent('${catEnc}'))"
+                        onkeydown="if(event.key==='Enter')toggleCategory(decodeURIComponent('${catEnc}'))">
+                        <td colspan="7"><span class="material-icons-outlined cat-chevron ${isCollapsed ? '' : 'open'}">chevron_right</span>${cat} <span class="cat-count">(${groups[cat].length})</span></td>
                     </tr>
                 `;
+                if (isCollapsed) continue;
                 groups[cat].forEach(food => {
-                    tbody.innerHTML += `
-                        <tr>
-                            <td style="padding-left: 28px;"><b>${food.name}</b></td>
+                    const isActive = food.active !== false;
+                    html += `
+                        <tr class="${isActive ? '' : 'inactive-row'}">
+                            <td style="padding-left: 28px;"><b>${food.name}</b>${isActive ? '' : '<span class="inactive-badge">已停用</span>'}</td>
                             <td>每 ${food.unit}</td>
                             <td>${food.kcal} kcal</td>
                             <td>${food.protein}g</td>
@@ -963,6 +1030,10 @@
                             <td>${food.fat}g</td>
                             <td>
                                 <div class="actions-cell">
+                                    <span class="material-icons-outlined action-icon ${isActive ? 'toggle-on' : ''}" tabindex="0" role="button"
+                                          aria-label="${isActive ? '停用' : '启用'} ${food.name}"
+                                          onclick="toggleFoodActive('${food.id}')"
+                                          onkeydown="if(event.key==='Enter')toggleFoodActive('${food.id}')">${isActive ? 'toggle_on' : 'toggle_off'}</span>
                                     <span class="material-icons-outlined action-icon" tabindex="0" role="button" aria-label="编辑 ${food.name}"
                                           onclick="openWarehouseModal('${food.id}')"
                                           onkeydown="if(event.key==='Enter')openWarehouseModal('${food.id}')">edit</span>
@@ -976,6 +1047,30 @@
                 });
             }
 
+            if (state.foods.length === 0) {
+                html = `
+                    <tr>
+                        <td colspan="7">
+                            <div class="empty-state">
+                                <span class="material-icons-outlined">inventory_2</span>
+                                仓库是空的，先添加一个食品基准吧
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }
+            tbody.innerHTML = html;
+
+            // Collapse-all button reflects current state
+            const collapseBtn = document.getElementById('collapse-all-btn');
+            if (collapseBtn) {
+                const allCats = Object.keys(groups);
+                const anyExpanded = allCats.some(c => !collapsedCats.has(c));
+                collapseBtn.style.visibility = allCats.length === 0 ? 'hidden' : 'visible';
+                document.getElementById('collapse-all-icon').textContent = anyExpanded ? 'unfold_less' : 'unfold_more';
+                document.getElementById('collapse-all-label').textContent = anyExpanded ? '全部收起' : '全部展开';
+            }
+
             // Refresh category datalist
             const datalist = document.getElementById('exist-categories');
             if (datalist) {
@@ -983,22 +1078,57 @@
                 Object.keys(groups).forEach(cat => { datalist.innerHTML += `<option value="${cat}">`; });
             }
 
-            // Rebuild diary food select with optgroups
+            rebuildDiarySelect();
+        }
+
+        // Rebuild diary food select: active items only, filtered by the search keyword
+        function rebuildDiarySelect() {
             const select = document.getElementById('diary-food-select');
-            if (select) {
-                select.innerHTML = '';
-                for (const cat in groups) {
-                    let groupHtml = `<optgroup label="📂 ${cat}">`;
-                    groups[cat].forEach(food => {
-                        groupHtml += `<option value="${food.id}">${food.name} (基准: ${food.unit})</option>`;
-                    });
-                    groupHtml += `</optgroup>`;
-                    select.innerHTML += groupHtml;
-                }
+            if (!select) return;
+            const searchInput = document.getElementById('diary-food-search');
+            const keyword = (searchInput ? searchInput.value : '').trim().toLowerCase();
+            const previousSelection = select.value;
+
+            const groups = groupFoodsByCategory();
+            let html = '';
+            for (const cat in groups) {
+                const visibleFoods = groups[cat].filter(f =>
+                    f.active !== false &&
+                    (!keyword || f.name.toLowerCase().includes(keyword) || cat.toLowerCase().includes(keyword))
+                );
+                if (visibleFoods.length === 0) continue;
+                html += `<optgroup label="📂 ${cat}">`;
+                visibleFoods.forEach(food => {
+                    html += `<option value="${food.id}">${food.name} (基准: ${food.unit})</option>`;
+                });
+                html += `</optgroup>`;
+            }
+            if (!html) {
+                html = keyword
+                    ? `<option value="" disabled selected>没有匹配「${keyword}」的食品</option>`
+                    : `<option value="" disabled selected>仓库中暂无启用的食品</option>`;
+            }
+            select.innerHTML = html;
+
+            // Keep the previous selection when it survives the filter
+            if (previousSelection && select.querySelector(`option[value="${previousSelection}"]`)) {
+                select.value = previousSelection;
+            } else {
+                prefillAmount();
             }
         }
 
-        function addCustomFood() {
+        // Prefill amount with the food's last-used amount, falling back to its base unit
+        function prefillAmount() {
+            const select = document.getElementById('diary-food-select');
+            const food = state.foods.find(f => f.id === select.value);
+            if (!food) return;
+            const base = parseFloat(food.unit);
+            document.getElementById('diary-food-amount').value =
+                food.lastAmount != null ? food.lastAmount : (isNaN(base) ? 100 : base);
+        }
+
+        async function addCustomFood() {
             const category = document.getElementById('food-category').value.trim() || "未分类";
             const name     = document.getElementById('food-name').value.trim();
             const unit     = document.getElementById('food-unit').value.trim() || "100g";
@@ -1009,8 +1139,14 @@
 
             if (!name) { showToast('请输入食物商品名称', 'error'); return; }
 
-            state.foods.push({ id: Date.now().toString(), category, name, unit, kcal, protein, carbs, fat });
-            saveState();
+            const res = await fetch('/api/foods', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ category, name, unit, kcal, protein, carbs, fat })
+            });
+            state.foods.push(await res.json());
+            // Make sure the freshly added item is visible even if its category was collapsed
+            collapsedCats.delete(category);
+            saveCollapsedCats();
             renderWarehouse();
             ['food-name','food-unit','food-kcal','food-protein','food-carbs','food-fat']
                 .forEach(id => document.getElementById(id).value = '');
@@ -1036,7 +1172,7 @@
             currentWarehouseEditId = null;
         }
 
-        function saveWarehouseEdit() {
+        async function saveWarehouseEdit() {
             if (!currentWarehouseEditId) return;
             const food = state.foods.find(f => f.id === currentWarehouseEditId);
             if (!food) return;
@@ -1051,28 +1187,24 @@
 
             if (!nextName) { showToast('名称不能为空', 'error'); return; }
 
-            food.category = nextCat; food.name = nextName; food.unit = nextUnit;
-            food.kcal = nextKcal; food.protein = nextProtein; food.carbs = nextCarbs; food.fat = nextFat;
+            const res = await fetch(`/api/foods/${currentWarehouseEditId}`, {
+                method: 'PUT', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ category: nextCat, name: nextName, unit: nextUnit, kcal: nextKcal, protein: nextProtein, carbs: nextCarbs, fat: nextFat })
+            });
+            const { food: updatedFood, updatedEntries } = await res.json();
 
-            const baseAmount = parseFloat(nextUnit) || 1;
-            const unitText   = nextUnit.replace(/[0-9.]/g, '') || '单位';
+            Object.assign(food, updatedFood);
 
-            for (const date in state.diary) {
-                state.diary[date].forEach(entry => {
-                    if (entry.foodId === currentWarehouseEditId && !entry.isTemporary) {
-                        const multiplier      = entry.rawAmount / baseAmount;
-                        entry.name            = nextName;
-                        entry.displayAmount   = entry.rawAmount + unitText;
-                        entry.kcal            = nextKcal    * multiplier;
-                        entry.protein         = nextProtein * multiplier;
-                        entry.carbs           = nextCarbs   * multiplier;
-                        entry.fat             = nextFat     * multiplier;
-                    }
-                });
+            // Server already recalculated every historical entry referencing this food; mirror those into local state
+            for (const updated of updatedEntries) {
+                const dayEntries = state.diary[updated.date];
+                if (!dayEntries) continue;
+                const entry = dayEntries.find(e => e.id === updated.id);
+                if (entry) Object.assign(entry, updated);
             }
 
-            saveState();
             renderWarehouse();
+            loadDiary();
             closeWarehouseModal();
             showToast('级联数据同步重算完成 ✓');
         }
@@ -1081,20 +1213,51 @@
             const food = state.foods.find(f => f.id === foodId);
             const ok = await showConfirm(`确定删除「${food ? food.name : '此食品'}」吗？历史日记数据将保留为静态记录。`);
             if (!ok) return;
+            await fetch(`/api/foods/${foodId}`, { method: 'DELETE' });
             state.foods = state.foods.filter(f => f.id !== foodId);
-            saveState();
             renderWarehouse();
             showToast('食品已删除');
+        }
+
+        async function toggleFoodActive(foodId) {
+            const food = state.foods.find(f => f.id === foodId);
+            if (!food) return;
+            const nextActive = !(food.active !== false);
+            const res = await fetch(`/api/foods/${foodId}/active`, {
+                method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ active: nextActive })
+            });
+            const updated = await res.json();
+            food.active = updated.active;
+            renderWarehouse();
+            showToast(food.active ? `「${food.name}」已启用 ✓` : `「${food.name}」已停用，不再出现在日记选择中`, food.active ? 'success' : 'info');
         }
 
         // ── Diary (meal-grouped) ──
         const MEAL_ORDER  = ['breakfast', 'lunch', 'dinner', 'snack'];
         const MEAL_LABELS = { breakfast: '🌅 早餐', lunch: '☀️ 午餐', dinner: '🌙 晚餐', snack: '🍎 加餐' };
 
+        // Applied once on page load only; the user's manual choice wins for the session
+        function getDefaultMeal(d = new Date()) {
+            const m = d.getHours() * 60 + d.getMinutes();
+            if (m >= 300 && m < 630)  return 'breakfast'; // 5:00-10:30
+            if (m >= 630 && m < 870)  return 'lunch';     // 10:30-14:30
+            if (m >= 990 && m < 1290) return 'dinner';    // 16:30-21:30
+            return 'snack';
+        }
+
+        function goToToday() {
+            document.getElementById('diary-date').value = new Date().toISOString().split('T')[0];
+            loadDiary();
+        }
+
         function loadDiary() {
             renderWarehouse(); // keep dropdown in sync
 
             const date       = document.getElementById('diary-date').value;
+            const todayStr   = new Date().toISOString().split('T')[0];
+            document.getElementById('btn-today').style.visibility = date === todayStr ? 'hidden' : 'visible';
+
             const dayEntries = state.diary[date] || [];
             const tbody      = document.getElementById('diary-table-body');
             tbody.innerHTML  = '';
@@ -1152,6 +1315,12 @@
                                     <span class="material-icons-outlined action-icon" tabindex="0" role="button" aria-label="编辑"
                                           onclick="openEditModal(${i})"
                                           onkeydown="if(event.key==='Enter')openEditModal(${i})">edit</span>
+                                    ${/ x \d+$/.test(entry.name) ? `<span class="material-icons-outlined action-icon" tabindex="0" role="button" aria-label="减一份"
+                                          onclick="changeEntryPortion(${i}, -1)"
+                                          onkeydown="if(event.key==='Enter')changeEntryPortion(${i}, -1)">remove</span>` : ''}
+                                    <span class="material-icons-outlined action-icon" tabindex="0" role="button" aria-label="加一份"
+                                          onclick="changeEntryPortion(${i}, 1)"
+                                          onkeydown="if(event.key==='Enter')changeEntryPortion(${i}, 1)">add</span>
                                     <span class="material-icons-outlined action-icon delete" tabindex="0" role="button" aria-label="删除"
                                           onclick="deleteDiaryEntry(${i})"
                                           onkeydown="if(event.key==='Enter')deleteDiaryEntry(${i})">delete</span>
@@ -1176,7 +1345,7 @@
             renderDashboard(totalKcal, totalP, totalC, totalF);
         }
 
-        function addDiaryEntry() {
+        async function addDiaryEntry() {
             const date       = document.getElementById('diary-date').value;
             const foodId     = document.getElementById('diary-food-select').value;
             const userAmount = parseFloat(document.getElementById('diary-food-amount').value) || 0;
@@ -1184,14 +1353,14 @@
 
             if (userAmount <= 0) { showToast('请输入合理的分量', 'error'); return; }
             const food = state.foods.find(f => f.id === foodId);
-            if (!food) return;
+            if (!food) { showToast('请先在仓库中启用或添加食品', 'error'); return; }
 
             const baseAmount = parseFloat(food.unit) || 1;
             const multiplier = userAmount / baseAmount;
             const unitText   = food.unit.replace(/[0-9.]/g, '') || '单位';
 
             const entry = {
-                foodId: food.id, isTemporary: false, meal,
+                date, foodId: food.id, isTemporary: false, meal,
                 name: food.name, rawAmount: userAmount,
                 displayAmount: userAmount + unitText,
                 kcal:    food.kcal    * multiplier,
@@ -1200,14 +1369,20 @@
                 fat:     food.fat     * multiplier
             };
 
+            const res = await fetch('/api/diary', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(entry)
+            });
+            const created = await res.json();
+
             if (!state.diary[date]) state.diary[date] = [];
-            state.diary[date].push(entry);
-            saveState();
+            state.diary[date].push(created);
+            food.lastAmount = userAmount; // remember for next prefill
             loadDiary();
             showToast(`已添加「${food.name}」✓`);
+            document.getElementById('diary-food-amount').focus();
         }
 
-        function addTemporaryDiaryEntry() {
+        async function addTemporaryDiaryEntry() {
             const date    = document.getElementById('diary-date').value;
             const name    = document.getElementById('temp-food-name').value.trim() || "临时聚餐/无库存食品";
             const kcal    = parseFloat(document.getElementById('temp-food-kcal').value);
@@ -1219,21 +1394,25 @@
             if (isNaN(kcal) || kcal < 0) { showToast('请填写预估热量 (kcal)', 'error'); return; }
 
             const entry = {
-                foodId: "temp_" + Date.now(), isTemporary: true, meal,
+                date, foodId: "temp_" + Date.now(), isTemporary: true, meal,
                 name, rawAmount: 1, displayAmount: "1次",
                 kcal, protein, carbs, fat
             };
 
+            const res = await fetch('/api/diary', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(entry)
+            });
+            const created = await res.json();
+
             if (!state.diary[date]) state.diary[date] = [];
-            state.diary[date].push(entry);
-            saveState();
+            state.diary[date].push(created);
             loadDiary();
 
             document.getElementById('temp-food-name').value    = '';
             document.getElementById('temp-food-kcal').value    = '';
-            document.getElementById('temp-food-protein').value = '0';
-            document.getElementById('temp-food-carbs').value   = '0';
-            document.getElementById('temp-food-fat').value     = '0';
+            document.getElementById('temp-food-protein').value = '';
+            document.getElementById('temp-food-carbs').value   = '';
+            document.getElementById('temp-food-fat').value     = '';
             showToast(`已添加「${name}」✓`);
         }
 
@@ -1271,42 +1450,80 @@
             currentEditIndex = null;
         }
 
-        function saveDiaryEdit() {
+        async function saveDiaryEdit() {
             if (currentEditIndex === null) return;
             const date  = document.getElementById('diary-date').value;
             const entry = state.diary[date][currentEditIndex];
 
             // Update meal category (applies to both temporary and warehouse entries)
-            entry.meal = document.getElementById('modal-meal').value;
+            const meal = document.getElementById('modal-meal').value;
+            let payload;
 
             if (entry.isTemporary) {
                 const nextK = parseFloat(document.getElementById('m-temp-kcal').value);
                 if (isNaN(nextK) || nextK < 0) { showToast('热量不能为空', 'error'); return; }
-                entry.name    = document.getElementById('m-temp-name').value.trim() || "临时食物";
-                entry.kcal    = nextK;
-                entry.protein = parseFloat(document.getElementById('m-temp-protein').value) || 0;
-                entry.carbs   = parseFloat(document.getElementById('m-temp-carbs').value)   || 0;
-                entry.fat     = parseFloat(document.getElementById('m-temp-fat').value)     || 0;
+                payload = {
+                    meal, name: document.getElementById('m-temp-name').value.trim() || "临时食物",
+                    rawAmount: entry.rawAmount, displayAmount: entry.displayAmount,
+                    kcal: nextK,
+                    protein: parseFloat(document.getElementById('m-temp-protein').value) || 0,
+                    carbs:   parseFloat(document.getElementById('m-temp-carbs').value)   || 0,
+                    fat:     parseFloat(document.getElementById('m-temp-fat').value)     || 0
+                };
             } else {
                 const newUserAmount = parseFloat(document.getElementById('modal-food-amount').value) || 0;
                 if (newUserAmount <= 0) { showToast('请输入合理的分量', 'error'); return; }
                 const food = state.foods.find(f => f.id === entry.foodId);
                 if (!food) { showToast('底层食品已删除，无法重算', 'error'); closeModal(); return; }
-                const baseAmount    = parseFloat(food.unit) || 1;
-                const multiplier    = newUserAmount / baseAmount;
-                const unitText      = food.unit.replace(/[0-9.]/g, '') || '单位';
-                entry.rawAmount     = newUserAmount;
-                entry.displayAmount = newUserAmount + unitText;
-                entry.kcal          = food.kcal    * multiplier;
-                entry.protein       = food.protein * multiplier;
-                entry.carbs         = food.carbs   * multiplier;
-                entry.fat           = food.fat     * multiplier;
+                const baseAmount = parseFloat(food.unit) || 1;
+                const multiplier = newUserAmount / baseAmount;
+                const unitText   = food.unit.replace(/[0-9.]/g, '') || '单位';
+                payload = {
+                    meal, name: entry.name,
+                    rawAmount: newUserAmount, displayAmount: newUserAmount + unitText,
+                    kcal:    food.kcal    * multiplier,
+                    protein: food.protein * multiplier,
+                    carbs:   food.carbs   * multiplier,
+                    fat:     food.fat     * multiplier
+                };
             }
 
-            saveState();
+            const res = await fetch(`/api/diary/${entry.id}`, {
+                method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+            });
+            state.diary[date][currentEditIndex] = await res.json();
             loadDiary();
             closeModal();
             showToast('记录已更新 ✓');
+        }
+
+        // Each click adds/removes one original portion; the " x N" name suffix is the current multiplier
+        async function changeEntryPortion(index, delta) {
+            const date  = document.getElementById('diary-date').value;
+            const entry = state.diary[date][index];
+            const match = entry.name.match(/^(.*) x (\d+)$/);
+            const base  = match ? match[1] : entry.name;
+            const mult  = match ? Number(match[2]) : 1;
+            const next  = mult + delta;
+            if (next < 1) return;
+            const ratio = next / mult;
+            const scale = v => Math.round(v * ratio * 100) / 100;
+            const amountNum = parseFloat(entry.displayAmount);
+
+            const res = await fetch(`/api/diary/${entry.id}`, {
+                method: 'PUT', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    meal: entry.meal, name: next > 1 ? `${base} x ${next}` : base,
+                    rawAmount: scale(entry.rawAmount),
+                    displayAmount: isNaN(amountNum) ? entry.displayAmount
+                        : entry.displayAmount.replace(String(amountNum), scale(amountNum)),
+                    kcal: scale(entry.kcal), protein: scale(entry.protein), carbs: scale(entry.carbs), fat: scale(entry.fat)
+                })
+            });
+            if (!res.ok) { showToast('操作失败', 'error'); return; }
+            state.diary[date][index] = await res.json();
+            loadDiary();
+            showToast(next > 1 ? `「${base}」x ${next} ✓` : `「${base}」已恢复原份量`);
         }
 
         async function deleteDiaryEntry(index) {
@@ -1314,8 +1531,8 @@
             const entry = state.diary[date][index];
             const ok    = await showConfirm(`确定删除「${entry ? entry.name : '此记录'}」？`);
             if (!ok) return;
+            await fetch(`/api/diary/${entry.id}`, { method: 'DELETE' });
             state.diary[date].splice(index, 1);
-            saveState();
             loadDiary();
             showToast('记录已删除');
         }
@@ -1442,8 +1659,9 @@
         }
 
         // ── Init ──
-        window.onload = function () {
-            loadState();
+        window.onload = async function () {
+            await loadState();
+            document.getElementById('diary-meal').value = getDefaultMeal();
             loadDiary();
         };
     </script>

@@ -1,0 +1,17 @@
+{
+  "name": "macro-tracker",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Personal diet diary webapp with a small Express + SQLite backend.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "migrate": "node db/migrate.js"
+  },
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "dependencies": {
+    "express": "^4.22.2"
+  }
+}

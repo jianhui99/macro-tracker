@@ -1,0 +1,8 @@
+node_modules/
+db/*.db
+db/*.db-journal
+db/*.db-wal
+db/*.db-shm
+.playwright-mcp/
+.DS_Store
+server.log
