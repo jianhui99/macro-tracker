@@ -4,347 +4,877 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MacroTracker</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231C2FD1'/%3E%3Cpath d='M8 23 12 9h3l1 7 4-7h3l-4 14h-3l2.3-8-4.3 7h-2l-1-7-2 8z' fill='white'/%3E%3C/svg%3E">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,400..900;1,62..125,400..900&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..24,400..600,0..1,0&icon_names=add,arrow_downward,arrow_upward,bolt,calendar_month,check,check_circle,chevron_left,chevron_right,delete,dinner_dining,download,edit,egg_alt,error,free_breakfast,info,inventory_2,local_fire_department,lunch_dining,nutrition,person,remove,restaurant,rice_bowl,search,sports_score,sprint,unfold_less,unfold_more,water_drop&display=block" rel="stylesheet">
 
     <style>
         :root {
-            --md-primary: #1a73e8;
-            --md-primary-variant: #e8f0fe;
-            --md-bg: #f8f9fa;
-            --md-surface: #ffffff;
-            --md-on-surface: #202124;
-            --md-on-surface-variant: #5f6368;
-            --md-border: #dadce0;
+            --cobalt: #1C2FD1;
+            --cobalt-deep: #1424A8;
+            --cobalt-soft: #E6E9FD;
+            --ink: #0D1530;
+            --muted: #596179;
+            --subtle: #8B92A6;
+            --paper: #EDF0F5;
+            --surface: #FFFFFF;
+            --line: #DDE1EA;
+            --line-soft: #EEF0F5;
 
-            --kcal-color: #1a73e8;
-            --protein-color: #ea4335;
-            --carbs-color: #f9ab00;
-            --fat-color: #34a853;
+            /* Lane colors on the cobalt scoreboard (validated for CVD + 3:1 contrast on cobalt) */
+            --kcal: #FFFFFF;
+            --protein: #FF6E8A;
+            --carbs: #F5B32E;
+            --fat: #2FCFA8;
+            --done: #3EE0B8;
+            --caution: #F5B32E;
+
+            --hazard: #FF4B26;
+            --hazard-on-cobalt: #FF9B7A;
+            --ok: #0E8A6C;     --ok-bg: #E2F5EE;
+            --over: #D12E25;   --over-bg: #FDE7E5;
+            --under: #A86A00;  --under-bg: #FDF1DA;
+
+            --font: 'Archivo', 'Noto Sans SC', system-ui, -apple-system, sans-serif;
+            --ease-out: cubic-bezier(.2, .8, .2, 1);
+            --ease-spring: cubic-bezier(.34, 1.4, .64, 1);
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Roboto', sans-serif; }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+        html { -webkit-text-size-adjust: 100%; }
         body {
-            background-color: var(--md-bg);
-            color: var(--md-on-surface);
-            display: flex;
+            font-family: var(--font);
+            font-size: 14px;
+            line-height: 1.45;
+            color: var(--ink);
+            background: var(--paper);
+            display: grid;
+            grid-template-columns: 76px minmax(0, 1fr);
             height: 100vh;
             overflow: hidden;
+            -webkit-font-smoothing: antialiased;
         }
+        button, input, select { font: inherit; color: inherit; }
+        button { cursor: pointer; background: none; border: 0; }
+        :focus-visible { outline: 2px solid var(--cobalt); outline-offset: 2px; }
+        [hidden] { display: none !important; }
 
-        /* ── Sidebar ── */
-        nav {
-            width: 256px;
-            background-color: var(--md-surface);
-            border-right: 1px solid var(--md-border);
-            padding: 24px 12px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
+        .ms {
+            font-family: 'Material Symbols Rounded';
+            font-weight: normal;
+            font-style: normal;
+            font-size: 20px;
+            line-height: 1;
+            letter-spacing: normal;
+            text-transform: none;
+            white-space: nowrap;
+            direction: ltr;
+            display: inline-block;
+            font-feature-settings: 'liga';
+            font-variation-settings: 'FILL' 0, 'wght' 500, 'opsz' 24;
+            user-select: none;
             flex-shrink: 0;
         }
 
-        .brand {
-            font-size: 22px;
+        /* Jersey numerals: condensed oblique heavy with tabular figures */
+        .num {
+            font-family: 'Archivo', sans-serif;
+            font-variant-numeric: tabular-nums;
+            font-stretch: 72%;
+            font-style: italic;
+            font-weight: 800;
+            letter-spacing: -0.01em;
+        }
+
+        /* ── Rail nav ── */
+        .rail {
+            background: var(--surface);
+            border-right: 1px solid var(--line);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 14px 0;
+            gap: 4px;
+        }
+        .brand-mark {
+            width: 40px;
+            height: 40px;
+            border-radius: 11px;
+            background: var(--cobalt);
+            color: #fff;
+            display: grid;
+            place-items: center;
+            font-size: 19px;
+            margin-bottom: 14px;
+            font-stretch: 70%;
+        }
+        .rail-item {
+            width: 60px;
+            padding: 8px 0 6px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            font-size: 11px;
             font-weight: 500;
-            color: var(--md-primary);
-            padding: 0 12px 24px 12px;
+            color: var(--muted);
+            transition: background-color .15s, color .15s;
+        }
+        .rail-item .ms { font-size: 22px; transition: transform .25s var(--ease-spring); }
+        .rail-item:hover { background: var(--line-soft); color: var(--ink); }
+        .rail-item[aria-current="page"] { color: var(--cobalt); background: var(--cobalt-soft); }
+        .rail-item[aria-current="page"] .ms { font-variation-settings: 'FILL' 1, 'wght' 600, 'opsz' 24; }
+        .rail-item:active .ms { transform: scale(.88); }
+
+        /* ── Main + pages ── */
+        main { overflow-y: auto; padding: 18px 22px 28px; }
+        .page { display: none; max-width: 1320px; margin: 0 auto; }
+        .page.is-active { display: block; animation: pageIn .28s var(--ease-out); }
+        @keyframes pageIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to   { opacity: 1; transform: none; }
+        }
+
+        .topbar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 14px;
+            min-height: 40px;
+            flex-wrap: wrap;
+        }
+        .page-title {
+            font-size: 22px;
+            font-weight: 900;
+            letter-spacing: .01em;
+            margin-right: auto;
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+        }
+        .page-title small { font-size: 13px; font-weight: 500; color: var(--muted); letter-spacing: 0; }
+
+        .panel {
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+        }
+        .panel-head {
             display: flex;
             align-items: center;
             gap: 8px;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--line-soft);
         }
+        .panel-head h2 { font-size: 15px; font-weight: 700; margin-right: auto; }
+        .panel-head .hint { font-size: 12px; color: var(--muted); }
 
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 24px;
-            cursor: pointer;
-            border-radius: 24px;
-            color: var(--md-on-surface-variant);
-            font-weight: 500;
-            transition: background-color 0.2s, color 0.2s;
-            user-select: none;
-        }
-        .nav-item:hover { background-color: #f1f3f4; }
-        .nav-item.active { background-color: var(--md-primary-variant); color: var(--md-primary); }
-        .nav-item:focus-visible { outline: 2px solid var(--md-primary); outline-offset: 2px; border-radius: 24px; }
-
-        /* ── Main ── */
-        main { flex: 1; padding: 32px; overflow-y: auto; }
-
-        /* ── Pages + fade-in transition ── */
-        .page { display: none; max-width: 1000px; margin: 0 auto; }
-        .page.active { display: block; animation: fadeIn 0.2s ease; }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(6px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
-
-        h2 { font-size: 24px; font-weight: 500; margin-bottom: 24px; color: var(--md-on-surface); }
-
-        .card {
-            background: var(--md-surface);
-            border: 1px solid var(--md-border);
-            border-radius: 8px;
-            padding: 24px;
-            margin-bottom: 24px;
-        }
-
-        /* ── Dashboard cards + progress bars ── */
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 16px;
-            margin-bottom: 24px;
-        }
-
-        .dash-card {
-            background: var(--md-surface);
-            border: 1px solid var(--md-border);
-            border-radius: 12px;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-        .dash-card.kcal    { border-left: 5px solid var(--kcal-color); }
-        .dash-card.protein { border-left: 5px solid var(--protein-color); }
-        .dash-card.carbs   { border-left: 5px solid var(--carbs-color); }
-        .dash-card.fat     { border-left: 5px solid var(--fat-color); }
-
-        .dash-label  { font-size: 12px; font-weight: 500; color: var(--md-on-surface-variant); text-transform: uppercase; letter-spacing: 0.5px; }
-        .dash-value  { font-size: 26px; font-weight: 700; }
-        .dash-target { font-size: 11px; color: var(--md-on-surface-variant); }
-
-        .progress-track {
-            height: 5px;
-            background: #e8eaed;
-            border-radius: 3px;
-            overflow: hidden;
-            margin: 2px 0;
-        }
-        .progress-fill {
-            height: 100%;
-            border-radius: 3px;
-            width: 0%;
-            transition: width 0.5s ease, background-color 0.3s ease;
-        }
-
-        /* ── Forms ── */
-        .form-group { margin-bottom: 16px; display: flex; flex-direction: column; }
-        .form-group label {
-            display: block;
-            font-size: 14px;
-            font-weight: 500;
-            margin-bottom: 6px;
-            color: var(--md-on-surface-variant);
-        }
-        .form-control {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid var(--md-border);
-            border-radius: 4px;
-            font-size: 16px;
-            background: var(--md-bg);
-            transition: border-color 0.2s, box-shadow 0.2s;
-            height: 48px;
-        }
-        .form-control:focus {
-            outline: none;
-            border-color: var(--md-primary);
-            background: var(--md-surface);
-            box-shadow: 0 0 0 3px rgba(26,115,232,0.15);
-        }
-
-        .form-row { display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 8px; }
-        .flex-child { flex: 1; min-width: 120px; }
-
-        /* ── Warehouse form 2-column grid ── */
-        .warehouse-form-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-        }
-
-        /* ── Buttons ── */
+        /* ── Buttons & inputs ── */
         .btn {
-            background-color: var(--md-primary);
-            color: white;
-            border: none;
-            padding: 0 24px;
-            border-radius: 4px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: box-shadow 0.2s, background-color 0.15s;
+            height: 40px;
+            padding: 0 16px;
+            border-radius: 10px;
+            background: var(--cobalt);
+            color: #fff;
+            font-weight: 700;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
-            height: 48px;
+            gap: 6px;
+            white-space: nowrap;
+            transition: background-color .15s, transform .12s var(--ease-out), opacity .15s;
         }
-        .btn:hover { box-shadow: 0 1px 3px rgba(60,64,67,0.3), 0 4px 8px 3px rgba(60,64,67,0.15); }
-        .btn:focus-visible { outline: 2px solid var(--md-primary); outline-offset: 2px; }
-        .btn-secondary { background-color: transparent; color: var(--md-primary); border: 1px solid var(--md-border); }
-        .btn-secondary:hover { background-color: var(--md-primary-variant); box-shadow: none; }
-        .btn-danger { background-color: #ea4335; }
-        .btn-danger:hover { box-shadow: 0 1px 3px rgba(234,67,53,0.3), 0 4px 8px 3px rgba(234,67,53,0.15); }
+        .btn:hover { background: var(--cobalt-deep); }
+        .btn:active { transform: scale(.97); }
+        .btn:disabled { opacity: .5; cursor: progress; }
+        .btn .ms { font-size: 18px; }
+        .btn-ghost { background: var(--surface); color: var(--ink); border: 1px solid var(--line); font-weight: 500; }
+        .btn-ghost:hover { background: var(--line-soft); }
+        .btn-danger { background: var(--over); }
+        .btn-danger:hover { background: #B3241C; }
+        .btn-sm { height: 34px; padding: 0 12px; font-size: 13px; border-radius: 9px; }
 
-        /* ── Meal selector row ── */
-        .meal-selector-row {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 16px;
-            padding-bottom: 16px;
-            border-bottom: 1px solid var(--md-border);
+        .icon-btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            display: inline-grid;
+            place-items: center;
+            color: var(--muted);
+            transition: background-color .12s, color .12s, transform .12s var(--ease-out);
         }
-        .meal-selector-row label { font-size: 14px; font-weight: 500; color: var(--md-on-surface-variant); white-space: nowrap; }
-        .meal-selector-row select { width: auto; min-width: 150px; height: 40px; padding: 8px 12px; font-size: 14px; }
+        .icon-btn .ms { font-size: 18px; }
+        .icon-btn:hover { background: var(--line-soft); color: var(--ink); }
+        .icon-btn:active { transform: scale(.88); }
+        .icon-btn.danger:hover { background: var(--over-bg); color: var(--over); }
 
-        /* ── Diary tabs ── */
-        .diary-tabs { display: flex; gap: 16px; border-bottom: 1px solid var(--md-border); margin-bottom: 20px; }
-        .diary-tab {
-            padding: 8px 16px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            color: var(--md-on-surface-variant);
-            border-bottom: 2px solid transparent;
-            transition: color 0.2s;
-        }
-        .diary-tab:hover { color: var(--md-primary); }
-        .diary-tab.active { color: var(--md-primary); border-bottom-color: var(--md-primary); }
-        .diary-tab:focus-visible { outline: 2px solid var(--md-primary); outline-offset: 2px; }
-
-        /* ── Tables ── */
-        .data-table { width: 100%; border-collapse: collapse; }
-        .data-table th, .data-table td {
-            text-align: left;
-            padding: 12px 16px;
-            border-bottom: 1px solid var(--md-border);
-            font-size: 14px;
-        }
-        .data-table th {
-            color: var(--md-on-surface-variant);
-            font-weight: 500;
-            background-color: #f1f3f4;
-        }
-
-        .category-header td {
-            background: #f8f9fa;
-            font-weight: 700;
-            color: var(--md-primary);
-            padding: 8px 16px;
-        }
-        .category-header.collapsible { cursor: pointer; user-select: none; }
-        .category-header.collapsible:hover td { background: var(--md-primary-variant); }
-        .category-header.collapsible:focus-visible { outline: 2px solid var(--md-primary); outline-offset: -2px; }
-        .cat-chevron { font-size: 18px !important; vertical-align: middle; margin-right: 4px; transition: transform 0.15s ease; }
-        .cat-chevron.open { transform: rotate(90deg); }
-        .cat-count { font-weight: 400; font-size: 12px; color: var(--md-on-surface-variant); }
-        .meal-header td {
-            background: #f8f9fa;
-            font-weight: 600;
-            color: var(--md-on-surface);
-            font-size: 13px;
-            padding: 10px 16px;
-            border-top: 2px solid var(--md-border);
-        }
-        .meal-subtotal td {
-            background: #fafafa;
-            font-size: 12px;
-            color: var(--md-on-surface-variant);
-            padding: 6px 16px;
-            font-style: italic;
-        }
-
-        /* ── Empty state ── */
-        .empty-state {
-            text-align: center;
-            padding: 48px 0;
-            color: var(--md-on-surface-variant);
-            font-size: 14px;
-        }
-        .empty-state .material-icons-outlined { font-size: 52px; display: block; margin-bottom: 12px; opacity: 0.3; }
-
-        /* ── Action icons ── */
-        .actions-cell { display: flex; gap: 12px; align-items: center; }
-        .action-icon {
-            cursor: pointer;
-            color: var(--md-on-surface-variant);
-            user-select: none;
-            border-radius: 50%;
-            padding: 4px;
-            transition: color 0.15s, background 0.15s;
-        }
-        .action-icon:hover { color: var(--md-primary); background: var(--md-primary-variant); }
-        .action-icon.delete:hover { color: #ea4335; background: #fce8e6; }
-        .action-icon:focus-visible { outline: 2px solid var(--md-primary); outline-offset: 2px; border-radius: 50%; }
-        .action-icon.toggle-on { color: var(--md-primary); }
-
-        /* ── Inactive (disabled) warehouse items ── */
-        .inactive-row td:not(:last-child) { opacity: 0.45; }
-        .inactive-badge {
-            font-size: 11px;
-            color: var(--md-on-surface-variant);
-            border: 1px solid var(--md-border);
+        .field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+        .field > span { font-size: 12px; font-weight: 500; color: var(--muted); }
+        .input {
+            width: 100%;
+            height: 40px;
+            padding: 0 12px;
+            border: 1px solid var(--line);
             border-radius: 10px;
-            padding: 1px 8px;
-            margin-left: 8px;
-            font-weight: 400;
-            vertical-align: middle;
-        }
-
-        .alert-over { color: #d93025; font-weight: bold; }
-
-        /* ── Monthly stats ── */
-        .monthly-stats {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
+            background: var(--surface);
             font-size: 14px;
-            color: var(--md-on-surface-variant);
-            align-items: center;
+            transition: border-color .15s, box-shadow .15s;
         }
-        .monthly-stats strong { color: var(--md-on-surface); }
+        .input:hover { border-color: #C5CBD8; }
+        .input:focus { outline: none; border-color: var(--cobalt); box-shadow: 0 0 0 3px rgba(28, 47, 209, .14); }
+        select.input { padding-right: 8px; }
 
-        /* ── Modals ── */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background-color: rgba(0,0,0,0.45);
-            z-index: 1000;
+        /* Segmented control built on native radios */
+        .seg {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 4px;
+            padding: 4px;
+            background: var(--paper);
+            border-radius: 12px;
+            border: 0;
+        }
+        .seg label { position: relative; }
+        .seg input { position: absolute; opacity: 0; pointer-events: none; }
+        .seg-opt {
+            height: 36px;
+            border-radius: 9px;
+            display: flex;
             align-items: center;
             justify-content: center;
+            gap: 5px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--muted);
+            cursor: pointer;
+            transition: background-color .15s, color .15s, box-shadow .15s;
         }
-        .modal.active { display: flex; }
-        .modal-content {
-            background-color: var(--md-surface);
-            border-radius: 12px;
-            padding: 28px;
-            width: 100%;
-            max-width: 450px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.25);
-            animation: modalIn 0.18s ease;
+        .seg-opt .ms { font-size: 18px; }
+        .seg label:hover .seg-opt { color: var(--ink); }
+        .seg input:checked + .seg-opt {
+            background: var(--surface);
+            color: var(--cobalt);
+            font-weight: 700;
+            box-shadow: 0 1px 2px rgba(13, 21, 48, .12);
         }
-        @keyframes modalIn {
-            from { transform: scale(0.94); opacity: 0; }
-            to   { transform: scale(1);    opacity: 1; }
-        }
-        .modal-title { font-size: 18px; font-weight: 500; margin-bottom: 20px; }
+        .seg input:checked + .seg-opt .ms { font-variation-settings: 'FILL' 1, 'wght' 600, 'opsz' 24; }
+        .seg input:focus-visible + .seg-opt { outline: 2px solid var(--cobalt); outline-offset: 1px; }
 
-        /* ── Toast notifications ── */
+        /* ── Diary layout ── */
+        .date-nav { display: flex; align-items: center; gap: 4px; margin-right: auto; }
+        .date-label {
+            font-size: 22px;
+            font-weight: 900;
+            padding: 0 6px;
+            border-radius: 8px;
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+        }
+        .date-label:hover { background: var(--line-soft); }
+        .date-label small { font-size: 14px; font-weight: 500; color: var(--muted); }
+        .date-input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+
+        .diary-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 368px;
+            grid-template-areas: "board quick" "log quick";
+            grid-template-rows: auto 1fr;
+            gap: 14px;
+            align-items: start;
+        }
+
+        /* ── Scoreboard ── */
+        .board {
+            grid-area: board;
+            position: relative;
+            overflow: hidden;
+            background: var(--cobalt);
+            color: #fff;
+            border-radius: 18px;
+            padding: 18px 22px 16px;
+        }
+        /* Speed stripes: a diagonal band that echoes kit graphics */
+        .board::before {
+            content: "";
+            position: absolute;
+            inset: -40% -10% auto auto;
+            width: 46%;
+            height: 180%;
+            background: repeating-linear-gradient(115deg, rgba(255,255,255,.07) 0 14px, transparent 14px 34px);
+            transform: skewX(-12deg);
+            pointer-events: none;
+        }
+        .board-head {
+            position: relative;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 14px;
+        }
+        .hero { display: flex; align-items: baseline; gap: 10px; }
+        .hero-label {
+            font-size: 15px;
+            font-weight: 700;
+            opacity: .85;
+            align-self: flex-start;
+            margin-top: 10px;
+        }
+        .hero-num {
+            font-size: clamp(60px, 6.4vw, 88px);
+            line-height: .86;
+            letter-spacing: -0.025em;
+            font-stretch: 66%;
+            transition: color .3s;
+        }
+        .hero-unit { font-size: 16px; font-weight: 700; opacity: .8; }
+        .board.is-over .hero-num { color: var(--hazard-on-cobalt); }
+
+        .board-meta { display: flex; gap: 8px; flex-wrap: wrap; }
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            height: 32px;
+            padding: 0 12px 0 10px;
+            border-radius: 999px;
+            background: rgba(255,255,255,.12);
+            font-size: 13px;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        .chip .ms { font-size: 18px; }
+        .chip b { font-size: 17px; }
+        .chip.is-hot .ms { color: #FFB45C; font-variation-settings: 'FILL' 1, 'wght' 600, 'opsz' 24; }
+
+        .lanes { position: relative; display: flex; flex-direction: column; }
+        .lane {
+            display: grid;
+            grid-template-columns: 52px minmax(0, 1fr) 172px;
+            align-items: center;
+            gap: 12px;
+            padding: 7px 0;
+            border-top: 1px solid rgba(255,255,255,.12);
+        }
+        .lane-name { font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+        .lane-name .ms { font-size: 18px; color: var(--c); }
+        .lane-track {
+            position: relative;
+            height: 10px;
+            border-radius: 999px;
+            background: var(--cobalt-deep);
+        }
+        .lane[data-key="kcal"] .lane-track { height: 14px; }
+        /* Beyond the finish line is the overshoot zone, faintly hatched */
+        .lane-track::after {
+            content: "";
+            position: absolute;
+            inset: 0 0 0 80%;
+            border-radius: 0 999px 999px 0;
+            background: repeating-linear-gradient(-45deg, rgba(255,255,255,.07) 0 3px, transparent 3px 7px);
+        }
+        .lane-finish {
+            position: absolute;
+            left: calc(80% - 3px);
+            top: -4px;
+            bottom: -4px;
+            width: 6px;
+            z-index: 2;
+            border-radius: 1px;
+            background: repeating-conic-gradient(#fff 0 25%, var(--cobalt-deep) 0 50%) 0 0 / 6px 6px;
+            opacity: .9;
+        }
+        .lane-fill {
+            position: absolute;
+            inset: 0 auto 0 0;
+            width: 0;
+            border-radius: 999px;
+            background: var(--c);
+            z-index: 1;
+            transition: width .9s var(--ease-spring), background-color .3s;
+        }
+        .lane.is-over .lane-fill {
+            background: repeating-linear-gradient(-45deg, var(--hazard) 0 5px, #FF7752 5px 10px);
+        }
+        .lane-val { font-size: 12px; text-align: right; white-space: nowrap; opacity: .9; }
+        .lane-val b { font-size: 18px; margin-right: 2px; }
+        .lane-flag {
+            display: inline-flex;
+            align-items: center;
+            vertical-align: 2px;
+            margin-left: 4px;
+            padding: 0 6px 0 3px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+            line-height: 18px;
+        }
+        .lane-flag .ms { font-size: 14px; }
+        .lane.is-done .lane-flag { background: var(--done); color: var(--ink); }
+        .lane.is-over .lane-flag { background: var(--hazard); color: #fff; }
+        .lane:not(.is-done):not(.is-over) .lane-flag { display: none; }
+
+        /* Action feedback: the bar head flashes when an entry lands in it */
+        .lane.bump .lane-fill { animation: bump .7s var(--ease-out); }
+        @keyframes bump {
+            0%   { box-shadow: 0 0 0 0 rgba(255,255,255,.75); filter: brightness(1.35); }
+            100% { box-shadow: 0 0 0 10px rgba(255,255,255,0); filter: none; }
+        }
+        .lane.finish .lane-finish { animation: finish .9s var(--ease-out) 2; }
+        @keyframes finish {
+            0%, 100% { transform: scaleY(1); opacity: .9; }
+            40%      { transform: scaleY(1.9); opacity: 1; }
+        }
+
+        /* ── Quick log panel ── */
+        .quick {
+            grid-area: quick;
+            position: sticky;
+            top: 0;
+            display: flex;
+            flex-direction: column;
+            max-height: calc(100vh - 98px);
+            min-height: 0;
+        }
+        .quick-body { display: flex; flex-direction: column; gap: 12px; padding: 12px 14px 14px; min-height: 0; flex: 1; }
+        .mode-tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--line-soft); margin: 0 -14px; padding: 0 14px; }
+        .mode-tab {
+            position: relative;
+            padding: 8px 10px 10px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--muted);
+        }
+        .mode-tab:hover { color: var(--ink); }
+        .mode-tab[aria-selected="true"] { color: var(--cobalt); font-weight: 700; }
+        .mode-tab::after {
+            content: "";
+            position: absolute;
+            left: 10px;
+            right: 10px;
+            bottom: -1px;
+            height: 3px;
+            border-radius: 3px 3px 0 0;
+            background: var(--cobalt);
+            transform: scaleX(0);
+            transition: transform .25s var(--ease-spring);
+        }
+        .mode-tab[aria-selected="true"]::after { transform: scaleX(1); }
+
+        .add-form { display: flex; flex-direction: column; gap: 10px; min-height: 0; flex: 1; }
+        .search { position: relative; }
+        .search .ms { position: absolute; left: 10px; top: 10px; color: var(--subtle); pointer-events: none; }
+        .search .input { padding-left: 36px; }
+
+        .food-list {
+            flex: 1;
+            min-height: 140px;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            overscroll-behavior: contain;
+        }
+        .pick-cat {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            padding: 5px 12px;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--muted);
+            background: #F6F7FA;
+            border-bottom: 1px solid var(--line-soft);
+        }
+        .pick {
+            position: relative;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto 48px;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--line-soft);
+            transition: background-color .12s;
+        }
+        .pick:last-child { border-bottom: 0; }
+        .pick input { position: absolute; opacity: 0; pointer-events: none; }
+        .pick:hover { background: #F6F7FA; }
+        .pick-name { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .pick-unit { font-size: 12px; color: var(--muted); }
+        .pick-kcal { text-align: right; font-size: 15px; color: var(--muted); }
+        .pick::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 6px;
+            bottom: 6px;
+            width: 3px;
+            border-radius: 0 3px 3px 0;
+            background: var(--cobalt);
+            transform: scaleY(0);
+            transition: transform .2s var(--ease-spring);
+        }
+        .pick:has(input:checked) { background: var(--cobalt-soft); }
+        .pick:has(input:checked)::before { transform: scaleY(1); }
+        .pick:has(input:checked) .pick-name { color: var(--cobalt); font-weight: 700; }
+        .pick:has(input:checked) .pick-kcal { color: var(--cobalt); }
+        .pick:has(input:focus-visible) { outline: 2px solid var(--cobalt); outline-offset: -2px; }
+        .pick-empty { padding: 28px 16px; text-align: center; color: var(--muted); font-size: 13px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+
+        .amount-row { display: grid; grid-template-columns: 40px minmax(0, 1fr) 40px; gap: 6px; }
+        .amount-wrap { position: relative; }
+        .amount-wrap .input {
+            height: 44px;
+            text-align: center;
+            font-size: 22px;
+            font-weight: 800;
+            font-style: italic;
+            font-stretch: 72%;
+            font-variant-numeric: tabular-nums;
+            padding: 0 44px;
+        }
+        .amount-unit {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 12px;
+            color: var(--muted);
+            pointer-events: none;
+            max-width: 40px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .step-btn {
+            height: 44px;
+            border-radius: 10px;
+            border: 1px solid var(--line);
+            display: grid;
+            place-items: center;
+            transition: background-color .12s, transform .12s var(--ease-out);
+        }
+        .step-btn:hover { background: var(--line-soft); }
+        .step-btn:active { transform: scale(.9); }
+        input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; }
+        input[type=number] { -moz-appearance: textfield; appearance: textfield; }
+
+        .preview {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 6px 8px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            background: var(--paper);
+            font-size: 12px;
+            color: var(--muted);
+            min-height: 46px;
+        }
+        .pv-kcal { font-size: 22px; color: var(--ink); line-height: 1; }
+        .pv-macros { flex-basis: 100%; display: flex; gap: 14px; }
+        .pv-m { display: inline-flex; align-items: center; gap: 3px; }
+        .mi { font-size: 15px; color: var(--muted); }
+        .pv-left { margin-left: auto; }
+        .pv-left b { font-size: 15px; color: var(--ink); }
+        .pv-left.is-over b { color: var(--over); }
+
+        .go-btn { height: 46px; font-size: 15px; border-radius: 12px; }
+
+        .temp-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+        .temp-grid .wide { grid-column: 1 / -1; }
+
+        /* ── Diary log ── */
+        .log { grid-area: log; }
+        .log-cols, .meal-head, .entry {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 64px 52px 52px 52px 132px;
+            align-items: center;
+            gap: 6px;
+            padding: 0 16px;
+        }
+        .log-cols {
+            height: 34px;
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--muted);
+            border-bottom: 1px solid var(--line-soft);
+        }
+        .log-cols > span:not(:first-child) { text-align: right; display: flex; align-items: center; justify-content: flex-end; gap: 5px; }
+
+        .meal + .meal { border-top: 1px solid var(--line); }
+        .meal-head { min-height: 46px; }
+        .meal-title { display: flex; align-items: center; gap: 8px; min-width: 0; }
+        .meal-title .ms {
+            font-size: 18px;
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            display: grid;
+            place-items: center;
+            background: var(--cobalt-soft);
+            color: var(--cobalt);
+        }
+        .meal-title h3 { font-size: 14px; font-weight: 700; }
+        .meal-title .muted { font-size: 12px; color: var(--subtle); font-weight: 400; }
+        .meal-sum { text-align: right; font-size: 17px; }
+        .meal-sum.sm { font-size: 14px; color: var(--muted); }
+        .meal-actions { display: flex; justify-content: flex-end; }
+        .meal.is-empty .meal-title .ms { background: var(--line-soft); color: var(--subtle); }
+
+        .entries { list-style: none; padding-bottom: 6px; }
+        .entry { min-height: 42px; border-radius: 10px; margin: 0 6px; padding: 0 10px; transition: background-color .15s; }
+        .entry:hover, .entry:focus-within { background: #F6F7FA; }
+        .entry-main { display: flex; align-items: baseline; gap: 8px; min-width: 0; padding-left: 36px; }
+        .entry-name { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .entry-amt { font-size: 12px; color: var(--muted); white-space: nowrap; }
+        .entry.is-temp .entry-name { color: var(--muted); }
+        .tag {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--muted);
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            padding: 0 6px;
+            line-height: 16px;
+            white-space: nowrap;
+            align-self: center;
+        }
+        .entry-kcal { text-align: right; font-size: 17px; }
+        .entry-m { text-align: right; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+        .entry-actions { display: flex; justify-content: flex-end; gap: 2px; opacity: 0; transition: opacity .15s; }
+        .entry:hover .entry-actions, .entry:focus-within .entry-actions { opacity: 1; }
+        @media (hover: none) { .entry-actions { opacity: 1; } }
+
+        .entry.is-new { animation: entryIn .9s var(--ease-out); }
+        @keyframes entryIn {
+            0%   { opacity: 0; transform: translateX(-12px); background: var(--cobalt-soft); }
+            30%  { opacity: 1; transform: none; background: var(--cobalt-soft); }
+            100% { background: transparent; }
+        }
+        .entry.is-leaving { animation: entryOut .22s var(--ease-out) forwards; pointer-events: none; }
+        @keyframes entryOut { to { opacity: 0; transform: translateX(16px); } }
+        .entry.is-changed .entry-kcal { animation: tick .45s var(--ease-spring); }
+        @keyframes tick { 40% { transform: scale(1.25); color: var(--cobalt); } }
+
+        /* ── Warehouse ── */
+        .toolbar-search { width: 220px; }
+        .new-food { margin-bottom: 14px; overflow: hidden; }
+        .new-food > summary {
+            list-style: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            cursor: pointer;
+            font-weight: 700;
+        }
+        .new-food > summary::-webkit-details-marker { display: none; }
+        .nf-icon {
+            width: 26px;
+            height: 26px;
+            border-radius: 8px;
+            background: var(--cobalt);
+            color: #fff;
+            display: grid;
+            place-items: center;
+        }
+        .nf-icon .ms { font-size: 18px; transition: transform .3s var(--ease-spring); }
+        .new-food[open] .nf-icon .ms { transform: rotate(45deg); }
+        .new-food > summary .hint { font-weight: 400; color: var(--muted); font-size: 12px; }
+        .new-food-form {
+            display: grid;
+            grid-template-columns: 1.1fr 1.6fr 1fr repeat(4, minmax(70px, .7fr)) auto;
+            gap: 10px;
+            align-items: end;
+            padding: 4px 16px 16px;
+            animation: pageIn .25s var(--ease-out);
+        }
+
+        .table-wrap { overflow-x: auto; }
+        .data-table { width: 100%; border-collapse: collapse; }
+        .data-table th {
+            height: 36px;
+            padding: 0 12px;
+            text-align: left;
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--muted);
+            border-bottom: 1px solid var(--line);
+            white-space: nowrap;
+        }
+        .data-table td { height: 44px; padding: 0 12px; border-bottom: 1px solid var(--line-soft); }
+        .data-table .r { text-align: right; }
+        .data-table th .mi { margin-right: 3px; vertical-align: -3px; }
+        .data-table tbody tr:not(.cat-row):hover td { background: #F8F9FB; }
+        .w-name { font-weight: 500; padding-left: 40px !important; }
+        .w-unit { color: var(--muted); font-size: 13px; }
+        .w-kcal { font-size: 16px; }
+        .w-m { font-variant-numeric: tabular-nums; color: var(--muted); }
+        .w-actions { display: flex; justify-content: flex-end; gap: 2px; }
+        .is-off .w-name, .is-off .w-unit, .is-off .w-kcal, .is-off .w-m { opacity: .45; }
+        .is-off .tag { margin-left: 8px; }
+
+        .cat-row td { height: 40px; background: #F6F7FA; padding: 0 6px; border-bottom: 1px solid var(--line); }
+        .cat-toggle {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            width: 100%;
+            height: 34px;
+            padding: 0 6px;
+            border-radius: 8px;
+            font-weight: 700;
+            text-align: left;
+        }
+        .cat-toggle:hover { background: var(--line-soft); }
+        .cat-toggle .ms { font-size: 20px; color: var(--muted); transition: transform .25s var(--ease-spring); }
+        .cat-toggle[aria-expanded="true"] .ms { transform: rotate(90deg); }
+        .cat-toggle small { font-weight: 400; color: var(--muted); font-size: 12px; }
+
+        /* Native checkbox styled as a switch */
+        .switch { position: relative; display: inline-block; width: 36px; height: 22px; vertical-align: middle; }
+        .switch input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; z-index: 1; }
+        .switch span {
+            position: absolute;
+            inset: 0;
+            border-radius: 999px;
+            background: #C9CEDA;
+            transition: background-color .2s;
+        }
+        .switch span::after {
+            content: "";
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 1px 2px rgba(13,21,48,.25);
+            transition: transform .25s var(--ease-spring);
+        }
+        .switch input:checked + span { background: var(--cobalt); }
+        .switch input:checked + span::after { transform: translateX(14px); }
+        .switch input:focus-visible + span { outline: 2px solid var(--cobalt); outline-offset: 2px; }
+
+        .empty { padding: 40px 16px; text-align: center; color: var(--muted); }
+
+        /* ── Summary ── */
+        .month-nav { display: flex; align-items: center; gap: 4px; }
+        .month-label { min-width: 116px; text-align: center; font-weight: 700; font-size: 15px; }
+        .board.summary-board { display: flex; align-items: flex-end; gap: 28px; flex-wrap: wrap; margin-bottom: 14px; }
+        .summary-board .hero { position: relative; }
+        .stat-row { position: relative; display: flex; gap: 28px; flex-wrap: wrap; margin-left: auto; }
+        .stat { display: flex; flex-direction: column; gap: 2px; }
+        .stat span { font-size: 12px; opacity: .8; }
+        .stat b { font-size: 30px; line-height: 1; }
+        .stat b small { font-size: 14px; font-weight: 600; opacity: .75; margin-left: 2px; }
+
+        .cal-legend { display: flex; gap: 16px; flex-wrap: wrap; padding: 10px 16px; font-size: 12px; color: var(--muted); border-bottom: 1px solid var(--line-soft); }
+        .cal-legend span { display: inline-flex; align-items: center; gap: 4px; }
+        .cal-legend .ms { font-size: 16px; }
+        .lg-ok { color: var(--ok); }
+        .lg-over { color: var(--over); }
+        .lg-under { color: var(--under); }
+
+        .cal-week, .cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+        .cal-week { padding: 10px 12px 6px; font-size: 12px; color: var(--muted); text-align: center; }
+        .cal-grid { padding: 0 12px 12px; }
+        .cal-day {
+            position: relative;
+            min-height: 78px;
+            padding: 7px 8px 9px;
+            border-radius: 10px;
+            border: 1px solid var(--line-soft);
+            background: var(--surface);
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            text-align: left;
+            transition: transform .15s var(--ease-out), border-color .15s;
+        }
+        button.cal-day:hover { transform: translateY(-2px); border-color: var(--cobalt); }
+        .cal-day.is-blank { visibility: hidden; }
+        .cal-day.is-future { background: transparent; border-style: dashed; color: var(--subtle); }
+        .cal-top { display: flex; justify-content: space-between; align-items: baseline; }
+        .cal-date { font-size: 13px; font-weight: 700; }
+        .cal-kcal { font-size: 15px; }
+        .cal-status { display: flex; align-items: center; gap: 2px; font-size: 11px; font-weight: 700; margin-top: auto; }
+        .cal-status .ms { font-size: 14px; }
+        .cal-bar { position: relative; height: 4px; border-radius: 999px; background: rgba(13,21,48,.08); margin-top: 4px; overflow: hidden; }
+        .cal-bar i { position: absolute; inset: 0 auto 0 0; border-radius: 999px; background: currentColor; }
+        .cal-bar::after { content: ""; position: absolute; left: 80%; top: 0; bottom: 0; width: 2px; background: var(--surface); }
+        .cal-day.st-ok    { background: var(--ok-bg);    border-color: transparent; color: var(--ok); }
+        .cal-day.st-over  { background: var(--over-bg);  border-color: transparent; color: var(--over); }
+        .cal-day.st-under { background: var(--under-bg); border-color: transparent; color: var(--under); }
+        .cal-day.st-ok .cal-date, .cal-day.st-over .cal-date, .cal-day.st-under .cal-date, .cal-day .cal-kcal { color: var(--ink); }
+        .cal-day.is-today { box-shadow: 0 0 0 2px var(--cobalt); }
+        .cal-day.is-today .cal-date::after { content: "今天"; margin-left: 4px; font-size: 10px; color: var(--cobalt); }
+        .cal-grid.is-entering .cal-day { animation: calIn .4s var(--ease-out) backwards; animation-delay: calc(var(--i) * 12ms); }
+        @keyframes calIn { from { opacity: 0; transform: scale(.94); } }
+
+        /* ── Settings ── */
+        .settings-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+        .settings-form { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; padding: 16px; }
+        .settings-form .full { grid-column: 1 / -1; }
+        .settings-foot { display: flex; align-items: center; justify-content: flex-end; gap: 12px; padding: 0 16px 16px; }
+        .dirty-note { font-size: 12px; color: var(--under); margin-right: auto; display: flex; align-items: center; gap: 4px; }
+        .dirty-note .ms { font-size: 16px; }
+
+        .plan { padding: 16px; display: flex; flex-direction: column; gap: 16px; }
+        .plan-chain { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+        .plan-step { padding: 10px 12px; border-radius: 10px; background: var(--paper); }
+        .plan-step span { font-size: 12px; color: var(--muted); display: block; }
+        .plan-step b { font-size: 26px; line-height: 1.1; }
+        .plan-step.is-goal { background: var(--cobalt); color: #fff; }
+        .plan-step.is-goal span { color: rgba(255,255,255,.8); }
+        .split-bar { display: flex; gap: 2px; height: 12px; border-radius: 4px; overflow: hidden; }
+        .split-bar i { background: var(--cobalt); transition: flex-grow .6s var(--ease-out); }
+        .split-legend { display: flex; gap: 2px; margin-top: 8px; }
+        .split-legend div { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex-basis: 0; transition: flex-grow .6s var(--ease-out); }
+        .split-legend span { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 4px; }
+        .split-legend b { font-size: 22px; }
+        .split-legend small { font-size: 12px; color: var(--muted); }
+        .formula { font-size: 12px; color: var(--muted); line-height: 1.7; border-top: 1px solid var(--line-soft); padding-top: 12px; }
+        .formula code { font-family: inherit; color: var(--ink); background: var(--paper); padding: 1px 5px; border-radius: 4px; }
+        .data-panel { display: flex; align-items: center; gap: 12px; padding: 14px 16px; margin-top: 14px; }
+        .data-panel p { font-size: 13px; color: var(--muted); margin-right: auto; }
+
+        /* ── Dialogs ── */
+        dialog {
+            margin: auto;
+            border: 0;
+            padding: 0;
+            border-radius: 16px;
+            width: min(440px, calc(100vw - 32px));
+            background: var(--surface);
+            color: var(--ink);
+            box-shadow: 0 24px 60px rgba(13, 21, 48, .28);
+        }
+        dialog[open] { animation: pop .24s var(--ease-spring); }
+        dialog::backdrop { background: rgba(13, 21, 48, .45); }
+        dialog[open]::backdrop { animation: fade .2s ease; }
+        @keyframes pop { from { opacity: 0; transform: translateY(8px) scale(.96); } }
+        @keyframes fade { from { opacity: 0; } }
+        .dialog-body { padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+        .dialog-title { font-size: 17px; font-weight: 700; }
+        .dialog-foot { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .confirm-dialog { width: min(360px, calc(100vw - 32px)); }
+        .confirm-dialog p { font-size: 15px; }
+
+        /* ── Toasts ── */
         #toast-container {
             position: fixed;
-            bottom: 32px;
+            bottom: 24px;
             left: 50%;
             transform: translateX(-50%);
             z-index: 9999;
@@ -355,296 +885,263 @@
             pointer-events: none;
         }
         .toast {
-            padding: 12px 20px;
-            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px 10px 12px;
+            border-radius: 12px;
+            background: var(--ink);
+            color: #fff;
             font-size: 14px;
             font-weight: 500;
-            color: white;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.25);
-            opacity: 0;
-            transform: translateY(12px);
-            transition: opacity 0.25s ease, transform 0.25s ease;
-            white-space: nowrap;
-            max-width: 90vw;
+            box-shadow: 0 10px 30px rgba(13, 21, 48, .3);
+            max-width: calc(100vw - 32px);
+            animation: toastIn .32s var(--ease-spring);
         }
-        .toast.show { opacity: 1; transform: translateY(0); }
+        .toast.is-leaving { animation: toastOut .2s ease forwards; }
+        .toast .ms { font-variation-settings: 'FILL' 1, 'wght' 500, 'opsz' 24; }
+        .toast.t-success .ms { color: var(--done); }
+        .toast.t-error .ms   { color: #FF8A7A; }
+        .toast.t-warning .ms { color: var(--caution); }
+        .toast.t-info .ms    { color: #9AA6FF; }
+        @keyframes toastIn  { from { opacity: 0; transform: translateY(14px) scale(.96); } }
+        @keyframes toastOut { to   { opacity: 0; transform: translateY(8px); } }
 
-        /* ── Optgroup ── */
-        optgroup { font-weight: 700; color: var(--md-primary); background: #f1f3f4; font-style: normal; }
-        optgroup option { font-weight: normal; color: var(--md-on-surface); background: var(--md-surface); }
-
-        /* ── Mobile responsive ── */
-        @media (max-width: 768px) {
-            body { flex-direction: column; height: auto; min-height: 100vh; overflow: auto; }
-            nav {
-                width: 100%;
-                flex-direction: row;
-                padding: 0 8px;
-                border-right: none;
-                border-bottom: 1px solid var(--md-border);
-                overflow-x: auto;
-                gap: 0;
-                position: sticky;
-                top: 0;
+        /* ── Responsive ── */
+        @media (max-width: 1100px) {
+            .diary-grid { grid-template-columns: minmax(0, 1fr); grid-template-areas: "board" "quick" "log"; }
+            .quick { position: static; max-height: none; }
+            .food-list { max-height: 240px; }
+            .new-food-form { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+            .new-food-form .wide { grid-column: span 2; }
+            .settings-grid { grid-template-columns: minmax(0, 1fr); }
+        }
+        @media (max-width: 720px) {
+            body { display: block; height: auto; min-height: 100vh; overflow: auto; }
+            .rail {
+                position: fixed;
+                inset: auto 0 0 0;
                 z-index: 100;
+                flex-direction: row;
+                justify-content: space-around;
+                padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+                border-right: 0;
+                border-top: 1px solid var(--line);
             }
-            .brand { padding: 10px 8px; font-size: 18px; flex-shrink: 0; }
-            .nav-item {
-                flex-direction: column;
-                gap: 2px;
-                padding: 8px 10px;
-                font-size: 10px;
-                border-radius: 8px;
-                min-width: 52px;
-                text-align: center;
-                flex-shrink: 0;
+            .brand-mark { display: none; }
+            .rail-item { width: auto; flex: 1; }
+            main { overflow: visible; padding: 12px 12px 96px; }
+            #toast-container { bottom: 88px; }
+            .board { padding: 16px 16px 12px; border-radius: 16px; }
+            .lane { grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "name val" "track track"; gap: 4px 10px; padding: 6px 0 8px; }
+            .lane-name { grid-area: name; }
+            .lane-track { grid-area: track; }
+            .lane-val { grid-area: val; }
+            .lane-val b { font-size: 16px; }
+            .log-cols, .meal-head, .entry { grid-template-columns: minmax(0, 1fr) 52px 40px 60px; padding: 0 12px; }
+            .entry { padding: 0 6px; }
+            .c-carbs, .c-fat { display: none !important; }
+            .entry-main { padding-left: 0; flex-wrap: wrap; row-gap: 0; }
+            .entry-actions .icon-btn { width: 28px; }
+            .entry-actions .act-portion { display: none; }
+            .data-table th:nth-child(5), .data-table td:nth-child(5),
+            .data-table th:nth-child(6), .data-table td:nth-child(6) { display: none; }
+            .w-name { padding-left: 16px !important; }
+            .toolbar-search { width: 100%; order: 3; }
+            .new-food-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .new-food-form .wide, .new-food-form .btn { grid-column: 1 / -1; }
+            .stat-row { margin-left: 0; gap: 20px; }
+            .cal-week, .cal-grid { gap: 3px; }
+            .cal-grid { padding: 0 6px 8px; }
+            .cal-week { padding: 8px 6px 4px; }
+            .cal-day { min-height: 58px; padding: 5px; border-radius: 8px; }
+            .cal-status span:last-child { display: none; }
+            .cal-top { flex-direction: column; align-items: flex-start; }
+            .cal-kcal { font-size: 12px; line-height: 1.1; }
+            .cal-day.is-today .cal-date::after { content: none; }
+            .settings-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .temp-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: .01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: .01ms !important;
             }
-            main { padding: 16px; overflow-y: visible; height: auto; }
-            .dashboard-grid { grid-template-columns: repeat(2, 1fr); }
-            .form-row { flex-direction: column; }
-            .warehouse-form-grid { grid-template-columns: 1fr; }
-            .data-table th:nth-child(5),
-            .data-table td:nth-child(5),
-            .data-table th:nth-child(6),
-            .data-table td:nth-child(6) { display: none; }
         }
     </style>
 </head>
 <body>
 
-    <!-- Toast container -->
-    <div id="toast-container"></div>
+    <div id="toast-container" role="status" aria-live="polite"></div>
 
-    <!-- Custom confirm dialog -->
-    <div id="confirm-dialog" class="modal" onclick="if(event.target===this)resolveConfirm(false)">
-        <div class="modal-content" style="max-width: 340px;">
-            <p class="modal-title" id="confirm-message" style="font-size: 16px; font-weight: 400;"></p>
-            <div style="display: flex; justify-content: flex-end; gap: 8px;">
-                <button class="btn btn-secondary" onclick="resolveConfirm(false)">取消</button>
-                <button class="btn btn-danger" onclick="resolveConfirm(true)">确认删除</button>
-            </div>
-        </div>
-    </div>
-
-    <nav>
-        <div class="brand">
-            <span class="material-icons-outlined">local_dining</span>
-            <span>MacroTracker</span>
-        </div>
-        <div class="nav-item active" data-page="diary" tabindex="0" role="button"
-             onclick="switchPage('diary', this)"
-             onkeydown="if(event.key==='Enter'||event.key===' ')switchPage('diary',this)">
-            <span class="material-icons-outlined">restaurant</span> 饮食日记
-        </div>
-        <div class="nav-item" data-page="warehouse" tabindex="0" role="button"
-             onclick="switchPage('warehouse', this)"
-             onkeydown="if(event.key==='Enter'||event.key===' ')switchPage('warehouse',this)">
-            <span class="material-icons-outlined">inventory_2</span> 食品仓库
-        </div>
-        <div class="nav-item" data-page="summary" tabindex="0" role="button"
-             onclick="switchPage('summary', this)"
-             onkeydown="if(event.key==='Enter'||event.key===' ')switchPage('summary',this)">
-            <span class="material-icons-outlined">bar_chart</span> 数据汇总
-        </div>
-        <div class="nav-item" data-page="settings" tabindex="0" role="button"
-             onclick="switchPage('settings', this)"
-             onkeydown="if(event.key==='Enter'||event.key===' ')switchPage('settings',this)">
-            <span class="material-icons-outlined">person</span> 身体设定
-        </div>
+    <nav class="rail" aria-label="主导航">
+        <div class="brand-mark num" aria-label="MacroTracker">MT</div>
+        <button class="rail-item" data-page="diary" aria-current="page" onclick="switchPage('diary')">
+            <span class="ms" aria-hidden="true">restaurant</span>日记
+        </button>
+        <button class="rail-item" data-page="warehouse" onclick="switchPage('warehouse')">
+            <span class="ms" aria-hidden="true">inventory_2</span>仓库
+        </button>
+        <button class="rail-item" data-page="summary" onclick="switchPage('summary')">
+            <span class="ms" aria-hidden="true">calendar_month</span>汇总
+        </button>
+        <button class="rail-item" data-page="settings" onclick="switchPage('settings')">
+            <span class="ms" aria-hidden="true">person</span>身体
+        </button>
     </nav>
 
     <main>
-        <!-- ── Diary Page ── -->
-        <div id="page-diary" class="page active">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-                <h2 style="margin-bottom: 0;">饮食日记</h2>
-                <div style="display: flex; gap: 8px; align-items: center;">
-                    <button id="btn-today" class="btn btn-secondary" style="height: 40px; padding: 0 12px; visibility: hidden;" onclick="goToToday()">
-                        <span class="material-icons-outlined" style="font-size:18px;">today</span> 回到今天
+        <!-- ── Diary ── -->
+        <div id="page-diary" class="page is-active">
+            <div class="topbar">
+                <div class="date-nav">
+                    <button class="icon-btn" onclick="shiftDay(-1)" aria-label="前一天"><span class="ms" aria-hidden="true">chevron_left</span></button>
+                    <button class="date-label" onclick="openDatePicker()" aria-label="选择日期">
+                        <span id="date-main">-</span><small id="date-sub"></small>
                     </button>
-                    <input type="date" id="diary-date" class="form-control" style="width: auto;" onchange="loadDiary()">
+                    <input type="date" id="diary-date" class="date-input" tabindex="-1" aria-hidden="true" onchange="renderDiary()">
+                    <button class="icon-btn" onclick="shiftDay(1)" aria-label="后一天"><span class="ms" aria-hidden="true">chevron_right</span></button>
                 </div>
+                <button id="btn-today" class="btn btn-ghost btn-sm" onclick="goToToday()" hidden>回到今天</button>
             </div>
 
-            <div class="dashboard-grid">
-                <div class="dash-card kcal">
-                    <span class="dash-label">热量摄入</span>
-                    <span id="dash-kcal-val" class="dash-value">0 / 0</span>
-                    <div class="progress-track"><div id="dash-kcal-bar" class="progress-fill" style="background: var(--kcal-color);"></div></div>
-                    <span class="dash-target">kcal · 减脂目标 (TDEE − 550)</span>
-                </div>
-                <div class="dash-card protein">
-                    <span class="dash-label">蛋白质</span>
-                    <span id="dash-p-val" class="dash-value">0 / 0</span>
-                    <div class="progress-track"><div id="dash-p-bar" class="progress-fill" style="background: var(--protein-color);"></div></div>
-                    <span class="dash-target">g · 2.1 g × 体重</span>
-                </div>
-                <div class="dash-card carbs">
-                    <span class="dash-label">碳水化合物</span>
-                    <span id="dash-c-val" class="dash-value">0 / 0</span>
-                    <div class="progress-track"><div id="dash-c-bar" class="progress-fill" style="background: var(--carbs-color);"></div></div>
-                    <span class="dash-target">g · 剩余热量分配</span>
-                </div>
-                <div class="dash-card fat">
-                    <span class="dash-label">脂肪</span>
-                    <span id="dash-f-val" class="dash-value">0 / 0</span>
-                    <div class="progress-track"><div id="dash-f-bar" class="progress-fill" style="background: var(--fat-color);"></div></div>
-                    <span class="dash-target">g · 总热量 × 25%</span>
-                </div>
-            </div>
+            <div class="diary-grid">
+                <section id="board" class="board" aria-label="今日进度">
+                    <div class="board-head">
+                        <div class="hero">
+                            <span id="hero-label" class="hero-label">还能吃</span>
+                            <span id="hero-num" class="hero-num num">0</span>
+                            <span class="hero-unit">kcal</span>
+                        </div>
+                        <div class="board-meta">
+                            <span id="chip-streak" class="chip"><span class="ms" aria-hidden="true">local_fire_department</span><span>连续记录 <b class="num" id="streak-days">0</b> 天</span></span>
+                            <span id="chip-protein" class="chip"></span>
+                        </div>
+                    </div>
+                    <div class="lanes">
+                        <div class="lane" data-key="kcal" style="--c: var(--kcal)">
+                            <span class="lane-name"><span class="ms" aria-hidden="true">bolt</span>热量</span>
+                            <div class="lane-track"><div class="lane-fill"></div><span class="lane-finish"></span></div>
+                            <span class="lane-val"><b class="num lane-cur">0</b>/ <span class="lane-target">0</span> kcal<span class="lane-flag"></span></span>
+                        </div>
+                        <div class="lane" data-key="protein" style="--c: var(--protein)">
+                            <span class="lane-name"><span class="ms" aria-hidden="true">egg_alt</span>蛋白</span>
+                            <div class="lane-track"><div class="lane-fill"></div><span class="lane-finish"></span></div>
+                            <span class="lane-val"><b class="num lane-cur">0</b>/ <span class="lane-target">0</span> g<span class="lane-flag"></span></span>
+                        </div>
+                        <div class="lane" data-key="carbs" style="--c: var(--carbs)">
+                            <span class="lane-name"><span class="ms" aria-hidden="true">rice_bowl</span>碳水</span>
+                            <div class="lane-track"><div class="lane-fill"></div><span class="lane-finish"></span></div>
+                            <span class="lane-val"><b class="num lane-cur">0</b>/ <span class="lane-target">0</span> g<span class="lane-flag"></span></span>
+                        </div>
+                        <div class="lane" data-key="fat" style="--c: var(--fat)">
+                            <span class="lane-name"><span class="ms" aria-hidden="true">water_drop</span>脂肪</span>
+                            <div class="lane-track"><div class="lane-fill"></div><span class="lane-finish"></span></div>
+                            <span class="lane-val"><b class="num lane-cur">0</b>/ <span class="lane-target">0</span> g<span class="lane-flag"></span></span>
+                        </div>
+                    </div>
+                </section>
 
-            <div class="card">
-                <!-- Meal type selector (shared between both tabs) -->
-                <div class="meal-selector-row">
-                    <label>用餐类型</label>
-                    <select id="diary-meal" class="form-control">
-                        <option value="breakfast">🌅 早餐</option>
-                        <option value="lunch">☀️ 午餐</option>
-                        <option value="dinner">🌙 晚餐</option>
-                        <option value="snack">🍎 加餐</option>
-                    </select>
-                </div>
+                <aside class="quick panel" aria-label="记一笔">
+                    <div class="panel-head"><h2>记一笔</h2><span class="hint" id="quick-hint"></span></div>
+                    <div class="quick-body">
+                        <fieldset class="seg" id="meal-seg" aria-label="餐次"></fieldset>
 
-                <div class="diary-tabs">
-                    <div id="tab-warehouse" class="diary-tab active" role="tab" tabindex="0"
-                         onclick="switchDiaryTab('warehouse')"
-                         onkeydown="if(event.key==='Enter')switchDiaryTab('warehouse')">从仓库中选择</div>
-                    <div id="tab-temporary" class="diary-tab" role="tab" tabindex="0"
-                         onclick="switchDiaryTab('temporary')"
-                         onkeydown="if(event.key==='Enter')switchDiaryTab('temporary')">临时快捷记账（不入库）</div>
-                </div>
+                        <div class="mode-tabs" role="tablist">
+                            <button class="mode-tab" role="tab" id="tab-food" aria-selected="true" aria-controls="form-food" onclick="switchMode('food')">仓库食品</button>
+                            <button class="mode-tab" role="tab" id="tab-temp" aria-selected="false" aria-controls="form-temp" onclick="switchMode('temp')">临时记录（不入库）</button>
+                        </div>
 
-                <form id="diary-form-warehouse" class="form-row" onsubmit="event.preventDefault(); addDiaryEntry();">
-                    <div class="form-group" style="width: 200px;">
-                        <label>搜索食物</label>
-                        <input type="text" id="diary-food-search" class="form-control" placeholder="按名称/分类过滤"
-                               oninput="rebuildDiarySelect()"
-                               onkeydown="if(event.key==='Enter'){event.preventDefault();document.getElementById('diary-food-amount').focus();}">
-                    </div>
-                    <div class="form-group flex-child" style="flex: 2;">
-                        <label>选择食物</label>
-                        <select id="diary-food-select" class="form-control" onchange="prefillAmount()"></select>
-                    </div>
-                    <div class="form-group" style="width: 180px;">
-                        <label>分量/重量</label>
-                        <input type="number" id="diary-food-amount" class="form-control" placeholder="如 100" value="100" min="0" step="any" onfocus="this.select()">
-                    </div>
-                    <div class="form-group">
-                        <button type="submit" class="btn">
-                            <span class="material-icons-outlined" style="font-size:18px;">add</span> 添加记录
-                        </button>
-                    </div>
-                </form>
+                        <form id="form-food" class="add-form" role="tabpanel" onsubmit="event.preventDefault(); addDiaryEntry();">
+                            <div class="search">
+                                <span class="ms" aria-hidden="true">search</span>
+                                <input type="search" id="food-search" class="input" placeholder="搜索食物或分类" autocomplete="off"
+                                       oninput="renderFoodPicker()" onkeydown="onSearchKey(event)">
+                            </div>
+                            <div id="food-list" class="food-list" role="radiogroup" aria-label="食物"></div>
+                            <div class="amount-row">
+                                <button type="button" class="step-btn" onclick="stepAmount(-1)" aria-label="减少分量"><span class="ms" aria-hidden="true">remove</span></button>
+                                <div class="amount-wrap">
+                                    <input type="number" id="food-amount" class="input" min="0" step="any" aria-label="分量" oninput="updatePreview()" onfocus="this.select()">
+                                    <span id="amount-unit" class="amount-unit"></span>
+                                </div>
+                                <button type="button" class="step-btn" onclick="stepAmount(1)" aria-label="增加分量"><span class="ms" aria-hidden="true">add</span></button>
+                            </div>
+                            <div id="add-preview" class="preview" aria-live="polite"></div>
+                            <button type="submit" class="btn go-btn" id="go-food"><span class="ms" aria-hidden="true">add</span><span class="go-label">记录</span></button>
+                        </form>
 
-                <form id="diary-form-temporary" class="form-row" style="display: none;" onsubmit="event.preventDefault(); addTemporaryDiaryEntry();">
-                    <div class="form-group flex-child" style="min-width: 160px; flex: 2;">
-                        <label>临时食物/场景名称</label>
-                        <input type="text" id="temp-food-name" class="form-control" placeholder="临时食物">
+                        <form id="form-temp" class="add-form" role="tabpanel" hidden onsubmit="event.preventDefault(); addTemporaryDiaryEntry();">
+                            <div class="temp-grid">
+                                <label class="field wide"><span>名称</span><input type="text" id="temp-food-name" class="input" placeholder="如：公司聚餐、奶茶"></label>
+                                <label class="field wide"><span>预估热量 kcal（必填）</span><input type="number" id="temp-food-kcal" class="input" min="0" step="any" required></label>
+                                <label class="field"><span>蛋白 g</span><input type="number" id="temp-food-protein" class="input" min="0" step="any" placeholder="选填"></label>
+                                <label class="field"><span>碳水 g</span><input type="number" id="temp-food-carbs" class="input" min="0" step="any" placeholder="选填"></label>
+                                <label class="field"><span>脂肪 g</span><input type="number" id="temp-food-fat" class="input" min="0" step="any" placeholder="选填"></label>
+                            </div>
+                            <button type="submit" class="btn go-btn" id="go-temp"><span class="ms" aria-hidden="true">add</span><span class="go-label">记录</span></button>
+                        </form>
                     </div>
-                    <div class="form-group flex-child">
-                        <label>预估热量 (kcal)</label>
-                        <input type="number" id="temp-food-kcal" class="form-control" placeholder="必填" min="0" step="any">
-                    </div>
-                    <div class="form-group flex-child">
-                        <label>蛋白质 (g)</label>
-                        <input type="number" id="temp-food-protein" class="form-control" placeholder="选填" min="0" step="any">
-                    </div>
-                    <div class="form-group flex-child">
-                        <label>碳水 (g)</label>
-                        <input type="number" id="temp-food-carbs" class="form-control" placeholder="选填" min="0" step="any">
-                    </div>
-                    <div class="form-group flex-child">
-                        <label>脂肪 (g)</label>
-                        <input type="number" id="temp-food-fat" class="form-control" placeholder="选填" min="0" step="any">
-                    </div>
-                    <div class="form-group">
-                        <button type="submit" class="btn">
-                            <span class="material-icons-outlined" style="font-size:18px;">add</span> 添加记录
-                        </button>
-                    </div>
-                </form>
-            </div>
+                </aside>
 
-            <div class="card">
-                <h3 style="font-weight: 500; margin-bottom: 0;">今日进食明细</h3>
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>食物名称</th>
-                            <th>进食分量</th>
-                            <th>热量 (kcal)</th>
-                            <th>蛋白质 (g)</th>
-                            <th>碳水 (g)</th>
-                            <th>脂肪 (g)</th>
-                            <th>操作</th>
-                        </tr>
-                    </thead>
-                    <tbody id="diary-table-body"></tbody>
-                </table>
+                <section class="log panel" aria-label="今日明细">
+                    <div class="panel-head"><h2>今日明细</h2><span class="hint" id="log-count"></span></div>
+                    <div class="log-cols" aria-hidden="true">
+                        <span>食物</span>
+                        <span><span class="ms mi" aria-hidden="true">bolt</span>kcal</span>
+                        <span><span class="ms mi" aria-hidden="true">egg_alt</span>蛋白</span>
+                        <span class="c-carbs"><span class="ms mi" aria-hidden="true">rice_bowl</span>碳水</span>
+                        <span class="c-fat"><span class="ms mi" aria-hidden="true">water_drop</span>脂肪</span>
+                        <span></span>
+                    </div>
+                    <div id="diary-log"></div>
+                </section>
             </div>
         </div>
 
-        <!-- ── Warehouse Page ── -->
+        <!-- ── Warehouse ── -->
         <div id="page-warehouse" class="page">
-            <h2>食品仓库</h2>
-            <div class="card">
-                <h3 style="font-weight: 500; margin-bottom: 20px;">添加新食品基准</h3>
-                <form class="warehouse-form-grid" onsubmit="event.preventDefault(); addCustomFood();">
-                    <div class="form-group">
-                        <label>食物大类分类</label>
-                        <input type="text" id="food-category" class="form-control" placeholder="如：蛋畜类、坚果、补剂" list="exist-categories">
-                        <datalist id="exist-categories"></datalist>
-                    </div>
-                    <div class="form-group">
-                        <label>精细商品/具体名称</label>
-                        <input type="text" id="food-name" class="form-control" placeholder="如：鸡蛋 A 厂、黄油坚果">
-                    </div>
-                    <div class="form-group">
-                        <label>计量单位</label>
-                        <input type="text" id="food-unit" class="form-control" placeholder="如：100g / 1粒 / 1scoop">
-                    </div>
-                    <div class="form-group">
-                        <label>热量 (kcal)</label>
-                        <input type="number" id="food-kcal" class="form-control" placeholder="0" min="0" step="any">
-                    </div>
-                    <div class="form-group">
-                        <label>蛋白质 (g)</label>
-                        <input type="number" id="food-protein" class="form-control" placeholder="0" min="0" step="any">
-                    </div>
-                    <div class="form-group">
-                        <label>碳水 (g)</label>
-                        <input type="number" id="food-carbs" class="form-control" placeholder="0" min="0" step="any">
-                    </div>
-                    <div class="form-group">
-                        <label>脂肪 (g)</label>
-                        <input type="number" id="food-fat" class="form-control" placeholder="0" min="0" step="any">
-                    </div>
-                    <div style="display: flex; align-items: flex-end; margin-bottom: 16px;">
-                        <button type="submit" class="btn" style="width: 100%;">
-                            <span class="material-icons-outlined" style="font-size:18px;">add_circle</span> 入库新食品
-                        </button>
-                    </div>
-                </form>
+            <div class="topbar">
+                <h1 class="page-title">食品仓库<small id="warehouse-count"></small></h1>
+                <div class="search toolbar-search">
+                    <span class="ms" aria-hidden="true">search</span>
+                    <input type="search" id="warehouse-search" class="input" placeholder="搜索名称或分类" oninput="renderWarehouse()">
+                </div>
+                <button id="collapse-all-btn" class="btn btn-ghost" onclick="toggleAllCategories()">
+                    <span id="collapse-all-icon" class="ms" aria-hidden="true">unfold_less</span>
+                    <span id="collapse-all-label">全部收起</span>
+                </button>
             </div>
 
-            <div class="card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                    <h3 style="font-weight: 500; margin-bottom: 0;">我的仓库库存 (按大类分组)</h3>
-                    <button id="collapse-all-btn" class="btn btn-secondary" style="height: 36px; padding: 0 12px; font-size: 13px;" onclick="toggleAllCategories()">
-                        <span id="collapse-all-icon" class="material-icons-outlined" style="font-size:18px;">unfold_less</span>
-                        <span id="collapse-all-label">全部收起</span>
-                    </button>
-                </div>
+            <details class="panel new-food" id="new-food">
+                <summary><span class="nf-icon"><span class="ms" aria-hidden="true">add</span></span>新建食品<span class="hint">按包装上的营养标签填写一份基准分量</span></summary>
+                <form class="new-food-form" onsubmit="event.preventDefault(); addCustomFood();">
+                    <label class="field wide"><span>分类</span><input type="text" id="food-category" class="input" placeholder="如：鸡蛋类" list="exist-categories"></label>
+                    <datalist id="exist-categories"></datalist>
+                    <label class="field wide"><span>名称</span><input type="text" id="food-name" class="input" placeholder="如：鸡胸肉" required></label>
+                    <label class="field"><span>基准分量</span><input type="text" id="food-unit" class="input" placeholder="100g / 2粒"></label>
+                    <label class="field"><span>热量 kcal</span><input type="number" id="food-kcal" class="input" placeholder="0" min="0" step="any"></label>
+                    <label class="field"><span>蛋白 g</span><input type="number" id="food-protein" class="input" placeholder="0" min="0" step="any"></label>
+                    <label class="field"><span>碳水 g</span><input type="number" id="food-carbs" class="input" placeholder="0" min="0" step="any"></label>
+                    <label class="field"><span>脂肪 g</span><input type="number" id="food-fat" class="input" placeholder="0" min="0" step="any"></label>
+                    <button type="submit" class="btn"><span class="ms" aria-hidden="true">add</span>入库</button>
+                </form>
+            </details>
+
+            <div class="panel table-wrap">
                 <table class="data-table">
                     <thead>
                         <tr>
-                            <th>食品名称</th>
-                            <th>基准分量单位</th>
-                            <th>热量</th>
-                            <th>蛋白质</th>
-                            <th>碳水</th>
-                            <th>脂肪</th>
-                            <th>操作</th>
+                            <th>名称</th>
+                            <th>基准分量</th>
+                            <th class="r"><span class="ms mi" aria-hidden="true">bolt</span>kcal</th>
+                            <th class="r"><span class="ms mi" aria-hidden="true">egg_alt</span>蛋白</th>
+                            <th class="r"><span class="ms mi" aria-hidden="true">rice_bowl</span>碳水</th>
+                            <th class="r"><span class="ms mi" aria-hidden="true">water_drop</span>脂肪</th>
+                            <th>启用</th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody id="warehouse-table-body"></tbody>
@@ -652,590 +1149,369 @@
             </div>
         </div>
 
-        <!-- ── Summary Page ── -->
+        <!-- ── Summary ── -->
         <div id="page-summary" class="page">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                <h2 style="margin-bottom: 0;">月度合规日历</h2>
-                <div style="display: flex; gap: 8px; align-items: center;">
-                    <button class="btn btn-secondary" style="height: 36px; padding: 0 12px;"
-                            onclick="changeSummaryMonth(-1)" aria-label="上个月">
-                        <span class="material-icons-outlined">chevron_left</span>
-                    </button>
-                    <span id="summary-month-label" style="font-size: 16px; font-weight: 500; min-width: 100px; text-align: center;">-</span>
-                    <button class="btn btn-secondary" style="height: 36px; padding: 0 12px;"
-                            onclick="changeSummaryMonth(1)" aria-label="下个月">
-                        <span class="material-icons-outlined">chevron_right</span>
-                    </button>
+            <div class="topbar">
+                <h1 class="page-title">月度汇总</h1>
+                <div class="month-nav">
+                    <button class="icon-btn" onclick="changeSummaryMonth(-1)" aria-label="上个月"><span class="ms" aria-hidden="true">chevron_left</span></button>
+                    <span id="summary-month-label" class="month-label">-</span>
+                    <button class="icon-btn" onclick="changeSummaryMonth(1)" aria-label="下个月"><span class="ms" aria-hidden="true">chevron_right</span></button>
                 </div>
             </div>
 
-            <!-- Monthly aggregate stats -->
-            <div class="card" style="padding: 16px 24px; margin-bottom: 16px;">
-                <div id="monthly-stats" class="monthly-stats">
-                    <span>加载中...</span>
+            <section class="board summary-board" aria-label="本月数据">
+                <div class="hero">
+                    <span class="hero-label">连续记录</span>
+                    <span id="sum-streak" class="hero-num num">0</span>
+                    <span class="hero-unit">天</span>
                 </div>
-            </div>
+                <div class="stat-row" id="monthly-stats"></div>
+            </section>
 
-            <!-- Legend -->
-            <div class="card" style="padding: 12px 24px; margin-bottom: 16px; display: flex; gap: 20px; align-items: center; flex-wrap: wrap; font-size: 13px;">
-                <span style="font-weight: 500; color: var(--md-on-surface-variant);">状态图例：</span>
-                <div style="display: flex; align-items: center; gap: 6px;"><div style="width: 14px; height: 14px; background: #e6f4ea; border: 1px solid #34a853; border-radius: 3px;"></div><span style="color:#137333;">达标 (−300 ~ +50 kcal)</span></div>
-                <div style="display: flex; align-items: center; gap: 6px;"><div style="width: 14px; height: 14px; background: #fce8e6; border: 1px solid #ea4335; border-radius: 3px;"></div><span style="color:#c5221f;">超标 (> +50 kcal)</span></div>
-                <div style="display: flex; align-items: center; gap: 6px;"><div style="width: 14px; height: 14px; background: #fef7e0; border: 1px solid #f9ab00; border-radius: 3px;"></div><span style="color:#b06000;">缺口过大 (< −300 kcal)</span></div>
-                <div style="display: flex; align-items: center; gap: 6px;"><div style="width: 14px; height: 14px; background: var(--md-surface); border: 1px solid var(--md-border); border-radius: 3px;"></div><span style="color:var(--md-on-surface-variant);">无记录 / 未来</span></div>
-            </div>
-
-            <div class="card">
-                <div style="display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-weight: 500; color: var(--md-on-surface-variant); margin-bottom: 12px; font-size: 14px;">
-                    <div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div>
+            <div class="panel">
+                <div class="cal-legend">
+                    <span class="lg-ok"><span class="ms" aria-hidden="true">check</span>达标（目标 -300 至 +50 kcal）</span>
+                    <span class="lg-over"><span class="ms" aria-hidden="true">arrow_upward</span>超标（高于 +50）</span>
+                    <span class="lg-under"><span class="ms" aria-hidden="true">arrow_downward</span>缺口过大（低于 -300）</span>
+                    <span>点日期可查看当天明细</span>
                 </div>
-                <div id="calendar-grid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px;"></div>
+                <div class="cal-week" aria-hidden="true"><div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div></div>
+                <div id="calendar-grid" class="cal-grid"></div>
             </div>
         </div>
 
-        <!-- ── Settings Page ── -->
+        <!-- ── Settings ── -->
         <div id="page-settings" class="page">
-            <h2>用户身体数据设定</h2>
-            <div class="card">
-                <div class="form-row" style="margin-bottom: 8px;">
-                    <div class="form-group flex-child">
-                        <label>身高 (cm)</label>
-                        <input type="number" id="user-height" class="form-control" value="183" step="any">
-                    </div>
-                    <div class="form-group flex-child">
-                        <label>体重 (kg)</label>
-                        <input type="number" id="user-weight" class="form-control" value="91" step="any">
-                    </div>
-                    <div class="form-group flex-child">
-                        <label>年龄</label>
-                        <input type="number" id="user-age" class="form-control" value="27" min="10" max="100">
-                    </div>
-                    <div class="form-group flex-child">
-                        <label>性别</label>
-                        <select id="user-gender" class="form-control">
-                            <option value="male">男</option>
-                            <option value="female">女</option>
-                        </select>
+            <div class="topbar"><h1 class="page-title">身体数据</h1></div>
+            <div class="settings-grid">
+                <div class="panel">
+                    <div class="panel-head"><h2>基础信息</h2></div>
+                    <form id="settings-form" class="settings-form" oninput="onSettingsInput()" onsubmit="event.preventDefault(); saveSettings();">
+                        <label class="field"><span>身高 cm</span><input type="number" id="user-height" class="input" step="any" min="100" max="250"></label>
+                        <label class="field"><span>体重 kg</span><input type="number" id="user-weight" class="input" step="any" min="30" max="300"></label>
+                        <label class="field"><span>年龄</span><input type="number" id="user-age" class="input" min="10" max="100"></label>
+                        <label class="field"><span>性别</span>
+                            <select id="user-gender" class="input" onchange="onSettingsInput()">
+                                <option value="male">男</option>
+                                <option value="female">女</option>
+                            </select>
+                        </label>
+                        <label class="field full"><span>日常活动量</span>
+                            <select id="user-activity" class="input" onchange="onSettingsInput()">
+                                <option value="1.2">久坐不动（基本不运动）</option>
+                                <option value="1.375">轻度活动（每周运动 1-3 天）</option>
+                                <option value="1.55">中度活动（每周运动 3-5 天）</option>
+                                <option value="1.725">重度活动（每周运动 6-7 天）</option>
+                            </select>
+                        </label>
+                    </form>
+                    <div class="settings-foot">
+                        <span id="dirty-note" class="dirty-note" hidden><span class="ms" aria-hidden="true">info</span>右侧为预览，保存后生效</span>
+                        <button type="submit" form="settings-form" class="btn" id="save-settings" disabled>保存并更新目标</button>
                     </div>
                 </div>
-                <div class="form-row">
-                    <div class="form-group flex-child" style="flex: 3;">
-                        <label>日常活动量系数</label>
-                        <select id="user-activity" class="form-control">
-                            <option value="1.2">久坐不动 (基本不运动)</option>
-                            <option value="1.375">轻度活动 (每周运动 1-3 天)</option>
-                            <option value="1.55" selected>中度活动 (每周运动 3-5 天)</option>
-                            <option value="1.725">重度活动 (每周运动 6-7 天)</option>
-                        </select>
-                    </div>
-                    <div class="form-group" style="display: flex; align-items: flex-end;">
-                        <button class="btn" onclick="saveSettings()">保存并重新计算 TDEE</button>
+
+                <div class="panel">
+                    <div class="panel-head"><h2>每日目标</h2><span class="hint">减脂期</span></div>
+                    <div class="plan">
+                        <div class="plan-chain">
+                            <div class="plan-step"><span>基础代谢 BMR</span><b class="num" id="plan-bmr">0</b></div>
+                            <div class="plan-step"><span>总消耗 TDEE</span><b class="num" id="plan-tdee">0</b></div>
+                            <div class="plan-step is-goal"><span>目标摄入</span><b class="num" id="plan-kcal">0</b></div>
+                        </div>
+                        <div>
+                            <div class="split-bar" id="split-bar">
+                                <i></i><i></i><i></i>
+                            </div>
+                            <div class="split-legend" id="split-legend"></div>
+                        </div>
+                        <p class="formula">
+                            BMR 用 Mifflin-St Jeor 公式：男 <code>10×体重 + 6.25×身高 - 5×年龄 + 5</code>，女末项为 <code>-161</code>。
+                            TDEE = BMR × 活动量系数，目标摄入 = TDEE - 550 kcal。
+                            蛋白按 2.1 g/kg 体重，脂肪占 25% 热量，其余给碳水。
+                        </p>
                     </div>
                 </div>
             </div>
 
-            <div class="card" style="background-color: var(--md-primary-variant); border-color: transparent;">
-                <h3 style="font-weight: 500; margin-bottom: 12px; color: var(--md-primary);">计算逻辑明细</h3>
-                <p style="font-size: 14px; line-height: 1.7; color: var(--md-on-surface-variant);">
-                    采用 <b>Mifflin-St Jeor 公式</b> 计算 BMR：男性 <code>10×体重 + 6.25×身高 − 5×年龄 + 5</code>，女性末项改为 <code>−161</code>。<br>
-                    TDEE = BMR × 活动量系数。减脂目标 = TDEE − 550 kcal。<br>
-                    宏量配比：蛋白质 2.1 g/kg 体重，脂肪占总热量 25%，其余分配给碳水化合物。
-                </p>
-            </div>
-
-            <div class="card">
-                <h3 style="font-weight: 500; margin-bottom: 16px;">数据管理</h3>
-                <button class="btn btn-secondary" onclick="exportData()">
-                    <span class="material-icons-outlined" style="font-size:18px;">download</span> 导出数据 (JSON)
-                </button>
+            <div class="panel data-panel">
+                <p>导出全部食品库与日记数据，用于备份或迁移。</p>
+                <button class="btn btn-ghost" onclick="exportData()"><span class="ms" aria-hidden="true">download</span>导出 JSON</button>
             </div>
         </div>
     </main>
 
-    <!-- ── Edit Diary Entry Modal ── -->
-    <div id="edit-modal" class="modal" onclick="if(event.target===this)closeModal()">
-        <div class="modal-content">
-            <h3 class="modal-title" id="modal-food-title">编辑进食数据</h3>
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label>用餐类型</label>
-                <select id="modal-meal" class="form-control">
-                    <option value="breakfast">🌅 早餐</option>
-                    <option value="lunch">☀️ 午餐</option>
-                    <option value="dinner">🌙 晚餐</option>
-                    <option value="snack">🍎 加餐</option>
-                </select>
-            </div>
+    <!-- ── Edit diary entry ── -->
+    <dialog id="edit-dialog" aria-labelledby="modal-food-title">
+        <form class="dialog-body" onsubmit="event.preventDefault(); saveDiaryEdit();">
+            <h3 class="dialog-title" id="modal-food-title">编辑记录</h3>
+            <fieldset class="seg" id="modal-meal-seg" aria-label="餐次"></fieldset>
             <div id="modal-field-container-standard">
-                <div class="form-group" style="margin-bottom: 24px;">
-                    <label id="modal-amount-label">新的分量/重量</label>
-                    <input type="number" id="modal-food-amount" class="form-control" min="0" step="any">
-                </div>
+                <label class="field"><span id="modal-amount-label">分量</span><input type="number" id="modal-food-amount" class="input" min="0" step="any"></label>
             </div>
-            <div id="modal-field-container-temp" style="display: none;">
-                <div class="form-group"><label>临时食物/场景名称</label><input type="text" id="m-temp-name" class="form-control"></div>
-                <div class="form-group"><label>热量 (kcal)</label><input type="number" id="m-temp-kcal" class="form-control" min="0" step="any"></div>
-                <div class="form-group"><label>蛋白质 (g)</label><input type="number" id="m-temp-protein" class="form-control" min="0" step="any"></div>
-                <div class="form-group"><label>碳水 (g)</label><input type="number" id="m-temp-carbs" class="form-control" min="0" step="any"></div>
-                <div class="form-group"><label>脂肪 (g)</label><input type="number" id="m-temp-fat" class="form-control" min="0" step="any"></div>
+            <div id="modal-field-container-temp" class="grid-2" hidden>
+                <label class="field"><span>名称</span><input type="text" id="m-temp-name" class="input"></label>
+                <label class="field"><span>热量 kcal</span><input type="number" id="m-temp-kcal" class="input" min="0" step="any"></label>
+                <label class="field"><span>蛋白 g</span><input type="number" id="m-temp-protein" class="input" min="0" step="any"></label>
+                <label class="field"><span>碳水 g</span><input type="number" id="m-temp-carbs" class="input" min="0" step="any"></label>
+                <label class="field"><span>脂肪 g</span><input type="number" id="m-temp-fat" class="input" min="0" step="any"></label>
             </div>
-            <div style="display: flex; justify-content: flex-end; gap: 8px;">
-                <button class="btn btn-secondary" onclick="closeModal()">取消</button>
-                <button class="btn" onclick="saveDiaryEdit()">保存修改</button>
+            <div class="dialog-foot">
+                <button type="button" class="btn btn-ghost" onclick="closeModal()">取消</button>
+                <button type="submit" class="btn">保存修改</button>
             </div>
-        </div>
-    </div>
+        </form>
+    </dialog>
 
-    <!-- ── Edit Warehouse Item Modal ── -->
-    <div id="warehouse-modal" class="modal" onclick="if(event.target===this)closeWarehouseModal()">
-        <div class="modal-content">
-            <h3 class="modal-title" id="w-modal-title">编辑食品基准数据</h3>
-            <div style="display: flex; gap: 12px; margin-bottom: 8px;">
-                <div class="form-group flex-child"><label>大类分类</label><input type="text" id="w-modal-cat" class="form-control"></div>
-                <div class="form-group flex-child"><label>商品精细名称</label><input type="text" id="w-modal-name" class="form-control"></div>
+    <!-- ── Edit warehouse item ── -->
+    <dialog id="warehouse-dialog" aria-labelledby="w-modal-title">
+        <form class="dialog-body" onsubmit="event.preventDefault(); saveWarehouseEdit();">
+            <h3 class="dialog-title" id="w-modal-title">编辑食品</h3>
+            <div class="grid-2">
+                <label class="field"><span>分类</span><input type="text" id="w-modal-cat" class="input" list="exist-categories"></label>
+                <label class="field"><span>名称</span><input type="text" id="w-modal-name" class="input"></label>
             </div>
-            <div class="form-group">
-                <label>计量单位 (如 100g / 1scoop)</label>
-                <input type="text" id="w-modal-unit" class="form-control">
+            <label class="field"><span>基准分量（如 100g / 2粒）</span><input type="text" id="w-modal-unit" class="input"></label>
+            <div class="grid-2">
+                <label class="field"><span>热量 kcal</span><input type="number" id="w-modal-kcal" class="input" min="0" step="any"></label>
+                <label class="field"><span>蛋白 g</span><input type="number" id="w-modal-protein" class="input" min="0" step="any"></label>
+                <label class="field"><span>碳水 g</span><input type="number" id="w-modal-carbs" class="input" min="0" step="any"></label>
+                <label class="field"><span>脂肪 g</span><input type="number" id="w-modal-fat" class="input" min="0" step="any"></label>
             </div>
-            <div style="display: flex; gap: 12px; margin-bottom: 8px;">
-                <div class="form-group flex-child"><label>热量 (kcal)</label><input type="number" id="w-modal-kcal" class="form-control" min="0" step="any"></div>
-                <div class="form-group flex-child"><label>蛋白质 (g)</label><input type="number" id="w-modal-protein" class="form-control" min="0" step="any"></div>
+            <p class="hint" style="font-size: 12px; color: var(--muted);">保存后，引用这个食品的历史记录会按新数值重新计算。</p>
+            <div class="dialog-foot">
+                <button type="button" class="btn btn-ghost" onclick="closeWarehouseModal()">取消</button>
+                <button type="submit" class="btn">保存并重算历史</button>
             </div>
-            <div style="display: flex; gap: 12px; margin-bottom: 20px;">
-                <div class="form-group flex-child"><label>碳水 (g)</label><input type="number" id="w-modal-carbs" class="form-control" min="0" step="any"></div>
-                <div class="form-group flex-child"><label>脂肪 (g)</label><input type="number" id="w-modal-fat" class="form-control" min="0" step="any"></div>
+        </form>
+    </dialog>
+
+    <!-- ── Confirm ── -->
+    <dialog id="confirm-dialog" class="confirm-dialog">
+        <form method="dialog" class="dialog-body">
+            <p id="confirm-message"></p>
+            <div class="dialog-foot">
+                <button value="cancel" class="btn btn-ghost">取消</button>
+                <button value="ok" class="btn btn-danger">删除</button>
             </div>
-            <div style="display: flex; justify-content: flex-end; gap: 8px;">
-                <button class="btn btn-secondary" onclick="closeWarehouseModal()">取消</button>
-                <button class="btn" onclick="saveWarehouseEdit()">应用修改并级联更新</button>
-            </div>
-        </div>
-    </div>
+        </form>
+    </dialog>
 
     <script>
-        // ── Default food data ──
-        const DEFAULT_FOODS = [
-            { id: "1",   category: "补剂",   name: "蛋白粉",          unit: "1 scoop", kcal: 122, protein: 24,  carbs: 3,    fat: 1.5 },
-            { id: "2",   category: "蛋畜类", name: "鸡蛋 (A 牌大号)", unit: "1 粒",    kcal: 140, protein: 13,  carbs: 2.5,  fat: 8.5 },
-            { id: "2_b", category: "蛋畜类", name: "鸡蛋 (B 牌普通)", unit: "1 粒",    kcal: 130, protein: 12,  carbs: 2.0,  fat: 7.8 },
-            { id: "3",   category: "蛋畜类", name: "鸡胸肉",          unit: "100g",    kcal: 120, protein: 23,  carbs: 0,    fat: 1   },
-            { id: "4",   category: "主食谷物",name: "米饭",           unit: "100g",    kcal: 120, protein: 2,   carbs: 25,   fat: 0.3 },
-            { id: "5",   category: "主食谷物",name: "燕麦",           unit: "35g",     kcal: 133, protein: 4.3, carbs: 20.3, fat: 3.2 }
-        ];
+        const $ = id => document.getElementById(id);
+        const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        const fmt  = n => Math.round(n).toLocaleString('en-US');
+        const fmt1 = n => String(Math.round(n * 10) / 10);
+        const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
 
-        let state = {
-            user: { height: 183, weight: 91, activity: 1.55, age: 27, gender: 'male' },
-            foods: [...DEFAULT_FOODS],
-            diary: {}
+        // toISOString() is UTC, which reports yesterday before 08:00 in UTC+8; always use local dates
+        const localDate = (d = new Date()) =>
+            `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        const parseLocalDate = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+
+        const MEALS = {
+            breakfast: { label: '早餐', icon: 'free_breakfast' },
+            lunch:     { label: '午餐', icon: 'lunch_dining' },
+            pre_workout:  { label: '练前餐', icon: 'sprint' },
+            post_workout: { label: '练后餐', icon: 'sports_score' },
+            dinner:    { label: '晚餐', icon: 'dinner_dining' },
+            snack:     { label: '加餐', icon: 'nutrition' }
         };
+        const MEAL_ORDER = Object.keys(MEALS);
+        const MACRO_KEYS = ['kcal', 'protein', 'carbs', 'fat'];
+        const MACRO_ICONS = { kcal: 'bolt', protein: 'egg_alt', carbs: 'rice_bowl', fat: 'water_drop' };
+        const macroIcon = key => `<span class="ms mi" aria-hidden="true">${MACRO_ICONS[key]}</span>`;
+        const WEEKDAYS = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
+        let state = { user: { height: 183, weight: 91, activity: 1.55, age: 27, gender: 'male' }, foods: [], diary: {} };
         let currentEditIndex = null;
         let currentWarehouseEditId = null;
         let summaryCurrentDate = new Date();
+        let selectedFoodId = null;
+        let lastAddedId = null;
+        let changedEntryId = null;
+        let lanePct = {};
 
-        // ── Toast system ──
-        function showToast(message, type = 'success') {
-            const colors = { success: '#34a853', error: '#ea4335', info: '#1a73e8', warning: '#f9ab00' };
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = 'toast';
-            toast.style.background = colors[type] || colors.info;
-            toast.textContent = message;
-            container.appendChild(toast);
-            // Double rAF ensures the element is painted before transition starts
-            requestAnimationFrame(() => requestAnimationFrame(() => toast.classList.add('show')));
-            setTimeout(() => {
-                toast.classList.remove('show');
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
-        }
-
-        // ── Custom confirm dialog ──
-        let confirmResolve = null;
-        function showConfirm(message) {
-            return new Promise(resolve => {
-                document.getElementById('confirm-message').textContent = message;
-                document.getElementById('confirm-dialog').classList.add('active');
-                confirmResolve = resolve;
-            });
-        }
-        function resolveConfirm(result) {
-            document.getElementById('confirm-dialog').classList.remove('active');
-            if (confirmResolve) { confirmResolve(result); confirmResolve = null; }
-        }
-
-        // ESC closes any open modal
-        document.addEventListener('keydown', e => {
-            if (e.key !== 'Escape') return;
-            closeModal();
-            closeWarehouseModal();
-            resolveConfirm(false);
-        });
-
-        // ── State persistence ──
-        // ── State persistence (backed by the SQLite-based API in server.js) ──
-        async function loadState() {
-            const res = await fetch('/api/state');
-            state = await res.json();
-
-            document.getElementById('diary-date').value    = new Date().toISOString().split('T')[0];
-            document.getElementById('user-height').value   = state.user.height;
-            document.getElementById('user-weight').value   = state.user.weight;
-            document.getElementById('user-age').value      = state.user.age;
-            document.getElementById('user-gender').value   = state.user.gender;
-            document.getElementById('user-activity').value = state.user.activity;
-        }
-
-        // ── TDEE / macro targets (Mifflin-St Jeor, age + gender fixed) ──
-        function calculateTargets() {
-            const { height, weight, activity, age = 27, gender = 'male' } = state.user;
-            const genderConst = gender === 'male' ? 5 : -161;
-            const bmr        = 10 * weight + 6.25 * height - 5 * age + genderConst;
-            const tdee       = bmr * parseFloat(activity);
-            const targetKcal = Math.round(tdee - 550);
-            const targetProtein = Math.round(weight * 2.1);
-            const targetFat     = Math.round((targetKcal * 0.25) / 9);
-            const targetCarbs   = Math.round((targetKcal - targetProtein * 4 - targetFat * 9) / 4);
-            return { kcal: targetKcal, protein: targetProtein, carbs: targetCarbs, fat: targetFat };
-        }
-
-        // ── Page navigation (no implicit event global) ──
-        function switchPage(pageId, navEl) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-
-            document.getElementById(`page-${pageId}`).classList.add('active');
-
-            if (navEl) {
-                navEl.classList.add('active');
-            } else {
-                const found = document.querySelector(`.nav-item[data-page="${pageId}"]`);
-                if (found) found.classList.add('active');
+        // ── API ──
+        async function api(url, method = 'GET', body) {
+            let res;
+            try {
+                res = await fetch(url, {
+                    method,
+                    headers: body ? { 'Content-Type': 'application/json' } : undefined,
+                    body: body ? JSON.stringify(body) : undefined
+                });
+            } catch (err) {
+                console.error(`[api] ${method} ${url} network error`, err, body);
+                showToast('连不上服务器，请确认 npm start 正在运行', 'error');
+                throw err;
             }
+            if (!res.ok) {
+                const text = await res.text().catch(() => '');
+                console.error(`[api] ${method} ${url} -> ${res.status}`, text, body);
+                showToast(`操作失败（${res.status}），数据未保存`, 'error');
+                throw new Error(`${method} ${url} -> ${res.status}`);
+            }
+            return res.status === 204 ? null : res.json();
+        }
 
-            if (pageId === 'diary')     loadDiary();
+        // ── Toasts ──
+        function showToast(message, type = 'success') {
+            const icons = { success: 'check_circle', error: 'error', warning: 'error', info: 'info' };
+            const toast = document.createElement('div');
+            toast.className = `toast t-${type}`;
+            toast.innerHTML = `<span class="ms" aria-hidden="true">${icons[type] || icons.info}</span><span></span>`;
+            toast.lastChild.textContent = message;
+            const container = $('toast-container');
+            container.appendChild(toast);
+            while (container.children.length > 2) container.firstElementChild.remove();
+            setTimeout(() => {
+                toast.classList.add('is-leaving');
+                setTimeout(() => toast.remove(), 220);
+            }, 2800);
+        }
+
+        // ── Dialogs ──
+        // Clicking the backdrop lands on the <dialog> itself (content lives in an inner form)
+        document.querySelectorAll('dialog').forEach(d =>
+            d.addEventListener('click', e => { if (e.target === d) d.close('cancel'); }));
+        $('edit-dialog').addEventListener('close', () => { currentEditIndex = null; });
+        $('warehouse-dialog').addEventListener('close', () => { currentWarehouseEditId = null; });
+
+        function showConfirm(message) {
+            const dlg = $('confirm-dialog');
+            $('confirm-message').textContent = message;
+            dlg.returnValue = '';
+            dlg.showModal();
+            return new Promise(resolve =>
+                dlg.addEventListener('close', () => resolve(dlg.returnValue === 'ok'), { once: true }));
+        }
+
+        // Re-triggers a CSS animation class even if it is already applied
+        function replay(el, cls) {
+            el.classList.remove(cls);
+            void el.offsetWidth;
+            el.classList.add(cls);
+        }
+
+        function tweenNumber(el, to, format = fmt) {
+            const from = parseFloat(el.dataset.v ?? 0);
+            el.dataset.v = to;
+            cancelAnimationFrame(el._raf);
+            if (reduceMotion.matches || Math.abs(from - to) < 0.5) { el.textContent = format(to); return; }
+            const start = performance.now();
+            const dur = 750;
+            const step = now => {
+                const t = Math.min((now - start) / dur, 1);
+                el.textContent = format(from + (to - from) * (1 - Math.pow(1 - t, 3)));
+                if (t < 1) el._raf = requestAnimationFrame(step);
+            };
+            el._raf = requestAnimationFrame(step);
+        }
+
+        // ── State ──
+        async function loadState() {
+            state = await api('/api/state');
+            $('diary-date').value = localDate();
+            fillSettingsForm();
+        }
+
+        // ── Targets (Mifflin-St Jeor) ──
+        function computePlan(user) {
+            const { height, weight, activity, age = 27, gender = 'male' } = user;
+            const bmr = 10 * weight + 6.25 * height - 5 * age + (gender === 'male' ? 5 : -161);
+            const tdee = bmr * parseFloat(activity);
+            const kcal = Math.round(tdee - 550);
+            const protein = Math.round(weight * 2.1);
+            const fat = Math.round((kcal * 0.25) / 9);
+            const carbs = Math.round((kcal - protein * 4 - fat * 9) / 4);
+            return { bmr, tdee, kcal, protein, carbs, fat };
+        }
+        const calculateTargets = () => computePlan(state.user);
+
+        function sumEntries(entries) {
+            const t = { kcal: 0, protein: 0, carbs: 0, fat: 0 };
+            entries.forEach(e => MACRO_KEYS.forEach(k => { t[k] += e[k]; }));
+            return t;
+        }
+
+        // A recorded day is compliant within [-300, +50] kcal of target
+        function dayStatus(dateStr, targetKcal) {
+            const kcal = sumEntries(state.diary[dateStr] || []).kcal;
+            if (kcal <= 0) return { status: 'none', kcal };
+            const diff = kcal - targetKcal;
+            return { status: diff > 50 ? 'over' : diff < -300 ? 'under' : 'ok', kcal, diff };
+        }
+
+        // Consecutive recorded days ending today; an unrecorded today doesn't break the streak yet
+        function recordingStreak() {
+            const d = new Date();
+            if (!(state.diary[localDate(d)] || []).length) d.setDate(d.getDate() - 1);
+            let n = 0;
+            while ((state.diary[localDate(d)] || []).length) { n++; d.setDate(d.getDate() - 1); }
+            return n;
+        }
+
+        // ── Unit helpers (same parsing rules the server uses for cascades) ──
+        const unitBase = unit => parseFloat(unit) || 1;
+        const unitText = unit => unit.replace(/[0-9.]/g, '') || '单位';
+        function scaleFood(food, amount) {
+            const k = amount / unitBase(food.unit);
+            return { kcal: food.kcal * k, protein: food.protein * k, carbs: food.carbs * k, fat: food.fat * k };
+        }
+
+        // ── Navigation ──
+        function switchPage(pageId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.toggle('is-active', p.id === `page-${pageId}`));
+            document.querySelectorAll('.rail-item').forEach(n => {
+                if (n.dataset.page === pageId) n.setAttribute('aria-current', 'page');
+                else n.removeAttribute('aria-current');
+            });
+            lanePct = {};
+            if (pageId === 'diary')     { renderFoodPicker(); renderDiary(); }
             if (pageId === 'warehouse') renderWarehouse();
-            if (pageId === 'summary')   renderSummary();
+            if (pageId === 'summary')   renderSummary(true);
+            if (pageId === 'settings')  { fillSettingsForm(); }
+            document.querySelector('main').scrollTop = 0;
         }
 
-        function switchDiaryTab(mode) {
-            document.querySelectorAll('.diary-tab').forEach(t => t.classList.remove('active'));
-            document.getElementById('diary-form-warehouse').style.display  = 'none';
-            document.getElementById('diary-form-temporary').style.display  = 'none';
-            document.getElementById(`tab-${mode}`).classList.add('active');
-            document.getElementById(`diary-form-${mode}`).style.display    = 'flex';
-        }
-
-        // ── Calendar: clicking a past/present day navigates to its diary ──
         function navigateToDay(dateStr) {
-            document.getElementById('diary-date').value = dateStr;
+            $('diary-date').value = dateStr;
             switchPage('diary');
         }
 
-        // ── Settings ──
-        async function saveSettings() {
-            const payload = {
-                height:   parseFloat(document.getElementById('user-height').value)   || 170,
-                weight:   parseFloat(document.getElementById('user-weight').value)   || 70,
-                age:      parseInt(document.getElementById('user-age').value)         || 25,
-                gender:   document.getElementById('user-gender').value,
-                activity: document.getElementById('user-activity').value
-            };
-            const res = await fetch('/api/user', {
-                method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
-            });
-            state.user = await res.json();
-            showToast('身体数据已保存，目标已重新计算 ✓');
-            loadDiary();
+        // ── Diary: date ──
+        const diaryDate = () => $('diary-date').value;
+        function shiftDay(n) {
+            const d = parseLocalDate(diaryDate());
+            d.setDate(d.getDate() + n);
+            $('diary-date').value = localDate(d);
+            renderDiary();
+        }
+        function goToToday() { $('diary-date').value = localDate(); renderDiary(); }
+        function openDatePicker() {
+            const input = $('diary-date');
+            try { input.showPicker(); } catch { input.focus(); }
         }
 
-        // ── Data export ──
-        function exportData() {
-            const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
-            const url  = URL.createObjectURL(blob);
-            const a    = document.createElement('a');
-            a.href     = url;
-            a.download = `macro-tracker-${new Date().toISOString().split('T')[0]}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            showToast('数据已导出 ✓');
+        // ── Diary: meal + mode ──
+        function mealSegHtml(name) {
+            return MEAL_ORDER.map(m => `
+                <label><input type="radio" name="${name}" value="${m}">
+                    <span class="seg-opt"><span class="ms" aria-hidden="true">${MEALS[m].icon}</span>${MEALS[m].label}</span>
+                </label>`).join('');
         }
-
-        // ── Warehouse ──
-        // Collapsed category names live outside `state` so exports stay pure data
-        let collapsedCats = new Set();
-        try {
-            collapsedCats = new Set(JSON.parse(localStorage.getItem('macro_tracker_collapsed') || '[]'));
-        } catch (e) { collapsedCats = new Set(); }
-
-        function saveCollapsedCats() {
-            localStorage.setItem('macro_tracker_collapsed', JSON.stringify([...collapsedCats]));
+        const getMeal = (name = 'meal') => document.querySelector(`input[name="${name}"]:checked`)?.value || 'snack';
+        function setMeal(meal, name = 'meal') {
+            const input = document.querySelector(`input[name="${name}"][value="${meal}"]`);
+            if (input) input.checked = true;
+            if (name === 'meal') updateGoLabels();
         }
-
-        function toggleCategory(cat) {
-            collapsedCats.has(cat) ? collapsedCats.delete(cat) : collapsedCats.add(cat);
-            saveCollapsedCats();
-            renderWarehouse();
+        function updateGoLabels() {
+            const label = `记录到${MEALS[getMeal()].label}`;
+            document.querySelectorAll('.go-label').forEach(el => { el.textContent = label; });
         }
-
-        function toggleAllCategories() {
-            const allCats = [...new Set(state.foods.map(f => f.category || "未分类"))];
-            const anyExpanded = allCats.some(c => !collapsedCats.has(c));
-            collapsedCats = anyExpanded ? new Set(allCats) : new Set();
-            saveCollapsedCats();
-            renderWarehouse();
-        }
-
-        function groupFoodsByCategory() {
-            const groups = {};
-            state.foods.forEach(food => {
-                const cat = food.category || "未分类";
-                if (!groups[cat]) groups[cat] = [];
-                groups[cat].push(food);
-            });
-            return groups;
-        }
-
-        function renderWarehouse() {
-            const tbody = document.getElementById('warehouse-table-body');
-            if (!tbody) return;
-
-            const groups = groupFoodsByCategory();
-            let html = '';
-
-            for (const cat in groups) {
-                const isCollapsed = collapsedCats.has(cat);
-                // Category names are user input: pass them URI-encoded so quotes can't break the
-                // inline handler (encodeURIComponent leaves single quotes alone, so encode those too)
-                const catEnc = encodeURIComponent(cat).replace(/'/g, '%27');
-                html += `
-                    <tr class="category-header collapsible" tabindex="0" role="button" aria-expanded="${!isCollapsed}"
-                        onclick="toggleCategory(decodeURIComponent('${catEnc}'))"
-                        onkeydown="if(event.key==='Enter')toggleCategory(decodeURIComponent('${catEnc}'))">
-                        <td colspan="7"><span class="material-icons-outlined cat-chevron ${isCollapsed ? '' : 'open'}">chevron_right</span>${cat} <span class="cat-count">(${groups[cat].length})</span></td>
-                    </tr>
-                `;
-                if (isCollapsed) continue;
-                groups[cat].forEach(food => {
-                    const isActive = food.active !== false;
-                    html += `
-                        <tr class="${isActive ? '' : 'inactive-row'}">
-                            <td style="padding-left: 28px;"><b>${food.name}</b>${isActive ? '' : '<span class="inactive-badge">已停用</span>'}</td>
-                            <td>每 ${food.unit}</td>
-                            <td>${food.kcal} kcal</td>
-                            <td>${food.protein}g</td>
-                            <td>${food.carbs}g</td>
-                            <td>${food.fat}g</td>
-                            <td>
-                                <div class="actions-cell">
-                                    <span class="material-icons-outlined action-icon ${isActive ? 'toggle-on' : ''}" tabindex="0" role="button"
-                                          aria-label="${isActive ? '停用' : '启用'} ${food.name}"
-                                          onclick="toggleFoodActive('${food.id}')"
-                                          onkeydown="if(event.key==='Enter')toggleFoodActive('${food.id}')">${isActive ? 'toggle_on' : 'toggle_off'}</span>
-                                    <span class="material-icons-outlined action-icon" tabindex="0" role="button" aria-label="编辑 ${food.name}"
-                                          onclick="openWarehouseModal('${food.id}')"
-                                          onkeydown="if(event.key==='Enter')openWarehouseModal('${food.id}')">edit</span>
-                                    <span class="material-icons-outlined action-icon delete" tabindex="0" role="button" aria-label="删除 ${food.name}"
-                                          onclick="deleteWarehouseItem('${food.id}')"
-                                          onkeydown="if(event.key==='Enter')deleteWarehouseItem('${food.id}')">delete</span>
-                                </div>
-                            </td>
-                        </tr>
-                    `;
-                });
-            }
-
-            if (state.foods.length === 0) {
-                html = `
-                    <tr>
-                        <td colspan="7">
-                            <div class="empty-state">
-                                <span class="material-icons-outlined">inventory_2</span>
-                                仓库是空的，先添加一个食品基准吧
-                            </div>
-                        </td>
-                    </tr>
-                `;
-            }
-            tbody.innerHTML = html;
-
-            // Collapse-all button reflects current state
-            const collapseBtn = document.getElementById('collapse-all-btn');
-            if (collapseBtn) {
-                const allCats = Object.keys(groups);
-                const anyExpanded = allCats.some(c => !collapsedCats.has(c));
-                collapseBtn.style.visibility = allCats.length === 0 ? 'hidden' : 'visible';
-                document.getElementById('collapse-all-icon').textContent = anyExpanded ? 'unfold_less' : 'unfold_more';
-                document.getElementById('collapse-all-label').textContent = anyExpanded ? '全部收起' : '全部展开';
-            }
-
-            // Refresh category datalist
-            const datalist = document.getElementById('exist-categories');
-            if (datalist) {
-                datalist.innerHTML = '';
-                Object.keys(groups).forEach(cat => { datalist.innerHTML += `<option value="${cat}">`; });
-            }
-
-            rebuildDiarySelect();
-        }
-
-        // Rebuild diary food select: active items only, filtered by the search keyword
-        function rebuildDiarySelect() {
-            const select = document.getElementById('diary-food-select');
-            if (!select) return;
-            const searchInput = document.getElementById('diary-food-search');
-            const keyword = (searchInput ? searchInput.value : '').trim().toLowerCase();
-            const previousSelection = select.value;
-
-            const groups = groupFoodsByCategory();
-            let html = '';
-            for (const cat in groups) {
-                const visibleFoods = groups[cat].filter(f =>
-                    f.active !== false &&
-                    (!keyword || f.name.toLowerCase().includes(keyword) || cat.toLowerCase().includes(keyword))
-                );
-                if (visibleFoods.length === 0) continue;
-                html += `<optgroup label="📂 ${cat}">`;
-                visibleFoods.forEach(food => {
-                    html += `<option value="${food.id}">${food.name} (基准: ${food.unit})</option>`;
-                });
-                html += `</optgroup>`;
-            }
-            if (!html) {
-                html = keyword
-                    ? `<option value="" disabled selected>没有匹配「${keyword}」的食品</option>`
-                    : `<option value="" disabled selected>仓库中暂无启用的食品</option>`;
-            }
-            select.innerHTML = html;
-
-            // Keep the previous selection when it survives the filter
-            if (previousSelection && select.querySelector(`option[value="${previousSelection}"]`)) {
-                select.value = previousSelection;
-            } else {
-                prefillAmount();
-            }
-        }
-
-        // Prefill amount with the food's last-used amount, falling back to its base unit
-        function prefillAmount() {
-            const select = document.getElementById('diary-food-select');
-            const food = state.foods.find(f => f.id === select.value);
-            if (!food) return;
-            const base = parseFloat(food.unit);
-            document.getElementById('diary-food-amount').value =
-                food.lastAmount != null ? food.lastAmount : (isNaN(base) ? 100 : base);
-        }
-
-        async function addCustomFood() {
-            const category = document.getElementById('food-category').value.trim() || "未分类";
-            const name     = document.getElementById('food-name').value.trim();
-            const unit     = document.getElementById('food-unit').value.trim() || "100g";
-            const kcal     = parseFloat(document.getElementById('food-kcal').value)    || 0;
-            const protein  = parseFloat(document.getElementById('food-protein').value) || 0;
-            const carbs    = parseFloat(document.getElementById('food-carbs').value)   || 0;
-            const fat      = parseFloat(document.getElementById('food-fat').value)     || 0;
-
-            if (!name) { showToast('请输入食物商品名称', 'error'); return; }
-
-            const res = await fetch('/api/foods', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ category, name, unit, kcal, protein, carbs, fat })
-            });
-            state.foods.push(await res.json());
-            // Make sure the freshly added item is visible even if its category was collapsed
-            collapsedCats.delete(category);
-            saveCollapsedCats();
-            renderWarehouse();
-            ['food-name','food-unit','food-kcal','food-protein','food-carbs','food-fat']
-                .forEach(id => document.getElementById(id).value = '');
-            showToast(`「${name}」已成功入库 ✓`);
-        }
-
-        function openWarehouseModal(foodId) {
-            const food = state.foods.find(f => f.id === foodId);
-            if (!food) return;
-            currentWarehouseEditId = foodId;
-            document.getElementById('w-modal-cat').value     = food.category || "未分类";
-            document.getElementById('w-modal-name').value    = food.name;
-            document.getElementById('w-modal-unit').value    = food.unit;
-            document.getElementById('w-modal-kcal').value    = food.kcal;
-            document.getElementById('w-modal-protein').value = food.protein;
-            document.getElementById('w-modal-carbs').value   = food.carbs;
-            document.getElementById('w-modal-fat').value     = food.fat;
-            document.getElementById('warehouse-modal').classList.add('active');
-        }
-
-        function closeWarehouseModal() {
-            document.getElementById('warehouse-modal').classList.remove('active');
-            currentWarehouseEditId = null;
-        }
-
-        async function saveWarehouseEdit() {
-            if (!currentWarehouseEditId) return;
-            const food = state.foods.find(f => f.id === currentWarehouseEditId);
-            if (!food) return;
-
-            const nextCat     = document.getElementById('w-modal-cat').value.trim()     || "未分类";
-            const nextName    = document.getElementById('w-modal-name').value.trim();
-            const nextUnit    = document.getElementById('w-modal-unit').value.trim()    || "100g";
-            const nextKcal    = parseFloat(document.getElementById('w-modal-kcal').value)    || 0;
-            const nextProtein = parseFloat(document.getElementById('w-modal-protein').value) || 0;
-            const nextCarbs   = parseFloat(document.getElementById('w-modal-carbs').value)   || 0;
-            const nextFat     = parseFloat(document.getElementById('w-modal-fat').value)     || 0;
-
-            if (!nextName) { showToast('名称不能为空', 'error'); return; }
-
-            const res = await fetch(`/api/foods/${currentWarehouseEditId}`, {
-                method: 'PUT', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ category: nextCat, name: nextName, unit: nextUnit, kcal: nextKcal, protein: nextProtein, carbs: nextCarbs, fat: nextFat })
-            });
-            const { food: updatedFood, updatedEntries } = await res.json();
-
-            Object.assign(food, updatedFood);
-
-            // Server already recalculated every historical entry referencing this food; mirror those into local state
-            for (const updated of updatedEntries) {
-                const dayEntries = state.diary[updated.date];
-                if (!dayEntries) continue;
-                const entry = dayEntries.find(e => e.id === updated.id);
-                if (entry) Object.assign(entry, updated);
-            }
-
-            renderWarehouse();
-            loadDiary();
-            closeWarehouseModal();
-            showToast('级联数据同步重算完成 ✓');
-        }
-
-        async function deleteWarehouseItem(foodId) {
-            const food = state.foods.find(f => f.id === foodId);
-            const ok = await showConfirm(`确定删除「${food ? food.name : '此食品'}」吗？历史日记数据将保留为静态记录。`);
-            if (!ok) return;
-            await fetch(`/api/foods/${foodId}`, { method: 'DELETE' });
-            state.foods = state.foods.filter(f => f.id !== foodId);
-            renderWarehouse();
-            showToast('食品已删除');
-        }
-
-        async function toggleFoodActive(foodId) {
-            const food = state.foods.find(f => f.id === foodId);
-            if (!food) return;
-            const nextActive = !(food.active !== false);
-            const res = await fetch(`/api/foods/${foodId}/active`, {
-                method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ active: nextActive })
-            });
-            const updated = await res.json();
-            food.active = updated.active;
-            renderWarehouse();
-            showToast(food.active ? `「${food.name}」已启用 ✓` : `「${food.name}」已停用，不再出现在日记选择中`, food.active ? 'success' : 'info');
-        }
-
-        // ── Diary (meal-grouped) ──
-        const MEAL_ORDER  = ['breakfast', 'lunch', 'dinner', 'snack'];
-        const MEAL_LABELS = { breakfast: '🌅 早餐', lunch: '☀️ 午餐', dinner: '🌙 晚餐', snack: '🍎 加餐' };
 
         // Applied once on page load only; the user's manual choice wins for the session
         function getDefaultMeal(d = new Date()) {
@@ -1246,260 +1522,366 @@
             return 'snack';
         }
 
-        function goToToday() {
-            document.getElementById('diary-date').value = new Date().toISOString().split('T')[0];
-            loadDiary();
+        function switchMode(mode) {
+            ['food', 'temp'].forEach(m => {
+                $(`tab-${m}`).setAttribute('aria-selected', String(m === mode));
+                $(`form-${m}`).hidden = m !== mode;
+            });
         }
 
-        function loadDiary() {
-            renderWarehouse(); // keep dropdown in sync
+        function focusQuickAdd(meal) {
+            setMeal(meal);
+            const target = $('form-temp').hidden ? $('food-search') : $('temp-food-name');
+            target.focus({ preventScroll: true });
+            document.querySelector('.quick').scrollIntoView({ behavior: reduceMotion.matches ? 'auto' : 'smooth', block: 'nearest' });
+        }
 
-            const date       = document.getElementById('diary-date').value;
-            const todayStr   = new Date().toISOString().split('T')[0];
-            document.getElementById('btn-today').style.visibility = date === todayStr ? 'hidden' : 'visible';
+        // ── Diary: food picker ──
+        function groupFoodsByCategory() {
+            const groups = {};
+            state.foods.forEach(food => {
+                const cat = food.category || '未分类';
+                (groups[cat] ||= []).push(food);
+            });
+            return groups;
+        }
 
-            const dayEntries = state.diary[date] || [];
-            const tbody      = document.getElementById('diary-table-body');
-            tbody.innerHTML  = '';
+        function renderFoodPicker() {
+            const list = $('food-list');
+            const keyword = $('food-search').value.trim().toLowerCase();
+            const groups = groupFoodsByCategory();
+            const visibleIds = [];
+            let html = '';
+            for (const cat in groups) {
+                const foods = groups[cat].filter(f =>
+                    f.active !== false &&
+                    (!keyword || f.name.toLowerCase().includes(keyword) || cat.toLowerCase().includes(keyword)));
+                if (!foods.length) continue;
+                html += `<div class="pick-cat">${esc(cat)}</div>`;
+                for (const f of foods) {
+                    visibleIds.push(f.id);
+                    html += `
+                        <label class="pick">
+                            <input type="radio" name="food" value="${esc(f.id)}">
+                            <span class="pick-name">${esc(f.name)}</span>
+                            <span class="pick-unit">${esc(f.unit)}</span>
+                            <span class="pick-kcal num">${fmt(f.kcal)}</span>
+                        </label>`;
+                }
+            }
+            list.innerHTML = html || `
+                <div class="pick-empty">
+                    ${keyword ? `没有匹配「${esc(keyword)}」的食品` : '仓库里还没有启用的食品'}
+                    <button type="button" class="btn btn-ghost btn-sm" onclick="switchPage('warehouse'); $('new-food').open = true; $('food-name').focus();">去仓库新建</button>
+                </div>`;
+            $('quick-hint').textContent = visibleIds.length ? `${visibleIds.length} 种可选` : '';
 
-            if (dayEntries.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="7">
-                            <div class="empty-state">
-                                <span class="material-icons-outlined">restaurant</span>
-                                今天还没有进食记录，快去添加吧
-                            </div>
-                        </td>
-                    </tr>
-                `;
-                renderDashboard(0, 0, 0, 0);
+            // Never leave a hidden food selected: fall back to the first visible one
+            const nextId = visibleIds.includes(selectedFoodId) ? selectedFoodId : visibleIds[0] ?? null;
+            selectFood(nextId, nextId !== selectedFoodId);
+        }
+
+        function selectFood(id, prefill = true) {
+            selectedFoodId = id;
+            const input = id && document.querySelector(`#food-list input[value="${CSS.escape(id)}"]`);
+            if (input) input.checked = true;
+            const food = currentFood();
+            $('amount-unit').textContent = food ? unitText(food.unit).trim() : '';
+            if (prefill) prefillAmount();
+            updatePreview();
+        }
+        const currentFood = () => state.foods.find(f => f.id === selectedFoodId);
+
+        $('food-list').addEventListener('change', e => {
+            if (e.target.name === 'food') selectFood(e.target.value);
+        });
+        $('food-list').addEventListener('keydown', e => {
+            if (e.key === 'Enter') { e.preventDefault(); $('food-amount').focus(); }
+        });
+
+        function onSearchKey(e) {
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                (document.querySelector('#food-list input:checked') || document.querySelector('#food-list input'))?.focus();
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (selectedFoodId) $('food-amount').focus();
+            }
+        }
+
+        // Prefill with the food's last-used amount, falling back to its base unit
+        function prefillAmount() {
+            const food = currentFood();
+            if (!food) return;
+            const base = parseFloat(food.unit);
+            $('food-amount').value = food.lastAmount != null ? food.lastAmount : (isNaN(base) ? 100 : base);
+        }
+
+        function stepAmount(dir) {
+            const food = currentFood();
+            if (!food) return;
+            const base = unitBase(food.unit);
+            const step = base >= 50 ? 10 : base >= 20 ? 5 : base >= 5 ? 1 : 0.5;
+            const cur = parseFloat($('food-amount').value) || 0;
+            $('food-amount').value = Math.max(0, Math.round((cur + dir * step) * 100) / 100);
+            updatePreview();
+        }
+
+        function updatePreview() {
+            const el = $('add-preview');
+            const food = currentFood();
+            const amount = parseFloat($('food-amount').value);
+            if (!food || !(amount > 0)) {
+                el.innerHTML = '<span>选择食物并填写分量，这里会显示这一笔的营养</span>';
                 return;
             }
+            const m = scaleFood(food, amount);
+            const left = calculateTargets().kcal - sumEntries(state.diary[diaryDate()] || []).kcal - m.kcal;
+            el.innerHTML = `
+                <span class="pv-kcal num">+${fmt(m.kcal)}</span><span>kcal</span>
+                <span class="pv-left ${left < 0 ? 'is-over' : ''}">记完${left < 0 ? '超出' : '还剩'} <b class="num">${fmt(Math.abs(left))}</b></span>
+                <div class="pv-macros">
+                    <span class="pv-m">${macroIcon('protein')}蛋白 ${fmt1(m.protein)}g</span>
+                    <span class="pv-m">${macroIcon('carbs')}碳水 ${fmt1(m.carbs)}g</span>
+                    <span class="pv-m">${macroIcon('fat')}脂肪 ${fmt1(m.fat)}g</span>
+                </div>`;
+        }
 
-            // Group entries by meal; old entries without a meal default to 'snack'
-            const grouped = {};
-            MEAL_ORDER.forEach(m => grouped[m] = []);
-            dayEntries.forEach((entry, index) => {
-                grouped[entry.meal || 'snack'].push({ ...entry, _idx: index });
-            });
+        // ── Diary: render ──
+        function renderDiary({ celebrate = false } = {}) {
+            const date = diaryDate();
+            const d = parseLocalDate(date);
+            const today = localDate();
+            $('btn-today').hidden = date === today;
+            $('date-main').textContent = `${d.getMonth() + 1}月${d.getDate()}日`;
+            $('date-sub').textContent = date === today ? `${WEEKDAYS[d.getDay()]}，今天` : `${WEEKDAYS[d.getDay()]}，${d.getFullYear()}`;
 
-            let totalKcal = 0, totalP = 0, totalC = 0, totalF = 0;
+            const entries = state.diary[date] || [];
+            const totals = sumEntries(entries);
+            renderScoreboard(totals, celebrate);
+            $('log-count').textContent = entries.length ? `${entries.length} 项` : '';
 
-            MEAL_ORDER.forEach(meal => {
-                const entries = grouped[meal];
-                if (entries.length === 0) return;
+            const grouped = Object.fromEntries(MEAL_ORDER.map(m => [m, []]));
+            entries.forEach((e, idx) => (grouped[e.meal] || grouped.snack).push({ e, idx }));
+            $('diary-log').innerHTML = MEAL_ORDER.map(meal => mealHtml(meal, grouped[meal])).join('');
 
-                tbody.innerHTML += `<tr class="meal-header"><td colspan="7">${MEAL_LABELS[meal]}</td></tr>`;
+            lastAddedId = null;
+            changedEntryId = null;
+            updatePreview();
+        }
 
-                let mKcal = 0, mP = 0, mC = 0, mF = 0;
-                entries.forEach(entry => {
-                    const i = entry._idx;
-                    mKcal += entry.kcal; mP += entry.protein; mC += entry.carbs; mF += entry.fat;
-                    totalKcal += entry.kcal; totalP += entry.protein; totalC += entry.carbs; totalF += entry.fat;
+        function mealHtml(meal, items) {
+            const { label, icon } = MEALS[meal];
+            const sum = sumEntries(items.map(i => i.e));
+            const addBtn = `<button class="icon-btn" type="button" onclick="focusQuickAdd('${meal}')" aria-label="记一笔到${label}"><span class="ms" aria-hidden="true">add</span></button>`;
+            const head = items.length
+                ? `<div class="meal-head">
+                        <div class="meal-title"><span class="ms" aria-hidden="true">${icon}</span><h3>${label}</h3></div>
+                        <span class="meal-sum num">${fmt(sum.kcal)}</span>
+                        <span class="entry-m">${fmt1(sum.protein)}</span>
+                        <span class="entry-m c-carbs">${fmt1(sum.carbs)}</span>
+                        <span class="entry-m c-fat">${fmt1(sum.fat)}</span>
+                        <div class="meal-actions">${addBtn}</div>
+                   </div>`
+                : `<div class="meal-head">
+                        <div class="meal-title"><span class="ms" aria-hidden="true">${icon}</span><h3>${label} <span class="muted">还没记录</span></h3></div>
+                        <span></span><span></span><span class="c-carbs"></span><span class="c-fat"></span>
+                        <div class="meal-actions">${addBtn}</div>
+                   </div>`;
+            if (!items.length) return `<section class="meal is-empty">${head}</section>`;
 
-                    const nameTag = entry.isTemporary
-                        ? `<span style="color:var(--md-on-surface-variant);font-style:italic;">[临] ${entry.name}</span>`
-                        : `<b>${entry.name}</b>`;
+            const rows = items.map(({ e, idx }) => {
+                const name = esc(e.name);
+                const cls = [e.isTemporary && 'is-temp', e.id === lastAddedId && 'is-new', e.id === changedEntryId && 'is-changed'].filter(Boolean).join(' ');
+                return `
+                    <li class="entry ${cls}" data-idx="${idx}">
+                        <div class="entry-main">
+                            <span class="entry-name" title="${name}">${name}</span>
+                            ${e.isTemporary ? '<span class="tag">临时</span>' : ''}
+                            <span class="entry-amt">${esc(e.displayAmount)}</span>
+                        </div>
+                        <span class="entry-kcal num">${fmt(e.kcal)}</span>
+                        <span class="entry-m">${fmt1(e.protein)}</span>
+                        <span class="entry-m c-carbs">${fmt1(e.carbs)}</span>
+                        <span class="entry-m c-fat">${fmt1(e.fat)}</span>
+                        <div class="entry-actions">
+                            <button class="icon-btn" onclick="openEditModal(${idx})" aria-label="编辑 ${name}"><span class="ms" aria-hidden="true">edit</span></button>
+                            ${/ x \d+$/.test(e.name) ? `<button class="icon-btn act-portion" onclick="changeEntryPortion(${idx}, -1)" aria-label="${name} 减一份"><span class="ms" aria-hidden="true">remove</span></button>` : ''}
+                            <button class="icon-btn act-portion" onclick="changeEntryPortion(${idx}, 1)" aria-label="${name} 加一份"><span class="ms" aria-hidden="true">add</span></button>
+                            <button class="icon-btn danger" onclick="deleteDiaryEntry(${idx})" aria-label="删除 ${name}"><span class="ms" aria-hidden="true">delete</span></button>
+                        </div>
+                    </li>`;
+            }).join('');
+            return `<section class="meal">${head}<ul class="entries">${rows}</ul></section>`;
+        }
 
-                    tbody.innerHTML += `
-                        <tr>
-                            <td style="padding-left: 24px;">${nameTag}</td>
-                            <td>${entry.displayAmount}</td>
-                            <td>${entry.kcal.toFixed(1)}</td>
-                            <td>${entry.protein.toFixed(1)}g</td>
-                            <td>${entry.carbs.toFixed(1)}g</td>
-                            <td>${entry.fat.toFixed(1)}g</td>
-                            <td>
-                                <div class="actions-cell">
-                                    <span class="material-icons-outlined action-icon" tabindex="0" role="button" aria-label="编辑"
-                                          onclick="openEditModal(${i})"
-                                          onkeydown="if(event.key==='Enter')openEditModal(${i})">edit</span>
-                                    ${/ x \d+$/.test(entry.name) ? `<span class="material-icons-outlined action-icon" tabindex="0" role="button" aria-label="减一份"
-                                          onclick="changeEntryPortion(${i}, -1)"
-                                          onkeydown="if(event.key==='Enter')changeEntryPortion(${i}, -1)">remove</span>` : ''}
-                                    <span class="material-icons-outlined action-icon" tabindex="0" role="button" aria-label="加一份"
-                                          onclick="changeEntryPortion(${i}, 1)"
-                                          onkeydown="if(event.key==='Enter')changeEntryPortion(${i}, 1)">add</span>
-                                    <span class="material-icons-outlined action-icon delete" tabindex="0" role="button" aria-label="删除"
-                                          onclick="deleteDiaryEntry(${i})"
-                                          onkeydown="if(event.key==='Enter')deleteDiaryEntry(${i})">delete</span>
-                                </div>
-                            </td>
-                        </tr>
-                    `;
+        // Finish line sits at 80% of the track so up to 125% of target stays visible
+        const FINISH_SCALE = 1.25;
+        function renderScoreboard(totals, celebrate) {
+            const t = calculateTargets();
+            const remaining = t.kcal - totals.kcal;
+            $('board').classList.toggle('is-over', remaining < 0);
+            $('hero-label').textContent = remaining < 0 ? '已超出' : '还能吃';
+            tweenNumber($('hero-num'), Math.abs(remaining));
+
+            const streak = recordingStreak();
+            $('chip-streak').classList.toggle('is-hot', streak >= 3);
+            tweenNumber($('streak-days'), streak);
+
+            const proteinGap = t.protein - totals.protein;
+            $('chip-protein').innerHTML = proteinGap > 0
+                ? `<span class="ms" aria-hidden="true">egg_alt</span><span>蛋白还差 <b class="num">${fmt(proteinGap)}</b> g</span>`
+                : `<span class="ms" aria-hidden="true">check_circle</span><span>蛋白已达标</span>`;
+
+            for (const key of MACRO_KEYS) {
+                const lane = document.querySelector(`.lane[data-key="${key}"]`);
+                const pct = t[key] > 0 ? totals[key] / t[key] : 0;
+                const prevPct = lanePct[key];
+                lanePct[key] = pct;
+
+                lane.querySelector('.lane-fill').style.width = `${Math.min(pct, FINISH_SCALE) / FINISH_SCALE * 100}%`;
+                lane.querySelector('.lane-target').textContent = fmt(t[key]);
+                tweenNumber(lane.querySelector('.lane-cur'), totals[key]);
+
+                // On a cut, protein past target is the goal; everything else past target is overshoot
+                const done = key === 'protein' && pct >= 1;
+                const over = key !== 'protein' && pct > 1;
+                lane.classList.toggle('is-done', done);
+                lane.classList.toggle('is-over', over);
+                lane.querySelector('.lane-flag').innerHTML = done
+                    ? '<span class="ms" aria-hidden="true">check</span>达标'
+                    : over ? `+${fmt(totals[key] - t[key])}` : '';
+
+                if (!celebrate || prevPct === undefined) continue;
+                if (pct > prevPct) replay(lane, 'bump');
+                if (prevPct < 1 && pct >= 1) {
+                    replay(lane, 'finish');
+                    if (key === 'protein') showToast('蛋白质今日达标，保持住', 'success');
+                    if (key === 'kcal') showToast('今日热量已到目标线', 'warning');
+                }
+            }
+        }
+
+        // ── Diary: mutations ──
+        async function withBusy(btn, fn) {
+            btn.disabled = true;
+            try { await fn(); } finally { btn.disabled = false; }
+        }
+
+        function addDiaryEntry() {
+            return withBusy($('go-food'), async () => {
+                const date = diaryDate();
+                const userAmount = parseFloat($('food-amount').value) || 0;
+                const meal = getMeal();
+                const food = currentFood();
+                if (!food) { showToast('先选一个食物，或去仓库新建', 'error'); return; }
+                if (userAmount <= 0) { showToast('请填写大于 0 的分量', 'error'); $('food-amount').focus(); return; }
+
+                const created = await api('/api/diary', 'POST', {
+                    date, foodId: food.id, isTemporary: false, meal,
+                    name: food.name, rawAmount: userAmount,
+                    displayAmount: userAmount + unitText(food.unit),
+                    ...scaleFood(food, userAmount)
                 });
-
-                tbody.innerHTML += `
-                    <tr class="meal-subtotal">
-                        <td colspan="2" style="text-align:right;">小计</td>
-                        <td>${mKcal.toFixed(0)}</td>
-                        <td>${mP.toFixed(1)}g</td>
-                        <td>${mC.toFixed(1)}g</td>
-                        <td>${mF.toFixed(1)}g</td>
-                        <td></td>
-                    </tr>
-                `;
+                (state.diary[date] ||= []).push(created);
+                food.lastAmount = userAmount;
+                lastAddedId = created.id;
+                renderDiary({ celebrate: true });
+                showToast(`已记录「${food.name}」到${MEALS[meal].label}`);
+                $('food-amount').focus();
             });
-
-            renderDashboard(totalKcal, totalP, totalC, totalF);
         }
 
-        async function addDiaryEntry() {
-            const date       = document.getElementById('diary-date').value;
-            const foodId     = document.getElementById('diary-food-select').value;
-            const userAmount = parseFloat(document.getElementById('diary-food-amount').value) || 0;
-            const meal       = document.getElementById('diary-meal').value;
+        function addTemporaryDiaryEntry() {
+            return withBusy($('go-temp'), async () => {
+                const date = diaryDate();
+                const name = $('temp-food-name').value.trim() || '临时聚餐/无库存食品';
+                const kcal = parseFloat($('temp-food-kcal').value);
+                const meal = getMeal();
+                if (isNaN(kcal) || kcal < 0) { showToast('请填写预估热量', 'error'); $('temp-food-kcal').focus(); return; }
 
-            if (userAmount <= 0) { showToast('请输入合理的分量', 'error'); return; }
-            const food = state.foods.find(f => f.id === foodId);
-            if (!food) { showToast('请先在仓库中启用或添加食品', 'error'); return; }
-
-            const baseAmount = parseFloat(food.unit) || 1;
-            const multiplier = userAmount / baseAmount;
-            const unitText   = food.unit.replace(/[0-9.]/g, '') || '单位';
-
-            const entry = {
-                date, foodId: food.id, isTemporary: false, meal,
-                name: food.name, rawAmount: userAmount,
-                displayAmount: userAmount + unitText,
-                kcal:    food.kcal    * multiplier,
-                protein: food.protein * multiplier,
-                carbs:   food.carbs   * multiplier,
-                fat:     food.fat     * multiplier
-            };
-
-            const res = await fetch('/api/diary', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(entry)
+                const created = await api('/api/diary', 'POST', {
+                    date, foodId: 'temp_' + Date.now(), isTemporary: true, meal,
+                    name, rawAmount: 1, displayAmount: '1次', kcal,
+                    protein: parseFloat($('temp-food-protein').value) || 0,
+                    carbs:   parseFloat($('temp-food-carbs').value)   || 0,
+                    fat:     parseFloat($('temp-food-fat').value)     || 0
+                });
+                (state.diary[date] ||= []).push(created);
+                lastAddedId = created.id;
+                renderDiary({ celebrate: true });
+                ['temp-food-name', 'temp-food-kcal', 'temp-food-protein', 'temp-food-carbs', 'temp-food-fat'].forEach(id => { $(id).value = ''; });
+                showToast(`已记录「${name}」到${MEALS[meal].label}`);
             });
-            const created = await res.json();
-
-            if (!state.diary[date]) state.diary[date] = [];
-            state.diary[date].push(created);
-            food.lastAmount = userAmount; // remember for next prefill
-            loadDiary();
-            showToast(`已添加「${food.name}」✓`);
-            document.getElementById('diary-food-amount').focus();
-        }
-
-        async function addTemporaryDiaryEntry() {
-            const date    = document.getElementById('diary-date').value;
-            const name    = document.getElementById('temp-food-name').value.trim() || "临时聚餐/无库存食品";
-            const kcal    = parseFloat(document.getElementById('temp-food-kcal').value);
-            const protein = parseFloat(document.getElementById('temp-food-protein').value) || 0;
-            const carbs   = parseFloat(document.getElementById('temp-food-carbs').value)   || 0;
-            const fat     = parseFloat(document.getElementById('temp-food-fat').value)     || 0;
-            const meal    = document.getElementById('diary-meal').value;
-
-            if (isNaN(kcal) || kcal < 0) { showToast('请填写预估热量 (kcal)', 'error'); return; }
-
-            const entry = {
-                date, foodId: "temp_" + Date.now(), isTemporary: true, meal,
-                name, rawAmount: 1, displayAmount: "1次",
-                kcal, protein, carbs, fat
-            };
-
-            const res = await fetch('/api/diary', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(entry)
-            });
-            const created = await res.json();
-
-            if (!state.diary[date]) state.diary[date] = [];
-            state.diary[date].push(created);
-            loadDiary();
-
-            document.getElementById('temp-food-name').value    = '';
-            document.getElementById('temp-food-kcal').value    = '';
-            document.getElementById('temp-food-protein').value = '';
-            document.getElementById('temp-food-carbs').value   = '';
-            document.getElementById('temp-food-fat').value     = '';
-            showToast(`已添加「${name}」✓`);
         }
 
         function openEditModal(index) {
-            const date  = document.getElementById('diary-date').value;
-            const entry = state.diary[date][index];
+            const entry = state.diary[diaryDate()][index];
             currentEditIndex = index;
+            setMeal(MEALS[entry.meal] ? entry.meal : 'snack', 'modal-meal');
+            const isTemp = entry.isTemporary;
+            $('modal-field-container-standard').hidden = isTemp;
+            $('modal-field-container-temp').hidden = !isTemp;
 
-            // Pre-fill meal selector with the entry's current meal
-            document.getElementById('modal-meal').value = entry.meal || 'snack';
-
-            if (entry.isTemporary) {
-                document.getElementById('modal-field-container-standard').style.display = 'none';
-                document.getElementById('modal-field-container-temp').style.display     = 'block';
-                document.getElementById('modal-food-title').innerText = '修改临时记录';
-                document.getElementById('m-temp-name').value    = entry.name;
-                document.getElementById('m-temp-kcal').value    = entry.kcal;
-                document.getElementById('m-temp-protein').value = entry.protein;
-                document.getElementById('m-temp-carbs').value   = entry.carbs;
-                document.getElementById('m-temp-fat').value     = entry.fat;
+            if (isTemp) {
+                $('modal-food-title').textContent = '编辑临时记录';
+                $('m-temp-name').value    = entry.name;
+                $('m-temp-kcal').value    = entry.kcal;
+                $('m-temp-protein').value = entry.protein;
+                $('m-temp-carbs').value   = entry.carbs;
+                $('m-temp-fat').value     = entry.fat;
             } else {
-                document.getElementById('modal-field-container-standard').style.display = 'block';
-                document.getElementById('modal-field-container-temp').style.display     = 'none';
-                const food     = state.foods.find(f => f.id === entry.foodId) || { unit: "单位" };
-                const unitText = food.unit.replace(/[0-9.]/g, '') || '单位';
-                document.getElementById('modal-food-title').innerText    = `编辑 - ${entry.name}`;
-                document.getElementById('modal-amount-label').innerText  = `新的分量/重量 (${unitText})`;
-                document.getElementById('modal-food-amount').value       = entry.rawAmount || parseFloat(entry.displayAmount) || 100;
+                const food = state.foods.find(f => f.id === entry.foodId) || { unit: '单位' };
+                $('modal-food-title').textContent   = `编辑「${entry.name}」`;
+                $('modal-amount-label').textContent = `分量（${unitText(food.unit).trim()}）`;
+                $('modal-food-amount').value        = entry.rawAmount || parseFloat(entry.displayAmount) || 100;
             }
-            document.getElementById('edit-modal').classList.add('active');
+            $('edit-dialog').showModal();
         }
 
-        function closeModal() {
-            document.getElementById('edit-modal').classList.remove('active');
-            currentEditIndex = null;
-        }
+        function closeModal() { $('edit-dialog').close(); }
 
         async function saveDiaryEdit() {
             if (currentEditIndex === null) return;
-            const date  = document.getElementById('diary-date').value;
-            const entry = state.diary[date][currentEditIndex];
-
-            // Update meal category (applies to both temporary and warehouse entries)
-            const meal = document.getElementById('modal-meal').value;
+            const date = diaryDate();
+            const index = currentEditIndex;
+            const entry = state.diary[date][index];
+            const meal = getMeal('modal-meal');
             let payload;
 
             if (entry.isTemporary) {
-                const nextK = parseFloat(document.getElementById('m-temp-kcal').value);
-                if (isNaN(nextK) || nextK < 0) { showToast('热量不能为空', 'error'); return; }
+                const kcal = parseFloat($('m-temp-kcal').value);
+                if (isNaN(kcal) || kcal < 0) { showToast('请填写热量', 'error'); return; }
                 payload = {
-                    meal, name: document.getElementById('m-temp-name').value.trim() || "临时食物",
-                    rawAmount: entry.rawAmount, displayAmount: entry.displayAmount,
-                    kcal: nextK,
-                    protein: parseFloat(document.getElementById('m-temp-protein').value) || 0,
-                    carbs:   parseFloat(document.getElementById('m-temp-carbs').value)   || 0,
-                    fat:     parseFloat(document.getElementById('m-temp-fat').value)     || 0
+                    meal, name: $('m-temp-name').value.trim() || '临时食物',
+                    rawAmount: entry.rawAmount, displayAmount: entry.displayAmount, kcal,
+                    protein: parseFloat($('m-temp-protein').value) || 0,
+                    carbs:   parseFloat($('m-temp-carbs').value)   || 0,
+                    fat:     parseFloat($('m-temp-fat').value)     || 0
                 };
             } else {
-                const newUserAmount = parseFloat(document.getElementById('modal-food-amount').value) || 0;
-                if (newUserAmount <= 0) { showToast('请输入合理的分量', 'error'); return; }
+                const amount = parseFloat($('modal-food-amount').value) || 0;
+                if (amount <= 0) { showToast('请填写大于 0 的分量', 'error'); return; }
                 const food = state.foods.find(f => f.id === entry.foodId);
-                if (!food) { showToast('底层食品已删除，无法重算', 'error'); closeModal(); return; }
-                const baseAmount = parseFloat(food.unit) || 1;
-                const multiplier = newUserAmount / baseAmount;
-                const unitText   = food.unit.replace(/[0-9.]/g, '') || '单位';
+                if (!food) { showToast('这个食品已从仓库删除，无法按分量重算', 'error'); closeModal(); return; }
                 payload = {
                     meal, name: entry.name,
-                    rawAmount: newUserAmount, displayAmount: newUserAmount + unitText,
-                    kcal:    food.kcal    * multiplier,
-                    protein: food.protein * multiplier,
-                    carbs:   food.carbs   * multiplier,
-                    fat:     food.fat     * multiplier
+                    rawAmount: amount, displayAmount: amount + unitText(food.unit),
+                    ...scaleFood(food, amount)
                 };
             }
 
-            const res = await fetch(`/api/diary/${entry.id}`, {
-                method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
-            });
-            state.diary[date][currentEditIndex] = await res.json();
-            loadDiary();
+            const updated = await api(`/api/diary/${entry.id}`, 'PUT', payload);
+            state.diary[date][index] = updated;
+            changedEntryId = updated.id;
             closeModal();
-            showToast('记录已更新 ✓');
+            renderDiary({ celebrate: true });
+            showToast('记录已更新');
         }
 
         // Each click adds/removes one original portion; the " x N" name suffix is the current multiplier
         async function changeEntryPortion(index, delta) {
-            const date  = document.getElementById('diary-date').value;
+            const date  = diaryDate();
             const entry = state.diary[date][index];
             const match = entry.name.match(/^(.*) x (\d+)$/);
             const base  = match ? match[1] : entry.name;
@@ -1510,160 +1892,371 @@
             const scale = v => Math.round(v * ratio * 100) / 100;
             const amountNum = parseFloat(entry.displayAmount);
 
-            const res = await fetch(`/api/diary/${entry.id}`, {
-                method: 'PUT', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    meal: entry.meal, name: next > 1 ? `${base} x ${next}` : base,
-                    rawAmount: scale(entry.rawAmount),
-                    displayAmount: isNaN(amountNum) ? entry.displayAmount
-                        : entry.displayAmount.replace(String(amountNum), scale(amountNum)),
-                    kcal: scale(entry.kcal), protein: scale(entry.protein), carbs: scale(entry.carbs), fat: scale(entry.fat)
-                })
+            const updated = await api(`/api/diary/${entry.id}`, 'PUT', {
+                meal: entry.meal, name: next > 1 ? `${base} x ${next}` : base,
+                rawAmount: scale(entry.rawAmount),
+                displayAmount: isNaN(amountNum) ? entry.displayAmount
+                    : entry.displayAmount.replace(String(amountNum), scale(amountNum)),
+                kcal: scale(entry.kcal), protein: scale(entry.protein), carbs: scale(entry.carbs), fat: scale(entry.fat)
             });
-            if (!res.ok) { showToast('操作失败', 'error'); return; }
-            state.diary[date][index] = await res.json();
-            loadDiary();
-            showToast(next > 1 ? `「${base}」x ${next} ✓` : `「${base}」已恢复原份量`);
+            state.diary[date][index] = updated;
+            changedEntryId = updated.id;
+            renderDiary({ celebrate: true });
+            showToast(next > 1 ? `「${base}」x ${next}` : `「${base}」已恢复一份`);
         }
 
         async function deleteDiaryEntry(index) {
-            const date  = document.getElementById('diary-date').value;
+            const date  = diaryDate();
             const entry = state.diary[date][index];
-            const ok    = await showConfirm(`确定删除「${entry ? entry.name : '此记录'}」？`);
-            if (!ok) return;
-            await fetch(`/api/diary/${entry.id}`, { method: 'DELETE' });
-            state.diary[date].splice(index, 1);
-            loadDiary();
-            showToast('记录已删除');
-        }
-
-        // ── Dashboard with progress bars ──
-        function renderDashboard(tk, tp, tc, tf) {
-            const t = calculateTargets();
-            updateCardDisplay('dash-kcal-val', 'dash-kcal-bar', 'var(--kcal-color)',     tk, t.kcal);
-            updateCardDisplay('dash-p-val',    'dash-p-bar',    'var(--protein-color)',   tp, t.protein);
-            updateCardDisplay('dash-c-val',    'dash-c-bar',    'var(--carbs-color)',     tc, t.carbs);
-            updateCardDisplay('dash-f-val',    'dash-f-bar',    'var(--fat-color)',       tf, t.fat);
-        }
-
-        function updateCardDisplay(valueId, barId, color, current, target) {
-            const el  = document.getElementById(valueId);
-            const bar = document.getElementById(barId);
-            if (!el) return;
-            el.innerHTML = `${Math.round(current)} <span style="font-size:16px;font-weight:400;color:var(--md-on-surface-variant)">/ ${target}</span>`;
-            const pct = target > 0 ? Math.min((current / target) * 100, 100) : 0;
-            if (bar) {
-                bar.style.width      = pct + '%';
-                bar.style.background = current > target ? '#ea4335' : color;
+            if (!entry || !(await showConfirm(`删除「${entry.name}」这条记录？`))) return;
+            await api(`/api/diary/${entry.id}`, 'DELETE');
+            const row = document.querySelector(`.entry[data-idx="${index}"]`);
+            if (row && !reduceMotion.matches) {
+                row.classList.add('is-leaving');
+                await new Promise(r => setTimeout(r, 200));
             }
-            el.classList.toggle('alert-over', current > target);
+            state.diary[date].splice(index, 1);
+            renderDiary();
+            showToast('记录已删除', 'info');
         }
 
-        // ── Summary calendar ──
+        // ── Warehouse ──
+        // Collapsed category names live outside `state` so exports stay pure data
+        let collapsedCats = new Set();
+        try {
+            collapsedCats = new Set(JSON.parse(localStorage.getItem('macro_tracker_collapsed') || '[]'));
+        } catch { collapsedCats = new Set(); }
+
+        function saveCollapsedCats() {
+            try { localStorage.setItem('macro_tracker_collapsed', JSON.stringify([...collapsedCats])); } catch { /* storage unavailable */ }
+        }
+
+        function toggleCategory(cat) {
+            collapsedCats.has(cat) ? collapsedCats.delete(cat) : collapsedCats.add(cat);
+            saveCollapsedCats();
+            renderWarehouse();
+        }
+
+        function toggleAllCategories() {
+            const allCats = Object.keys(groupFoodsByCategory());
+            const anyExpanded = allCats.some(c => !collapsedCats.has(c));
+            collapsedCats = anyExpanded ? new Set(allCats) : new Set();
+            saveCollapsedCats();
+            renderWarehouse();
+        }
+
+        $('warehouse-table-body').addEventListener('click', e => {
+            const btn = e.target.closest('.cat-toggle');
+            if (btn) toggleCategory(btn.dataset.cat);
+        });
+
+        function renderWarehouse() {
+            const tbody = $('warehouse-table-body');
+            const groups = groupFoodsByCategory();
+            const keyword = $('warehouse-search').value.trim().toLowerCase();
+            const activeCount = state.foods.filter(f => f.active !== false).length;
+            $('warehouse-count').textContent = `${state.foods.length} 种，${activeCount} 种启用`;
+
+            let html = '';
+            for (const cat in groups) {
+                const foods = groups[cat].filter(f => !keyword || f.name.toLowerCase().includes(keyword) || cat.toLowerCase().includes(keyword));
+                if (!foods.length) continue;
+                // Searching shows every match regardless of collapse state
+                const isCollapsed = !keyword && collapsedCats.has(cat);
+                html += `
+                    <tr class="cat-row"><td colspan="8">
+                        <button class="cat-toggle" data-cat="${esc(cat)}" aria-expanded="${!isCollapsed}">
+                            <span class="ms" aria-hidden="true">chevron_right</span>${esc(cat)} <small>${foods.length}</small>
+                        </button>
+                    </td></tr>`;
+                if (isCollapsed) continue;
+                for (const food of foods) {
+                    const isActive = food.active !== false;
+                    const name = esc(food.name);
+                    const id = esc(food.id);
+                    html += `
+                        <tr class="${isActive ? '' : 'is-off'}">
+                            <td class="w-name">${name}${isActive ? '' : '<span class="tag">已停用</span>'}</td>
+                            <td class="w-unit">${esc(food.unit)}</td>
+                            <td class="r w-kcal num">${fmt(food.kcal)}</td>
+                            <td class="r w-m">${fmt1(food.protein)}</td>
+                            <td class="r w-m">${fmt1(food.carbs)}</td>
+                            <td class="r w-m">${fmt1(food.fat)}</td>
+                            <td><label class="switch"><input type="checkbox" role="switch" ${isActive ? 'checked' : ''}
+                                aria-label="在日记中启用 ${name}" onchange="toggleFoodActive('${id}', this)"><span></span></label></td>
+                            <td><div class="w-actions">
+                                <button class="icon-btn" onclick="openWarehouseModal('${id}')" aria-label="编辑 ${name}"><span class="ms" aria-hidden="true">edit</span></button>
+                                <button class="icon-btn danger" onclick="deleteWarehouseItem('${id}')" aria-label="删除 ${name}"><span class="ms" aria-hidden="true">delete</span></button>
+                            </div></td>
+                        </tr>`;
+                }
+            }
+
+            if (!state.foods.length) {
+                html = `<tr><td colspan="8"><div class="empty">仓库是空的。点上方「新建食品」，录入第一个常吃的食物。</div></td></tr>`;
+                $('new-food').open = true;
+            } else if (!html) {
+                html = `<tr><td colspan="8"><div class="empty">没有匹配「${esc(keyword)}」的食品</div></td></tr>`;
+            }
+            tbody.innerHTML = html;
+
+            const allCats = Object.keys(groups);
+            const anyExpanded = allCats.some(c => !collapsedCats.has(c));
+            $('collapse-all-btn').hidden = !allCats.length || !!keyword;
+            $('collapse-all-icon').textContent = anyExpanded ? 'unfold_less' : 'unfold_more';
+            $('collapse-all-label').textContent = anyExpanded ? '全部收起' : '全部展开';
+
+            $('exist-categories').innerHTML = allCats.map(cat => `<option value="${esc(cat)}">`).join('');
+        }
+
+        async function addCustomFood() {
+            const category = $('food-category').value.trim() || '未分类';
+            const name     = $('food-name').value.trim();
+            const unit     = $('food-unit').value.trim() || '100g';
+            if (!name) { showToast('请填写食品名称', 'error'); $('food-name').focus(); return; }
+
+            const food = await api('/api/foods', 'POST', {
+                category, name, unit,
+                kcal:    parseFloat($('food-kcal').value)    || 0,
+                protein: parseFloat($('food-protein').value) || 0,
+                carbs:   parseFloat($('food-carbs').value)   || 0,
+                fat:     parseFloat($('food-fat').value)     || 0
+            });
+            state.foods.push(food);
+            // Make sure the freshly added item is visible even if its category was collapsed
+            collapsedCats.delete(category);
+            saveCollapsedCats();
+            $('warehouse-search').value = '';
+            renderWarehouse();
+            renderFoodPicker();
+            ['food-name', 'food-unit', 'food-kcal', 'food-protein', 'food-carbs', 'food-fat'].forEach(id => { $(id).value = ''; });
+            $('food-name').focus();
+            showToast(`「${name}」已入库`);
+        }
+
+        function openWarehouseModal(foodId) {
+            const food = state.foods.find(f => f.id === foodId);
+            if (!food) return;
+            currentWarehouseEditId = foodId;
+            $('w-modal-cat').value     = food.category || '未分类';
+            $('w-modal-name').value    = food.name;
+            $('w-modal-unit').value    = food.unit;
+            $('w-modal-kcal').value    = food.kcal;
+            $('w-modal-protein').value = food.protein;
+            $('w-modal-carbs').value   = food.carbs;
+            $('w-modal-fat').value     = food.fat;
+            $('warehouse-dialog').showModal();
+        }
+
+        function closeWarehouseModal() { $('warehouse-dialog').close(); }
+
+        async function saveWarehouseEdit() {
+            const id = currentWarehouseEditId;
+            const food = id && state.foods.find(f => f.id === id);
+            if (!food) return;
+
+            const name = $('w-modal-name').value.trim();
+            if (!name) { showToast('名称不能为空', 'error'); return; }
+
+            const { food: updatedFood, updatedEntries } = await api(`/api/foods/${encodeURIComponent(id)}`, 'PUT', {
+                category: $('w-modal-cat').value.trim() || '未分类',
+                name,
+                unit:    $('w-modal-unit').value.trim() || '100g',
+                kcal:    parseFloat($('w-modal-kcal').value)    || 0,
+                protein: parseFloat($('w-modal-protein').value) || 0,
+                carbs:   parseFloat($('w-modal-carbs').value)   || 0,
+                fat:     parseFloat($('w-modal-fat').value)     || 0
+            });
+            Object.assign(food, updatedFood);
+
+            // Server already recalculated every historical entry referencing this food; mirror those into local state
+            for (const updated of updatedEntries) {
+                const entry = (state.diary[updated.date] || []).find(e => e.id === updated.id);
+                if (entry) Object.assign(entry, updated);
+            }
+
+            closeWarehouseModal();
+            renderWarehouse();
+            renderFoodPicker();
+            showToast(updatedEntries.length ? `已保存，同步重算 ${updatedEntries.length} 条历史记录` : '已保存');
+        }
+
+        async function deleteWarehouseItem(foodId) {
+            const food = state.foods.find(f => f.id === foodId);
+            if (!(await showConfirm(`删除「${food ? food.name : '此食品'}」？已记录的历史日记会保留。`))) return;
+            await api(`/api/foods/${encodeURIComponent(foodId)}`, 'DELETE');
+            state.foods = state.foods.filter(f => f.id !== foodId);
+            renderWarehouse();
+            renderFoodPicker();
+            showToast('食品已删除', 'info');
+        }
+
+        async function toggleFoodActive(foodId, input) {
+            const food = state.foods.find(f => f.id === foodId);
+            if (!food) return;
+            const nextActive = input.checked;
+            try {
+                const updated = await api(`/api/foods/${encodeURIComponent(foodId)}/active`, 'PATCH', { active: nextActive });
+                food.active = updated.active;
+            } catch {
+                input.checked = !nextActive;
+                return;
+            }
+            renderWarehouse();
+            renderFoodPicker();
+            showToast(food.active ? `「${food.name}」已启用` : `「${food.name}」已停用，不再出现在日记里`, food.active ? 'success' : 'info');
+        }
+
+        // ── Summary ──
         function changeSummaryMonth(offset) {
             summaryCurrentDate = new Date(summaryCurrentDate.getFullYear(), summaryCurrentDate.getMonth() + offset, 1);
-            renderSummary();
+            renderSummary(true);
         }
 
-        function renderSummary() {
-            const grid       = document.getElementById('calendar-grid');
-            const monthLabel = document.getElementById('summary-month-label');
-            const statsEl    = document.getElementById('monthly-stats');
-            if (!grid || !monthLabel) return;
-
+        function renderSummary(animate = false) {
             const year  = summaryCurrentDate.getFullYear();
             const month = summaryCurrentDate.getMonth();
-            monthLabel.innerText = `${year}年 ${(month + 1).toString().padStart(2, '0')}月`;
+            $('summary-month-label').textContent = `${year}年${month + 1}月`;
 
-            const firstDayIndex  = new Date(year, month, 1).getDay();
-            const totalDays      = new Date(year, month + 1, 0).getDate();
-            const prevTotalDays  = new Date(year, month, 0).getDate();
-            const targets        = calculateTargets();
-            const todayStr       = new Date().toISOString().split('T')[0];
+            const firstDayIndex = new Date(year, month, 1).getDay();
+            const totalDays     = new Date(year, month + 1, 0).getDate();
+            const targets       = calculateTargets();
+            const todayStr      = localDate();
+            const icons         = { ok: 'check', over: 'arrow_upward', under: 'arrow_downward' };
 
             let daysRecorded = 0, daysCompliant = 0, totalKcalSum = 0;
+            let html = '';
+            for (let i = 0; i < firstDayIndex; i++) html += '<div class="cal-day is-blank" aria-hidden="true"></div>';
 
-            grid.innerHTML = '';
-
-            // Previous month ghost cells
-            for (let i = firstDayIndex - 1; i >= 0; i--) {
-                grid.innerHTML += `<div style="background:#f1f3f4;border:1px dashed #dadce0;border-radius:8px;min-height:80px;padding:6px;color:#c2c4c7;font-size:12px;opacity:0.5;">${prevTotalDays - i}</div>`;
-            }
-
-            // Current month cells
             for (let day = 1; day <= totalDays; day++) {
-                const dateStr  = `${year}-${(month + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
-                const entries  = state.diary[dateStr] || [];
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 const isFuture = dateStr > todayStr;
-                const isToday  = dateStr === todayStr;
+                const { status, kcal, diff } = dayStatus(dateStr, targets.kcal);
+                const i = firstDayIndex + day;
+                const cls = ['cal-day', isFuture && 'is-future', dateStr === todayStr && 'is-today', status !== 'none' && `st-${status}`].filter(Boolean).join(' ');
 
-                let tk = 0, tp = 0, tc = 0, tf = 0;
-                entries.forEach(e => { tk += e.kcal; tp += e.protein; tc += e.carbs; tf += e.fat; });
-
-                let bgStyle    = "background:var(--md-surface);border:1px solid var(--md-border);color:var(--md-on-surface);";
-                let statusBadge = '';
-
-                if (tk > 0) {
+                let inner = `<div class="cal-top"><span class="cal-date">${day}</span>${kcal > 0 ? `<span class="cal-kcal num">${fmt(kcal)}</span>` : ''}</div>`;
+                if (status !== 'none') {
                     daysRecorded++;
-                    totalKcalSum += tk;
-                    const diff = tk - targets.kcal;
-                    if (diff > 50) {
-                        bgStyle     = "background:#fce8e6;border:1px solid #ea4335;color:#c5221f;";
-                        statusBadge = `<div style="font-size:10px;margin-top:4px;font-weight:700;">超 +${Math.round(diff)}</div>`;
-                    } else if (diff < -300) {
-                        bgStyle     = "background:#fef7e0;border:1px solid #f9ab00;color:#b06000;";
-                        statusBadge = `<div style="font-size:10px;margin-top:4px;font-weight:700;">缺口大</div>`;
-                    } else {
-                        daysCompliant++;
-                        bgStyle     = "background:#e6f4ea;border:1px solid #34a853;color:#137333;";
-                        statusBadge = `<div style="font-size:10px;margin-top:4px;font-weight:700;">✓ 达标</div>`;
-                    }
+                    totalKcalSum += kcal;
+                    if (status === 'ok') daysCompliant++;
+                    const label = status === 'ok' ? '达标' : status === 'over' ? `+${fmt(diff)}` : `${fmt(diff)}`;
+                    const width = Math.min(kcal / targets.kcal, FINISH_SCALE) / FINISH_SCALE * 100;
+                    inner += `<div class="cal-status"><span class="ms" aria-hidden="true">${icons[status]}</span><span>${label}</span></div>
+                              <div class="cal-bar"><i style="width:${width}%"></i></div>`;
                 }
 
-                const todayRing = isToday ? 'box-shadow:0 0 0 3px var(--md-primary);font-weight:700;' : '';
-                const baseStyle = `${bgStyle}${todayRing}border-radius:8px;min-height:80px;padding:8px;display:flex;flex-direction:column;justify-content:space-between;`;
-                const interactive = !isFuture
-                    ? `onclick="navigateToDay('${dateStr}')" style="${baseStyle}cursor:pointer;transition:transform 0.15s;" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform='scale(1)'"`
-                    : `style="${baseStyle}"`;
-
-                grid.innerHTML += `
-                    <div ${interactive}>
-                        <div style="display:flex;justify-content:space-between;align-items:center;">
-                            <span style="font-size:13px;">${day}</span>
-                            ${tk > 0 ? `<span style="font-size:10px;opacity:0.8;">${Math.round(tk)}k</span>` : ''}
-                        </div>
-                        ${statusBadge}
-                    </div>
-                `;
+                html += isFuture
+                    ? `<div class="${cls}" style="--i:${i}">${inner}</div>`
+                    : `<button class="${cls}" style="--i:${i}" onclick="navigateToDay('${dateStr}')" aria-label="${month + 1}月${day}日${kcal > 0 ? `，${fmt(kcal)} kcal` : '，无记录'}">${inner}</button>`;
             }
 
-            // Next month ghost cells
-            const nextRemaining = (7 - ((firstDayIndex + totalDays) % 7)) % 7;
-            for (let i = 1; i <= nextRemaining; i++) {
-                grid.innerHTML += `<div style="background:#f1f3f4;border:1px dashed #dadce0;border-radius:8px;min-height:80px;padding:6px;color:#c2c4c7;font-size:12px;opacity:0.5;">${i}</div>`;
-            }
+            const grid = $('calendar-grid');
+            grid.innerHTML = html;
+            grid.classList.remove('is-entering');
+            if (animate && !reduceMotion.matches) replay(grid, 'is-entering');
 
-            // Monthly aggregate stats
-            const avgKcal    = daysRecorded > 0 ? Math.round(totalKcalSum / daysRecorded) : 0;
-            const compliance = daysRecorded > 0 ? Math.round((daysCompliant / daysRecorded) * 100) : 0;
-            const compColor  = compliance >= 70 ? '#137333' : compliance >= 40 ? '#b06000' : '#c5221f';
-            statsEl.innerHTML = `
-                <span>本月已记录 <strong>${daysRecorded}</strong> / ${totalDays} 天</span>
-                <span style="color:var(--md-border)">·</span>
-                <span>达标天数 <strong style="color:#137333">${daysCompliant}</strong> 天</span>
-                <span style="color:var(--md-border)">·</span>
-                <span>平均热量 <strong>${avgKcal > 0 ? avgKcal.toLocaleString() : '—'}</strong> kcal</span>
-                <span style="color:var(--md-border)">·</span>
-                <span>合规率 <strong style="color:${compColor}">${daysRecorded > 0 ? compliance + '%' : '—'}</strong></span>
-            `;
+            tweenNumber($('sum-streak'), recordingStreak());
+            const avgKcal = daysRecorded ? Math.round(totalKcalSum / daysRecorded) : 0;
+            const compliance = daysRecorded ? Math.round((daysCompliant / daysRecorded) * 100) : 0;
+            $('monthly-stats').innerHTML = `
+                <div class="stat"><span>本月记录</span><b class="num">${daysRecorded}<small>/ ${totalDays} 天</small></b></div>
+                <div class="stat"><span>达标天数</span><b class="num">${daysCompliant}<small>天</small></b></div>
+                <div class="stat"><span>达标率</span><b class="num">${daysRecorded ? compliance : '-'}<small>${daysRecorded ? '%' : ''}</small></b></div>
+                <div class="stat"><span>日均热量</span><b class="num">${avgKcal ? fmt(avgKcal) : '-'}<small>${avgKcal ? `/ ${fmt(targets.kcal)}` : ''}</small></b></div>`;
+        }
+
+        // ── Settings ──
+        function fillSettingsForm() {
+            $('user-height').value   = state.user.height;
+            $('user-weight').value   = state.user.weight;
+            $('user-age').value      = state.user.age;
+            $('user-gender').value   = state.user.gender;
+            $('user-activity').value = String(state.user.activity);
+            $('dirty-note').hidden = true;
+            $('save-settings').disabled = true;
+            renderPlan(state.user);
+        }
+
+        function readSettingsForm() {
+            return {
+                height:   parseFloat($('user-height').value) || 170,
+                weight:   parseFloat($('user-weight').value) || 70,
+                age:      parseInt($('user-age').value)      || 25,
+                gender:   $('user-gender').value,
+                activity: $('user-activity').value
+            };
+        }
+
+        function onSettingsInput() {
+            const draft = readSettingsForm();
+            const dirty = ['height', 'weight', 'age', 'gender'].some(k => String(draft[k]) !== String(state.user[k]))
+                || parseFloat(draft.activity) !== parseFloat(state.user.activity);
+            $('dirty-note').hidden = !dirty;
+            $('save-settings').disabled = !dirty;
+            renderPlan(draft);
+        }
+
+        function renderPlan(user) {
+            const p = computePlan(user);
+            tweenNumber($('plan-bmr'), p.bmr);
+            tweenNumber($('plan-tdee'), p.tdee);
+            tweenNumber($('plan-kcal'), p.kcal);
+            const split = [
+                { key: 'protein', label: '蛋白', g: p.protein, kcal: p.protein * 4 },
+                { key: 'carbs',   label: '碳水', g: p.carbs,   kcal: p.carbs * 4 },
+                { key: 'fat',     label: '脂肪', g: p.fat,     kcal: p.fat * 9 }
+            ];
+            const total = split.reduce((s, x) => s + Math.max(x.kcal, 0), 0) || 1;
+            $('split-bar').querySelectorAll('i').forEach((el, i) => { el.style.flexGrow = Math.max(split[i].kcal, 0); });
+            $('split-legend').innerHTML = split.map(x => `
+                <div style="flex-grow: ${Math.max(x.kcal, 0)}">
+                    <span>${macroIcon(x.key)}${x.label}</span>
+                    <b class="num">${fmt(x.g)}<small> g</small></b>
+                    <small>${Math.round(Math.max(x.kcal, 0) / total * 100)}% 热量</small>
+                </div>`).join('');
+        }
+
+        async function saveSettings() {
+            const btn = $('save-settings');
+            await withBusy(btn, async () => {
+                state.user = await api('/api/user', 'PUT', readSettingsForm());
+                showToast('已保存，每日目标已更新');
+            });
+            fillSettingsForm();
+        }
+
+        // ── Data export ──
+        function exportData() {
+            const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+            const url  = URL.createObjectURL(blob);
+            const a    = document.createElement('a');
+            a.href     = url;
+            a.download = `macro-tracker-${localDate()}.json`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+            showToast('数据已导出');
         }
 
         // ── Init ──
-        window.onload = async function () {
-            await loadState();
-            document.getElementById('diary-meal').value = getDefaultMeal();
-            loadDiary();
-        };
+        $('meal-seg').innerHTML = mealSegHtml('meal');
+        $('modal-meal-seg').innerHTML = mealSegHtml('modal-meal');
+        $('meal-seg').addEventListener('change', updateGoLabels);
+        $('diary-date').value = localDate();
+
+        (async function init() {
+            setMeal(getDefaultMeal());
+            try {
+                await loadState();
+            } catch {
+                $('diary-log').innerHTML = '<div class="empty">数据加载失败。确认服务已启动（npm start）后刷新页面。</div>';
+                return;
+            }
+            renderFoodPicker();
+            renderDiary();
+        })();
     </script>
 </body>
 </html>
