@@ -20,6 +20,7 @@
 
     <nav class="rail" aria-label="主导航">
         <div class="brand-mark num" aria-label="MacroTracker">MT</div>
+        <span class="rail-level num" id="rail-level" hidden></span>
         <button class="rail-item" data-page="diary" aria-current="page">
             <span class="ms" aria-hidden="true">restaurant</span>日记
         </button>
@@ -70,6 +71,7 @@
                             <span class="star-spark" aria-hidden="true"></span><span class="star-spark" aria-hidden="true"></span><span class="star-spark" aria-hidden="true"></span>
                         </div>
                         <div class="board-meta">
+                            <span id="chip-level" class="chip level-chip" role="img" hidden><b class="num" id="lv-chip-num"></b><span class="level-title" id="lv-chip-title"></span><span class="xp-track is-mini" aria-hidden="true"><i id="lv-chip-bar"></i></span></span>
                             <span id="chip-streak" class="chip"><span class="ms" aria-hidden="true">local_fire_department</span><span>连击 <b class="num" id="streak-days">0</b> 天</span></span>
                             <span id="chip-protein" class="chip"></span>
                             <label class="chip day-type-chip">
@@ -347,6 +349,14 @@
                 <h1 class="page-title">成就勋章<small id="achievements-count"></small></h1>
                 <fieldset class="seg seg-inline badge-tabs" id="badge-tabs" aria-label="勋章系列"></fieldset>
             </div>
+            <section class="level-card" id="level-card" aria-label="冒险者等级" hidden>
+                <span class="lv-emblem num" id="lv-num"></span>
+                <div class="lv-body">
+                    <div class="lv-head"><b id="lv-title"></b><span>今日 <b class="num" id="lv-today">+0</b> XP</span></div>
+                    <div class="xp-track" id="lv-track" role="progressbar" aria-label="升级进度" aria-valuemin="0"><i id="lv-bar"></i></div>
+                    <div class="lv-foot"><span class="num" id="lv-xp"></span><span id="lv-next"></span></div>
+                </div>
+            </section>
             <ul class="panel badge-grid" id="badge-grid"></ul>
         </div>
 

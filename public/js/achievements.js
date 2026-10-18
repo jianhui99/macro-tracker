@@ -4,6 +4,7 @@ import { sumEntries, kcalStatus, targetsFor } from './nutrition.js';
 import { state } from './state.js';
 import { api } from './api.js';
 import { showToast, replay } from './ui.js';
+import { renderLevel } from './level.js';
 
 // ── Achievements ──
 // Each series is one badge; a tier unlocks the first day its metric reaches the threshold.
@@ -188,8 +189,13 @@ function evaluateAchievements(diary, weights, water, user, foodList, dayTargets,
     return progress;
 }
 
-// Fire-and-forget after any data change; marks tiers locally first so overlapping calls don't double-announce
+// Fire-and-forget after any data change; marks tiers locally first so overlapping calls don't double-announce.
+// Every data change routes through here, so it also refreshes the level.
 async function syncAchievements() {
+    try { await unlockAchievements(); } finally { renderLevel(); }
+}
+
+async function unlockAchievements() {
     const progress = evaluateAchievements(state.diary, state.weights, state.water, state.user, state.foods, targetsFor);
     const unlocks = ACHIEVEMENTS.flatMap(a => progress[a.id].reached.map((date, i) =>
         ({ id: `${a.id}:${a.tiers[i]}`, date, label: tierName(a, a.tiers[i]) })))
@@ -441,4 +447,4 @@ function initAchievements() {
     $('badge-tabs').addEventListener('change', filterBadges);
 }
 
-export { renderAchievements, initAchievements, syncAchievements, evaluateAchievements };
+export { renderAchievements, initAchievements, syncAchievements, evaluateAchievements, ACHIEVEMENTS, tierMetal };

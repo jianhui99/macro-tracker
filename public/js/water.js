@@ -82,6 +82,7 @@ async function deleteWater(id) {
     state.water[date] = state.water[date].filter(w => w.id !== id);
     renderWater();
     showToast('已删除这条饮水记录', 'info');
+    syncAchievements();
 }
 
 function initWater() {

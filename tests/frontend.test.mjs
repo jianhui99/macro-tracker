@@ -239,3 +239,33 @@ test('weight goal progress counts toward loss or gain goals and clamps', async (
     assert.equal(weightProgress(85, 80, null), null);
     assert.equal(weightProgress(80, 80, 80), null);
 });
+
+test('level curve: Lv L to L+1 costs 100 + 25 x (L - 1) XP', async () => {
+    const app = await loadApp();
+    const { levelFor } = await app.get('level.js');
+    assert.deepEqual(plain(levelFor(0)), { level: 1, into: 0, need: 100, title: '新手村民', metal: '' });
+    assert.equal(levelFor(99).level, 1);
+    assert.deepEqual(plain(levelFor(100)), { level: 2, into: 0, need: 125, title: '新手村民', metal: '' });
+    assert.equal(levelFor(549).level, 4);
+    assert.equal(levelFor(550).title, '见习冒险者');
+    assert.equal(levelFor(1800).metal, 'bronze');
+    assert.deepEqual([levelFor(13049).level, levelFor(13050).level, levelFor(13050).metal], [29, 30, 'diamond']);
+});
+
+test('XP sums stars, water, weigh-ins and unlocked medal tiers', async () => {
+    const app = await loadApp();
+    const store = await app.get('state.js');
+    await store.loadState();
+    const nutrition = await app.get('nutrition.js');
+    const { xpTotals } = await app.get('level.js');
+    const day = '2030-01-01';
+    const t = nutrition.targetsFor(day);
+    Object.assign(store.state, {
+        diary: { [day]: [{ kcal: t.kcal, protein: t.protein, carbs: 0, fat: 0 }] },
+        water: { [day]: [{ ml: t.water }], '2030-01-02': [{ ml: 1 }] },
+        weights: [{ date: '2030-01-03', weight: 80 }],
+        // record_streak has 7 tiers: the first is bronze, the last diamond
+        achievements: { 'record_streak:3': day, 'record_streak:365': '2030-01-03', 'gone:1': day }
+    });
+    assert.deepEqual(plain(xpTotals(day)), { total: 30 + 10 + 5 + 50 + 400, today: 30 + 10 + 50 });
+});

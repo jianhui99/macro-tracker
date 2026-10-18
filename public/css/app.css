@@ -128,6 +128,21 @@ button { cursor: pointer; background: none; border: 0; }
     margin-bottom: 14px;
     font-stretch: 70%;
 }
+/* Level: every badge, chip and card takes its tint (--lv) from the title's metal */
+.lv-bronze  { --lv: #D08447; }
+.lv-silver  { --lv: #B9C3D6; }
+.lv-gold    { --lv: #F5C451; }
+.lv-diamond { --lv: var(--arcane); }
+.rail-level {
+    margin: -6px 0 10px;
+    padding: 1px 7px;
+    border-radius: 999px;
+    font-size: 12px;
+    color: var(--lv, var(--accent));
+    background: rgba(0, 0, 0, .35);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--lv, var(--accent)) 55%, transparent);
+    animation: chipIn .4s var(--ease-spring);
+}
 .rail-item {
     width: 60px;
     padding: 8px 0 6px;
@@ -626,6 +641,15 @@ select.input { padding-right: 8px; }
 .day-type-chip option { color: var(--ink); }
 .day-type-chip .ms:last-child { font-size: 16px; opacity: .7; margin-left: -4px; }
 .chip-label { font-size: 11px; font-weight: 700; letter-spacing: .06em; color: var(--accent); }
+.level-chip { position: relative; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--lv, var(--accent)) 60%, transparent); }
+.level-chip > b { font-size: 15px; color: var(--lv, var(--accent)); }
+.level-title { font-size: 12px; font-weight: 700; }
+.xp-track.is-mini { width: 44px; height: 6px; border-radius: 3px; }
+.xp-track.is-mini::before { display: none; }
+/* Level bars are updated in place, so they glide to the new value instead of regrowing */
+.level-chip .xp-track i, .level-card .xp-track i { animation: none; transition: width .8s var(--ease-spring); }
+.float-gain.is-xp { left: calc(50% - 26px); top: -8px; font-size: 18px; color: #C8D3FF; text-shadow: 0 2px 0 var(--rim), 0 0 12px rgba(142, 162, 255, .9); }
+.float-gain.is-xp small { font-size: 11px; }
 /* Combo: three or more days in a row sets the chip alight */
 .chip.is-hot { box-shadow: inset 0 0 0 1px rgba(255, 180, 92, .65), 0 0 14px rgba(255, 140, 60, .3); }
 .chip.is-hot b { color: #FFB45C; }
@@ -1519,6 +1543,83 @@ button.cal-day:hover { transform: translateY(-2px); border-color: var(--accent);
 /* ── Achievements ── */
 .seg.seg-inline { display: inline-grid; grid-template-columns: none; grid-auto-flow: column; background: rgba(255, 255, 255, .05); }
 .seg-inline .seg-opt { padding: 0 16px; }
+/* Adventurer level card on the achievements page */
+.level-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 14px;
+    padding: 14px 18px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background:
+        radial-gradient(120% 160% at 100% 0%, rgba(110, 76, 200, .35), transparent 55%),
+        linear-gradient(160deg, #241B39, #15111F);
+    box-shadow: 0 0 0 1px var(--rim), inset 0 1px 0 var(--glint), 0 4px 0 var(--rim);
+}
+.lv-emblem {
+    flex-shrink: 0;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-size: 28px;
+    color: var(--on-accent);
+    background: radial-gradient(circle at 30% 25%, color-mix(in srgb, var(--lv, var(--accent)) 50%, #fff), var(--lv, var(--accent)) 55%, color-mix(in srgb, var(--lv, var(--accent)) 70%, #000));
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, .45), 0 0 0 4px color-mix(in srgb, var(--lv, var(--accent)) 60%, transparent), 0 0 20px color-mix(in srgb, var(--lv, var(--accent)) 40%, transparent);
+}
+#page-achievements.is-active .lv-emblem { animation: medalIn .7s var(--ease-spring) .1s backwards; }
+.lv-body { display: flex; flex-direction: column; gap: 7px; flex: 1; min-width: 0; }
+.lv-head { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.lv-head > b { font-size: 17px; letter-spacing: .04em; color: var(--lv, var(--accent)); white-space: nowrap; }
+.lv-head > span { margin-left: auto; font-size: 12px; color: var(--muted); white-space: nowrap; }
+.lv-head > span b { font-size: 15px; color: var(--accent); }
+.lv-foot { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--muted); }
+
+/* Level-up: rays and a stamped level number over the page, then it fades out on its own */
+.levelup {
+    position: fixed;
+    inset: 0;
+    z-index: 9500;
+    overflow: hidden;
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    gap: 6px;
+    pointer-events: none;
+    background: radial-gradient(circle, rgba(5, 3, 10, .65), rgba(5, 3, 10, .3) 55%, transparent 80%);
+    animation: levelupOut 2.4s var(--ease-out) forwards;
+}
+.levelup-rays {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 560px;
+    height: 560px;
+    margin: -280px 0 0 -280px;
+    border-radius: 50%;
+    background: repeating-conic-gradient(#FFD45C 0 8deg, transparent 8deg 24deg), radial-gradient(closest-side, #FFD45C, transparent 70%);
+    -webkit-mask-image: radial-gradient(closest-side, #000 25%, transparent);
+    mask-image: radial-gradient(closest-side, #000 25%, transparent);
+    opacity: 0;
+    animation: raysIn .6s var(--ease-out) forwards, raysSpin 24s linear infinite;
+}
+.levelup > :not(.levelup-rays) { position: relative; }
+.levelup-tag { font-size: 14px; font-weight: 900; letter-spacing: .4em; color: #FFE3A0; animation: wordIn .4s var(--ease-out) .1s backwards; }
+.levelup-num {
+    font-size: 76px;
+    line-height: 1;
+    background: linear-gradient(180deg, #FFF8E6 15%, #F6D28A 55%, var(--accent));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    filter: drop-shadow(0 4px 0 var(--rim)) drop-shadow(0 0 24px rgba(232, 176, 75, .6));
+    animation: stamp .5s var(--ease-spring) .15s backwards;
+}
+.levelup-title { font-size: 18px; font-weight: 800; color: var(--ink); animation: wordIn .4s var(--ease-out) .35s backwards; }
+@keyframes levelupOut { 0%, 80% { opacity: 1; } 100% { opacity: 0; } }
+
 .badge-grid { list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); gap: 10px; padding: 12px; }
 .badge {
     --medal: var(--locked-medal);
@@ -2017,7 +2118,7 @@ dialog[open]::backdrop { animation: fade .2s ease; }
         border-top: 1px solid var(--line);
         box-shadow: 0 -1px 0 var(--rim), 0 -8px 24px rgba(0, 0, 0, .45);
     }
-    .brand-mark { display: none; }
+    .brand-mark, .rail-level { display: none; }
     .rail-item { width: auto; flex: 1; }
     .rail-item[aria-current="page"]::before { left: 50%; top: -5px; width: 10px; height: 6px; margin: 0 0 0 -5px; clip-path: polygon(0 0, 100% 0, 50% 100%); animation: chipIn .3s var(--ease-spring), promptBob 1s ease-in-out .3s infinite; }
     main { overflow: visible; padding: 12px 12px calc(96px + env(safe-area-inset-bottom)); }
