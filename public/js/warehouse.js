@@ -82,10 +82,10 @@ function renderGrid(entering = false) {
     if (!foods.some(f => f.id === selectedId)) selectedId = foods[0]?.id ?? null;
     const counts = useCounts();
     if (!state.foods.length) {
-        grid.innerHTML = '<div class="empty">背包是空的。点上方「新建食品」，录入第一个常吃的食物。</div>';
+        grid.innerHTML = '<div class="empty">背包是空的。点上方「新建食物」，录入第一个常吃的食物。</div>';
         $('new-food').open = true;
     } else if (!foods.length) {
-        grid.innerHTML = `<div class="empty">没有匹配「${esc($('warehouse-search').value.trim())}」的食品</div>`;
+        grid.innerHTML = `<div class="empty">没有匹配「${esc($('warehouse-search').value.trim())}」的食物</div>`;
     } else {
         grid.innerHTML = foods.map((food, i) => slotHtml(food, counts[food.id] || 0, i)).join('');
     }
@@ -169,7 +169,7 @@ async function addCustomFood() {
     const category = $('food-category').value.trim() || '未分类';
     const name     = $('food-name').value.trim();
     const unit     = $('food-unit').value.trim() || '100g';
-    if (!name) { showToast('请填写食品名称', 'error'); $('food-name').focus(); return; }
+    if (!name) { showToast('请填写食物名称', 'error'); $('food-name').focus(); return; }
 
     const food = await api('/api/foods', 'POST', {
         category, name, unit,
@@ -240,7 +240,7 @@ async function saveWarehouseEdit() {
 
 async function deleteWarehouseItem(foodId) {
     const food = state.foods.find(f => f.id === foodId);
-    if (!(await showConfirm(`删除「${food ? food.name : '此食品'}」？已记录的历史日记会保留。`))) return;
+    if (!(await showConfirm(`删除「${food ? food.name : '此食物'}」？已记录的历史日记会保留。`))) return;
     await api(`/api/foods/${encodeURIComponent(foodId)}`, 'DELETE');
     closeSheet();
     const slot = [...$('inv-grid').children].find(s => s.dataset.foodId === foodId);
@@ -251,7 +251,7 @@ async function deleteWarehouseItem(foodId) {
     state.foods = state.foods.filter(f => f.id !== foodId);
     renderWarehouse();
     renderFoodPicker();
-    showToast('食品已删除', 'info');
+    showToast('食物已删除', 'info');
 }
 
 // Patches the slot and card in place so the switch thumb and the slot's frost fade animate

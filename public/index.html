@@ -219,7 +219,7 @@
             </div>
 
             <details class="panel new-food" id="new-food">
-                <summary><span class="nf-icon"><span class="ms" aria-hidden="true">add</span></span>新建食品<span class="hint">按包装上的营养标签填写一份基准分量</span></summary>
+                <summary><span class="nf-icon"><span class="ms" aria-hidden="true">add</span></span>新建食物<span class="hint">按包装上的营养标签填写一份基准分量</span></summary>
                 <form class="new-food-form">
                     <label class="field wide"><span>分类</span><input type="text" id="food-category" class="input" placeholder="如：鸡蛋类" list="exist-categories"></label>
                     <datalist id="exist-categories"></datalist>
@@ -447,7 +447,7 @@
             </section>
 
             <div class="panel data-panel">
-                <p>导出全部食品库与日记数据，用于备份或迁移。</p>
+                <p>导出全部背包食物与日记数据，用于备份或迁移。</p>
                 <button class="btn btn-ghost" id="export-data"><span class="ms" aria-hidden="true">download</span>导出 JSON</button>
             </div>
         </div>
@@ -491,7 +491,7 @@
 
     <dialog id="warehouse-dialog" aria-labelledby="w-modal-title">
         <form class="dialog-body">
-            <h3 class="dialog-title" id="w-modal-title">编辑食品</h3>
+            <h3 class="dialog-title" id="w-modal-title">编辑食物</h3>
             <div class="grid-2">
                 <label class="field"><span>分类</span><input type="text" id="w-modal-cat" class="input" list="exist-categories"></label>
                 <label class="field"><span>名称</span><input type="text" id="w-modal-name" class="input"></label>
@@ -503,7 +503,7 @@
                 <label class="field"><span>碳水 g</span><input type="number" id="w-modal-carbs" class="input" min="0" step="any"></label>
                 <label class="field"><span>脂肪 g</span><input type="number" id="w-modal-fat" class="input" min="0" step="any"></label>
             </div>
-            <p class="hint warehouse-edit-hint">保存后，引用这个食品的历史记录会按新数值重新计算。</p>
+            <p class="hint warehouse-edit-hint">保存后，引用这个食物的历史记录会按新数值重新计算。</p>
             <div class="dialog-foot">
                 <button type="button" class="btn btn-ghost" data-close-warehouse>取消</button>
                 <button type="submit" class="btn">保存并重算历史</button>

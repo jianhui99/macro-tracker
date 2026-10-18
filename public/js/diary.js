@@ -103,7 +103,7 @@ function renderFoodPicker() {
     }
     list.innerHTML = html || `
         <div class="pick-empty">
-            ${keyword ? `没有匹配「${esc(keyword)}」的食品` : '背包里还没有启用的食物'}
+            ${keyword ? `没有匹配「${esc(keyword)}」的食物` : '背包里还没有启用的食物'}
             <button type="button" class="btn btn-ghost btn-sm" data-new-food>去背包新建</button>
         </div>`;
     $('quick-hint').textContent = visibleIds.length ? `${visibleIds.length} 种可选` : '';
@@ -351,7 +351,7 @@ function addDiaryEntry() {
 function addTemporaryDiaryEntry() {
     return withBusy($('go-temp'), async () => {
         const date = diaryDate();
-        const name = $('temp-food-name').value.trim() || '临时聚餐/无库存食品';
+        const name = $('temp-food-name').value.trim() || '临时聚餐/背包外食物';
         const kcal = parseFloat($('temp-food-kcal').value);
         const meal = getMeal();
         if (isNaN(kcal) || kcal < 0) { showToast('请填写预估热量', 'error'); $('temp-food-kcal').focus(); return; }
