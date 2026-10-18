@@ -8,5 +8,5 @@ TIME_ZONE = "Asia/Kuala_Lumpur"
 [[d1_databases]]
 binding = "DB"
 database_name = "macro-tracker"
-database_id = "local-placeholder"
+database_id = "a130b96d-d2ad-4622-8a77-4e37d3c90e38"
 migrations_dir = "db/migrations"
