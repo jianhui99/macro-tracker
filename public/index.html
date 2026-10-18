@@ -242,6 +242,9 @@
         .input:hover { border-color: #C5CBD8; }
         .input:focus { outline: none; border-color: var(--cobalt); box-shadow: 0 0 0 3px rgba(28, 47, 209, .14); }
         select.input { padding-right: 8px; }
+        /* iOS Safari sizes native date inputs to their content and ignores width, overflowing narrow grid tracks */
+        .input[type=date] { -webkit-appearance: none; appearance: none; min-width: 0; }
+        .input[type=date]::-webkit-date-and-time-value { text-align: left; }
         .input[readonly] { background: var(--paper); color: var(--muted); }
         .input[readonly]:hover { border-color: var(--line); }
         .input[readonly]:focus { border-color: var(--line); box-shadow: none; }
@@ -804,7 +807,8 @@
         .data-table th .mi { margin-right: 3px; vertical-align: -3px; }
         .data-table tbody tr:not(.cat-row):hover td { background: #F8F9FB; }
         .w-name { font-weight: 500; padding-left: 40px !important; }
-        .w-unit { color: var(--muted); font-size: 13px; }
+        .w-unit, .w-sub { color: var(--muted); font-size: 13px; }
+        .w-sub { display: none; font-weight: 400; }
         .w-kcal { font-size: 16px; }
         .w-m { font-variant-numeric: tabular-nums; color: var(--muted); }
         .w-actions { display: flex; justify-content: flex-end; gap: 2px; }
@@ -922,7 +926,7 @@
         .weight-panel { margin-top: 14px; }
         .weight-body { display: grid; grid-template-columns: 360px minmax(0, 1fr); }
         .weight-side { display: flex; flex-direction: column; gap: 14px; padding: 16px; border-right: 1px solid var(--line-soft); min-width: 0; }
-        .weight-form { display: grid; grid-template-columns: minmax(0, 1fr) 84px auto; gap: 8px; align-items: end; }
+        .weight-form { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr) auto; gap: 8px; align-items: end; }
         .weight-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
         .weight-stats div { padding: 8px 10px; border-radius: 10px; background: var(--paper); min-width: 0; }
         .weight-stats span { display: block; font-size: 12px; color: var(--muted); }
@@ -1338,9 +1342,13 @@
             .entry-main { padding-left: 0; flex-wrap: wrap; row-gap: 0; }
             .entry-actions .icon-btn { width: 28px; }
             .entry-actions .act-portion { display: none; }
+            /* Unit moves under the name so the switch and actions fit a phone width */
+            .data-table th:nth-child(2), .data-table td:nth-child(2),
             .data-table th:nth-child(5), .data-table td:nth-child(5),
             .data-table th:nth-child(6), .data-table td:nth-child(6) { display: none; }
-            .w-name { padding-left: 16px !important; }
+            .data-table th, .data-table td { padding-inline: 6px; }
+            .w-name { padding-block: 6px; padding-left: 12px !important; }
+            .w-sub { display: block; font-size: 12px; }
             .toolbar-search { width: 100%; order: 3; }
             .new-food-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
             .new-food-form .wide, .new-food-form .btn { grid-column: 1 / -1; }
@@ -2796,7 +2804,7 @@
                     const id = esc(food.id);
                     html += `
                         <tr class="${isActive ? '' : 'is-off'}">
-                            <td class="w-name">${name}${isActive ? '' : '<span class="tag">已停用</span>'}</td>
+                            <td class="w-name">${name}${isActive ? '' : '<span class="tag">已停用</span>'}<span class="w-sub">${esc(food.unit)}</span></td>
                             <td class="w-unit">${esc(food.unit)}</td>
                             <td class="r w-kcal num">${fmt(food.kcal)}</td>
                             <td class="r w-m">${fmt1(food.protein)}</td>
