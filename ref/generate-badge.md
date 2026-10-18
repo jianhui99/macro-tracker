@@ -39,3 +39,4 @@ water_total     | a giant reservoir titan made of living water, holding back a c
 star_streak     | a shooting-star knight dashing forward with three golden stars orbiting its helmet, leaving a blazing comet trail
 star_days       | a star-collector astrologer mage in a starry robe, hugging a glass jar full of glowing golden stars
 star_total      | a cheerful star-forging dwarf blacksmith hammering glowing golden stars on an anvil, a growing pile of finished stars nearby
+level_rank      | a proud young adventurer in layered bronze, silver and gold armor, raising a glowing star-shaped rank emblem overhead, a golden level-up light beam rising behind
