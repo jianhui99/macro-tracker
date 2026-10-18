@@ -1339,7 +1339,7 @@
             }
             .brand-mark { display: none; }
             .rail-item { width: auto; flex: 1; }
-            main { overflow: visible; padding: 12px 12px 96px; }
+            main { overflow: visible; padding: 12px 12px calc(96px + env(safe-area-inset-bottom)); }
             #toast-container { bottom: 88px; }
             .board { padding: 16px 16px 12px; border-radius: 16px; }
             .lane { grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "name val" "track track"; gap: 4px 10px; padding: 6px 0 8px; }
@@ -1354,17 +1354,42 @@
             .entry-main { padding-left: 0; flex-wrap: wrap; row-gap: 0; }
             .entry-actions .icon-btn { width: 28px; }
             .entry-actions .act-portion { display: none; }
-            /* Unit moves under the name so the switch and actions fit a phone width */
-            .data-table th:nth-child(2), .data-table td:nth-child(2),
-            .data-table th:nth-child(5), .data-table td:nth-child(5),
-            .data-table th:nth-child(6), .data-table td:nth-child(6) { display: none; }
-            .data-table th, .data-table td { padding-inline: 6px; }
-            .w-name { padding-block: 6px; padding-left: 12px !important; }
+            /* Warehouse rows become cards: name and switch on top, labelled macros and actions below */
+            .data-table, .data-table tbody, .data-table tr, .data-table td { display: block; }
+            .data-table thead { display: none; }
+            .data-table tbody tr:not(.cat-row):hover td { background: none; }
+            .cat-row td { height: 48px; }
+            .cat-toggle { height: 46px; }
+            .data-table .w-row {
+                display: grid;
+                grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+                grid-template-areas: "name name name name switch" "kcal protein carbs fat actions";
+                align-items: center;
+                gap: 6px 10px;
+                padding: 12px 8px 8px 14px;
+                border-bottom: 1px solid var(--line-soft);
+            }
+            .w-row td { height: auto; padding: 0; border: 0; }
+            .w-row .w-unit { display: none; }
+            .w-row .w-name { grid-area: name; padding-left: 0 !important; }
+            .w-row td:nth-child(3) { grid-area: kcal; }
+            .w-row td:nth-child(4) { grid-area: protein; }
+            .w-row td:nth-child(5) { grid-area: carbs; }
+            .w-row td:nth-child(6) { grid-area: fat; }
+            .w-row td:nth-child(7) { grid-area: switch; justify-self: end; padding-right: 6px; }
+            .w-row td:nth-child(8) { grid-area: actions; }
+            .w-row .r { text-align: left; }
+            .w-row .r::before { display: block; font: 400 11px/1.4 var(--font); color: var(--muted); }
+            .w-row td:nth-child(3)::before { content: "kcal"; }
+            .w-row td:nth-child(4)::before { content: "蛋白"; }
+            .w-row td:nth-child(5)::before { content: "碳水"; }
+            .w-row td:nth-child(6)::before { content: "脂肪"; }
             .w-sub { display: block; font-size: 12px; }
             .w-title { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
             /* The dimmed row and the off switch already say "disabled" */
             .w-name .tag { display: none; }
-            .w-actions .icon-btn { width: 28px; }
+            .w-actions { gap: 4px; }
+            .w-actions .icon-btn { width: 40px; height: 40px; }
             .toolbar-search { width: 100%; order: 3; }
             .new-food-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
             .new-food-form .wide, .new-food-form .btn { grid-column: 1 / -1; }
@@ -2820,7 +2845,7 @@
                     const name = esc(food.name);
                     const id = esc(food.id);
                     html += `
-                        <tr class="${isActive ? '' : 'is-off'}">
+                        <tr class="w-row${isActive ? '' : ' is-off'}">
                             <td class="w-name"><span class="w-title">${name}</span>${isActive ? '' : '<span class="tag">已停用</span>'}<span class="w-sub">${esc(food.unit)}</span></td>
                             <td class="w-unit">${esc(food.unit)}</td>
                             <td class="r w-kcal num">${fmt(food.kcal)}</td>
