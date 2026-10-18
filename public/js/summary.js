@@ -1,5 +1,5 @@
 import { moveSegThumb, hideFloatTip, tweenNumber, replay, showFloatTipAt } from './ui.js';
-import { MEAL_ORDER, sumEntries, targetsFor, MACRO_KEYS, kcalStatus, MEALS, computePlan, recordingStreak, dayStatus, FINISH_SCALE, MACRO_META, macroIcon } from './nutrition.js';
+import { MEAL_ORDER, sumEntries, targetsFor, MACRO_KEYS, kcalStatus, MEALS, computePlan, recordingStreak, dayStatus, dayStars, FINISH_SCALE, MACRO_META, macroIcon } from './nutrition.js';
 import { state } from './state.js';
 import { parseLocalDate, localDate, $, ymd, fmtKg, fmt, reduceMotion, WEEKDAYS, esc, fmtMonthDay } from './helpers.js';
 import { waterTotal } from './water.js';
@@ -170,8 +170,10 @@ function renderCalendar(year, month, targets, animate) {
         const i = firstDayIndex + day;
         const cls = ['cal-day', isFuture && 'is-future', dateStr === todayStr && 'is-today', status !== 'none' && `st-${status}`].filter(Boolean).join(' ');
 
+        const stars = dayStars(dateStr);
         let inner = `<div class="cal-top"><span class="cal-date">${day}</span>${kcal > 0 ? `<span class="cal-kcal num">${fmt(kcal)}</span>` : ''}</div>`;
         if (status !== 'none') {
+            inner += `<div class="cal-stars" aria-hidden="true">${[1, 2, 3].map(n => `<span class="ms${n <= stars ? ' is-on' : ''}">star</span>`).join('')}</div>`;
             const label = status === 'ok' ? '达标' : status === 'over' ? `+${fmt(diff)}` : `${fmt(diff)}`;
             const width = Math.min(kcal / targets.kcal, FINISH_SCALE) / FINISH_SCALE * 100;
             inner += `<div class="cal-status"><span class="ms" aria-hidden="true">${STATUS_ICONS[status]}</span><span>${label}</span></div>
@@ -184,7 +186,7 @@ function renderCalendar(year, month, targets, animate) {
 
         html += isFuture
             ? `<div class="${cls}" style="--i:${i}">${inner}</div>`
-            : `<button class="${cls}" style="--i:${i}" data-date="${dateStr}" aria-label="${month + 1}月${day}日${kcal > 0 ? `，${fmt(kcal)} kcal` : '，无记录'}${waterLabel}">${inner}</button>`;
+            : `<button class="${cls}" style="--i:${i}" data-date="${dateStr}" aria-label="${month + 1}月${day}日${kcal > 0 ? `，${fmt(kcal)} kcal，${stars} 星` : '，无记录'}${waterLabel}">${inner}</button>`;
     }
 
     const grid = $('calendar-grid');
@@ -350,13 +352,13 @@ function renderInsights(stats, targets, elapsed, animate) {
 function renderRings(stats, elapsed) {
     const C = 2 * Math.PI * 38;
     const rings = [
-        { label: '记录率', value: elapsed ? stats.recorded / elapsed : 0, sub: `${stats.recorded} / ${elapsed} 天` },
-        { label: '达标率', value: stats.compliant / stats.recorded, sub: `${stats.compliant} / ${stats.recorded} 天` },
+        { label: '每日记录', value: elapsed ? stats.recorded / elapsed : 0, sub: `${stats.recorded} / ${elapsed} 天` },
+        { label: '热量达标', value: stats.compliant / stats.recorded, sub: `${stats.compliant} / ${stats.recorded} 天` },
         { label: '蛋白达标', value: stats.proteinDays / stats.recorded, sub: `${stats.proteinDays} / ${stats.recorded} 天` }
     ];
     $('ins-rings').innerHTML = rings.map(r => {
         const pct = Math.round(Math.min(r.value, 1) * 100);
-        return `<div class="ring">
+        return `<div class="ring${pct >= 100 ? ' is-done' : ''}">
                 <div class="ring-wrap">
                     <svg viewBox="0 0 88 88" aria-hidden="true"><circle class="ring-track" cx="44" cy="44" r="38"/>${pct ? `<circle class="ring-fill" cx="44" cy="44" r="38" stroke-dasharray="${C * pct / 100} ${C}"/>` : ''}</svg>
                     <b class="num">${pct}<small>%</small></b>

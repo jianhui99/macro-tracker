@@ -126,6 +126,23 @@ function goalStatHtml(first, latest, list) {
     return `<div><span>距目标 ${fmtKg(target)}</span>${remaining > 0 ? `<b class="num">${fmtKg(remaining)}</b><small>kg</small>` : '<b>已达成</b>'}</div>`;
 }
 
+// Share of the way from the first weigh-in to the target (a gain goal counts upward), clamped to [0, 1]
+function weightProgress(start, current, target) {
+    if (!target || target === start) return null;
+    return Math.min(Math.max((start - current) / (start - target), 0), 1);
+}
+
+function renderWeightXp(first, latest) {
+    const xp = $('weight-xp');
+    const progress = latest ? weightProgress(first.weight, latest.weight, state.user.targetWeight) : null;
+    xp.hidden = progress === null;
+    if (progress === null) return;
+    const pct = Math.round(progress * 100);
+    xp.innerHTML = `
+        <div class="xp-head"><span>目标进度</span><b class="num">${pct}<small>%</small></b><em>${fmtKg(first.weight)} → ${fmtKg(state.user.targetWeight)} kg</em></div>
+        <div class="xp-track" role="progressbar" aria-label="体重目标进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i style="--p:${progress}"></i></div>`;
+}
+
 function renderWeights() {
     const list = state.weights;
     const today = localDate();
@@ -139,6 +156,7 @@ function renderWeights() {
         <div><span>自${fmtMonthDay(first.date)}</span><b class="num">${change > 0 ? '+' : change < 0 ? '-' : ''}${fmtKg(Math.abs(change))}</b><small>kg</small></div>
         ${goalStatHtml(first, latest, list)}` : '';
     $('weight-stats').hidden = !latest;
+    renderWeightXp(first, latest);
 
     $('weight-list').innerHTML = list.map((w, i) => {
         const day = fmtMonthDay(w.date);
@@ -303,4 +321,4 @@ function initSettings() {
     });
 }
 
-export { fillSettingsForm, fillCycleForm, renderWeights, initSettings };
+export { fillSettingsForm, fillCycleForm, renderWeights, initSettings, weightProgress };

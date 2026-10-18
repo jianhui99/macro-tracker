@@ -36,6 +36,20 @@ function toggleAllCategories() {
     renderWarehouse();
 }
 
+// Item rarity by how often a food was logged, reusing the badge tiers
+const RARITY = [[100, 'diamond', '传说'], [30, 'gold', '史诗'], [10, 'silver', '稀有'], [3, 'bronze', '优秀']];
+
+function useCounts() {
+    const counts = {};
+    for (const entries of Object.values(state.diary)) for (const e of entries) counts[e.foodId] = (counts[e.foodId] || 0) + 1;
+    return counts;
+}
+
+function rarityHtml(uses) {
+    const [, tier, label] = RARITY.find(([min]) => uses >= min) || [];
+    return tier ? `<span class="rarity r-${tier}" role="img" data-tip="${label} · 记录 ${uses} 次" aria-label="${label}，记录 ${uses} 次"></span>` : '';
+}
+
 function renderWarehouse() {
     const tbody = $('warehouse-table-body');
     const groups = groupFoodsByCategory();
@@ -43,6 +57,7 @@ function renderWarehouse() {
     const activeCount = state.foods.filter(f => f.active !== false).length;
     $('warehouse-count').textContent = `${state.foods.length} 种，${activeCount} 种启用`;
 
+    const counts = useCounts();
     let html = '';
     for (const cat in groups) {
         const foods = groups[cat].filter(f => !keyword || f.name.toLowerCase().includes(keyword) || cat.toLowerCase().includes(keyword));
@@ -63,7 +78,7 @@ function renderWarehouse() {
             const enterAttr = cat === expandingCat ? ` style="--i:${Math.min(i, 12)}"` : '';
             html += `
                 <tr class="w-row${isActive ? '' : ' is-off'}${enterAttr ? ' is-entering' : ''}"${enterAttr}>
-                    <td class="w-name"><span class="w-title">${name}</span>${isActive ? '' : '<span class="tag">已停用</span>'}<span class="w-sub">${esc(food.unit)}</span></td>
+                    <td class="w-name">${rarityHtml(counts[food.id] || 0)}<span class="w-title">${name}</span>${isActive ? '' : '<span class="tag">已停用</span>'}<span class="w-sub">${esc(food.unit)}</span></td>
                     <td class="w-unit">${esc(food.unit)}</td>
                     <td class="r w-kcal num">${fmt(food.kcal)}</td>
                     <td class="r w-m">${fmt1(food.protein)}</td>

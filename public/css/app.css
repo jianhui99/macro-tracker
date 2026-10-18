@@ -142,6 +142,22 @@ button { cursor: pointer; background: none; border: 0; }
     transition: background-color .15s, color .15s;
 }
 .rail-item .ms { font-size: 22px; transition: transform .25s var(--ease-spring); }
+.rail-item { position: relative; }
+/* RPG menu cursor: a bobbing pointer beside the current page */
+.rail-item[aria-current="page"]::before {
+    content: "";
+    position: absolute;
+    left: -7px;
+    top: 50%;
+    width: 6px;
+    height: 10px;
+    margin-top: -5px;
+    background: var(--accent);
+    clip-path: polygon(0 0, 100% 50%, 0 100%);
+    filter: drop-shadow(0 0 4px rgba(232, 176, 75, .8));
+    animation: chipIn .3s var(--ease-spring), cursorBob 1s ease-in-out .3s infinite;
+}
+@keyframes cursorBob { 50% { translate: 3px 0; opacity: .6; } }
 .rail-item:hover { background: var(--surface-2); color: var(--ink); }
 .rail-item[aria-current="page"] {
     color: var(--accent);
@@ -1095,7 +1111,30 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
 .data-table .r { text-align: right; }
 .data-table th .mi { margin-right: 3px; vertical-align: -3px; }
 .data-table tbody tr:not(.cat-row):hover td { background: var(--surface-2); }
-.w-name { font-weight: 500; padding-left: 40px !important; }
+.w-name { position: relative; font-weight: 500; padding-left: 40px !important; }
+/* Rarity gem: a faceted diamond in the tier's metal, sitting in the name cell's left gutter */
+.rarity {
+    position: absolute;
+    left: 18px;
+    top: 50%;
+    width: 10px;
+    height: 10px;
+    margin-top: -5px;
+    /* `rotate` (not transform) so the pop-in scale keeps the diamond turned */
+    rotate: 45deg;
+    --k: .4;
+    background: linear-gradient(135deg, color-mix(in srgb, var(--gem) 45%, #fff), var(--gem) 55%, color-mix(in srgb, var(--gem) 65%, #000));
+    box-shadow: 0 0 8px color-mix(in srgb, var(--gem) 70%, transparent);
+    animation: var(--gem-fx, none);
+    cursor: help;
+}
+.r-bronze  { --gem: #D08447; }
+.r-silver  { --gem: #B9C3D6; }
+.r-gold    { --gem: #F5C451; --glow: rgba(245, 196, 81, .6); --gem-fx: glow 2.6s ease-in-out infinite; }
+.r-diamond { --gem: var(--arcane); --glow: rgba(142, 162, 255, .7); --gem-fx: glow 2.2s ease-in-out infinite; }
+.w-row:has(.r-gold) .w-title { color: #F5C451; }
+.w-row:has(.r-diamond) .w-title { color: var(--arcane); }
+.w-row.is-entering .rarity { animation: tierPop .4s var(--ease-spring) calc(var(--i) * 20ms + 120ms) backwards, var(--gem-fx, none); }
 .w-unit, .w-sub { color: var(--muted); font-size: 13px; }
 .w-sub { display: none; font-weight: 400; }
 .w-kcal { font-size: 16px; }
@@ -1205,6 +1244,13 @@ button.cal-day:hover { transform: translateY(-2px); border-color: var(--accent);
 @keyframes calIn { from { opacity: 0; transform: scale(.94); } }
 /* Filled drop: the day's water goal was reached; hollow: some water logged, goal missed */
 .cal-water { position: absolute; top: 28px; right: 7px; font-size: 15px; color: var(--water); font-variation-settings: 'FILL' 0, 'wght' 500, 'opsz' 20; }
+.cal-stars { display: flex; gap: 1px; margin-top: 2px; }
+.cal-stars .ms { font-size: 13px; color: rgba(255, 255, 255, .14); font-variation-settings: 'FILL' 1, 'wght' 500, 'opsz' 20; }
+.cal-stars .is-on { color: #F5C451; filter: drop-shadow(0 0 3px rgba(245, 196, 81, .6)); }
+.cal-legend .lg-star { color: #F5C451; font-variation-settings: 'FILL' 1, 'wght' 500, 'opsz' 20; }
+.cal-grid.is-entering .cal-stars .is-on { animation: tierPop .4s var(--ease-spring) backwards; animation-delay: calc(var(--i) * 12ms + 300ms); }
+.cal-grid.is-entering .cal-stars .is-on:nth-child(2) { animation-delay: calc(var(--i) * 12ms + 360ms); }
+.cal-grid.is-entering .cal-stars .is-on:nth-child(3) { animation-delay: calc(var(--i) * 12ms + 420ms); }
 .cal-water.is-full, .cal-legend .lg-water { color: var(--water); font-variation-settings: 'FILL' 1, 'wght' 500, 'opsz' 20; }
 .cal-grid.is-entering .cal-water { animation: tierPop .4s var(--ease-spring) backwards; animation-delay: calc(var(--i) * 12ms + 250ms); }
 .cal-grid.is-entering .cal-bar i { transform-origin: left; animation: growX .5s var(--ease-out) backwards; animation-delay: calc(var(--i) * 12ms + 150ms); }
@@ -1213,6 +1259,7 @@ button.cal-day:hover { transform: translateY(-2px); border-color: var(--accent);
 .settings-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 14px; }
 .settings-form { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; padding: 16px; }
 .settings-form .span-3 { grid-column: span 3; }
+.settings-form .field > span::before { content: ""; display: inline-block; width: 5px; height: 5px; margin: 0 6px 1px 1px; rotate: 45deg; background: var(--accent-deep); }
 .settings-foot { display: flex; align-items: center; justify-content: flex-end; gap: 12px; padding: 0 16px 16px; }
 .dirty-note { font-size: 12px; color: var(--under); margin-right: auto; display: flex; align-items: center; gap: 4px; animation: pageIn .25s var(--ease-out); }
 .dirty-note .ms { font-size: 16px; }
@@ -1233,6 +1280,46 @@ button.cal-day:hover { transform: translateY(-2px); border-color: var(--accent);
 .weight-stats span { display: block; font-size: 12px; color: var(--muted); }
 .weight-stats b { font-size: 22px; line-height: 1.15; }
 .weight-stats small { font-size: 12px; font-weight: 600; color: var(--muted); margin-left: 2px; }
+/* Goal XP bar: same socket and notches as the diary HP bars, one notch per 10% of the goal */
+.xp { display: flex; flex-direction: column; gap: 7px; padding: 10px 12px 12px; border-radius: 10px; background: var(--paper); }
+.xp-head { display: flex; align-items: baseline; gap: 6px; font-size: 12px; color: var(--muted); min-width: 0; }
+.xp-head b { font-size: 20px; color: var(--accent); }
+.xp-head b small { font-size: 12px; }
+.xp-head em { margin-left: auto; font-style: normal; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.xp-track {
+    position: relative;
+    height: 12px;
+    border-radius: 4px;
+    overflow: hidden;
+    background: rgba(0, 0, 0, .5);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, .6), 0 0 0 1px rgba(232, 176, 75, .18);
+}
+.xp-track::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: repeating-linear-gradient(90deg, transparent 0 calc(10% - 2px), rgba(0, 0, 0, .55) calc(10% - 2px) 10%);
+}
+.xp-track i {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: calc(var(--p) * 100%);
+    overflow: hidden;
+    background: linear-gradient(180deg, #FFE3A0 0 30%, var(--accent) 30% 70%, var(--accent-deep) 70%);
+    box-shadow: 0 0 10px rgba(232, 176, 75, .5);
+    transform-origin: left;
+    animation: growX .8s var(--ease-out) backwards;
+}
+.xp-track i::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(115deg, transparent 38%, rgba(255, 255, 255, .55) 50%, transparent 62%) no-repeat;
+    background-size: 250% 100%;
+    background-position: 150% 0;
+    animation: sheen 6s ease-in-out infinite;
+}
 .weight-list { list-style: none; max-height: 292px; overflow-y: auto; margin: 0 -8px; }
 .weight-list li { display: grid; grid-template-columns: minmax(0, 1fr) auto 56px auto; align-items: center; gap: 8px; min-height: 44px; padding: 0 8px; border-radius: 8px; }
 .weight-list li + li { box-shadow: 0 -1px 0 var(--line-soft); }
@@ -1632,8 +1719,11 @@ button.hm-cell:hover, button.hm-cell:focus-visible { transform: scale(1.35); pos
 .rings { flex-direction: row; justify-content: space-around; gap: 8px; padding-top: 18px; }
 .ring { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; text-align: center; }
 .ring svg { width: 88px; height: 88px; transform: rotate(-90deg); }
-.ring-track { fill: none; stroke: var(--line-soft); stroke-width: 9; }
-.ring-fill { fill: none; stroke: var(--accent); stroke-width: 9; stroke-linecap: round; }
+/* 20 notches around r=38 (circumference 238.8) */
+.ring-track { fill: none; stroke: rgba(0, 0, 0, .45); stroke-width: 9; stroke-dasharray: 9.94 2; }
+.ring-fill { fill: none; stroke: var(--accent); stroke-width: 9; stroke-linecap: round; filter: drop-shadow(0 0 4px rgba(232, 176, 75, .55)); }
+.ring.is-done .ring-fill { stroke: var(--done); filter: drop-shadow(0 0 6px rgba(62, 224, 184, .7)); }
+.ring.is-done span { color: var(--done); }
 .ring-wrap { position: relative; }
 .ring-wrap b { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 22px; }
 .ring-wrap b small { font-size: 12px; }
@@ -1775,6 +1865,7 @@ dialog[open]::backdrop { animation: fade .2s ease; }
     }
     .brand-mark { display: none; }
     .rail-item { width: auto; flex: 1; }
+    .rail-item[aria-current="page"]::before { left: 50%; top: -5px; width: 10px; height: 6px; margin: 0 0 0 -5px; clip-path: polygon(0 0, 100% 0, 50% 100%); animation: chipIn .3s var(--ease-spring), promptBob 1s ease-in-out .3s infinite; }
     main { overflow: visible; padding: 12px 12px calc(96px + env(safe-area-inset-bottom)); }
     #toast-container { bottom: 88px; }
     .board { padding: 16px 16px 12px; border-radius: 16px; }
@@ -1809,6 +1900,7 @@ dialog[open]::backdrop { animation: fade .2s ease; }
     .w-row td { height: auto; padding: 0; border: 0; }
     .w-row .w-unit { display: none; }
     .w-row .w-name { grid-area: name; padding-left: 0 !important; }
+    .w-row .rarity { left: -12px; top: 10px; width: 8px; height: 8px; margin-top: -4px; }
     .w-row td:nth-child(3) { grid-area: kcal; }
     .w-row td:nth-child(4) { grid-area: protein; }
     .w-row td:nth-child(5) { grid-area: carbs; }
@@ -1847,6 +1939,8 @@ dialog[open]::backdrop { animation: fade .2s ease; }
     .cal-kcal { font-size: 12px; line-height: 1.1; }
     .cal-day.is-today .cal-date::after { content: none; }
     .cal-water { top: 4px; right: 4px; font-size: 13px; }
+    .cal-stars { gap: 0; }
+    .cal-stars .ms { font-size: 10px; }
     .settings-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .settings-form .span-3 { grid-column: 1 / -1; }
     .cycle-rows { grid-template-columns: minmax(0, 1fr); }

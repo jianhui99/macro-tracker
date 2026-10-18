@@ -290,6 +290,7 @@
                     <span class="lg-over"><span class="ms" aria-hidden="true">arrow_upward</span>超标（高于 +50）</span>
                     <span class="lg-under"><span class="ms" aria-hidden="true">arrow_downward</span>缺口过大（低于 -300）</span>
                     <span><span class="ms lg-water" aria-hidden="true">water_drop</span>喝够饮水目标（空心为没喝够）</span>
+                    <span><span class="ms lg-star" aria-hidden="true">star</span>星级：记录 1 星，热量达标再加 1 星，蛋白吃够再加 1 星</span>
                     <span>点日期可查看当天明细</span>
                 </div>
                 <div class="cal-week" aria-hidden="true"><div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div></div>
@@ -330,7 +331,7 @@
 
             <div class="insight-grid" id="insight-grid">
                 <section class="panel" aria-labelledby="ins-rings-title">
-                    <div class="panel-head"><h2 id="ins-rings-title">完成度</h2><span class="hint" id="ins-rings-hint"></span></div>
+                    <div class="panel-head"><h2 id="ins-rings-title">任务进度</h2><span class="hint" id="ins-rings-hint"></span></div>
                     <div class="ins-body rings" id="ins-rings"></div>
                 </section>
                 <section class="panel" aria-labelledby="ins-donut-title">
@@ -370,7 +371,7 @@
             <div class="topbar"><h1 class="page-title">身体数据</h1></div>
             <div class="settings-grid">
                 <div class="panel">
-                    <div class="panel-head"><h2>基础信息</h2></div>
+                    <div class="panel-head"><h2>角色属性</h2></div>
                     <form id="settings-form" class="settings-form">
                         <label class="field"><span>身高 cm</span><input type="number" id="user-height" class="input" step="any" min="100" max="250"></label>
                         <label class="field"><span>体重 kg <small>按最新称重</small></span><input type="number" id="user-weight" class="input" readonly></label>
@@ -443,6 +444,7 @@
                             <button type="submit" class="btn" id="weight-save">记录</button>
                         </form>
                         <div class="weight-stats" id="weight-stats"></div>
+                        <div class="xp" id="weight-xp" hidden></div>
                         <ul class="weight-list" id="weight-list" aria-label="称重记录"></ul>
                     </div>
                     <div class="weight-chart" id="weight-chart"></div>

@@ -142,3 +142,32 @@ test('HTML and rendered templates contain no inline event handlers', async () =>
         assert.doesNotMatch(source, /\beval\s*\(|new Function\s*\(|Object\.assign\(window/);
     }
 });
+
+test('calendar stars: one for recording, one for kcal in range, one for protein met', async () => {
+    const app = await loadApp();
+    const store = await app.get('state.js');
+    await store.loadState();
+    const nutrition = await app.get('nutrition.js');
+    const date = '2030-01-01';
+    const t = nutrition.targetsFor(date);
+    const stars = (kcal, protein) => {
+        store.state.diary[date] = [{ kcal, protein, carbs: 0, fat: 0 }];
+        return nutrition.dayStars(date);
+    };
+    assert.equal(nutrition.dayStars('2030-01-02'), 0);
+    assert.equal(stars(t.kcal, t.protein), 3);
+    assert.equal(stars(t.kcal, t.protein - 1), 2);
+    assert.equal(stars(t.kcal + 51, t.protein), 2);
+    assert.equal(stars(t.kcal - 301, t.protein - 1), 1);
+});
+
+test('weight goal progress counts toward loss or gain goals and clamps', async () => {
+    const app = await loadApp();
+    const { weightProgress } = await app.get('settings.js');
+    assert.equal(weightProgress(85, 81, 75), 0.4);
+    assert.equal(weightProgress(60, 62, 65), 0.4);
+    assert.equal(weightProgress(85, 74, 75), 1);
+    assert.equal(weightProgress(85, 87, 75), 0);
+    assert.equal(weightProgress(85, 80, null), null);
+    assert.equal(weightProgress(80, 80, 80), null);
+});

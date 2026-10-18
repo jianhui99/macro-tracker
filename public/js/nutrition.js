@@ -67,6 +67,14 @@ function dayStatus(dateStr, targetKcal) {
     return { status: kcalStatus(kcal, targetKcal), kcal, diff: kcal - targetKcal };
 }
 
+// Calendar stars: one for recording, one for kcal in range, one for protein met
+function dayStars(dateStr) {
+    const t = sumEntries(state.diary[dateStr] || []);
+    if (t.kcal <= 0) return 0;
+    const target = targetsFor(dateStr);
+    return 1 + (kcalStatus(t.kcal, target.kcal) === 'ok') + (t.protein >= target.protein);
+}
+
 // Consecutive recorded days ending today; an unrecorded today doesn't break the streak yet
 function recordingStreak() {
     const d = new Date();
@@ -81,4 +89,4 @@ const FINISH_SCALE = 1.25;
 
 const MACRO_META = { kcal: ['热量', 'kcal'], protein: ['蛋白', 'g'], carbs: ['碳水', 'g'], fat: ['脂肪', 'g'] };
 
-export { sumEntries, kcalStatus, targetsFor, MEAL_ORDER, MEALS, macroIcon, recordingStreak, MACRO_KEYS, FINISH_SCALE, computePlan, autoWaterTarget, DAY_TYPES, MACRO_META, applyOffset, dayStatus };
+export { sumEntries, kcalStatus, targetsFor, MEAL_ORDER, MEALS, macroIcon, recordingStreak, MACRO_KEYS, FINISH_SCALE, computePlan, autoWaterTarget, DAY_TYPES, MACRO_META, applyOffset, dayStatus, dayStars };
