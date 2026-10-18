@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,400..900;1,62..125,400..900&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..24,400..600,0..1,0&icon_names=accessibility_new,add,arrow_downward,arrow_upward,blender,bolt,calendar_month,check,check_circle,chevron_left,chevron_right,close,delete,diamond,dinner_dining,download,edit,edit_note,egg,egg_alt,emoji_events,error,event_available,fitness_center,flag,free_breakfast,grain,info,inventory_2,kebab_dining,local_fire_department,lunch_dining,military_tech,monitor_weight,nutrition,person,ramen_dining,remove,restart_alt,restaurant,rice_bowl,search,sports_score,sprint,star,target,trending_down,unfold_less,unfold_more,verified,vertical_align_bottom,water_drop&display=block" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..24,400..600,0..1,0&icon_names=accessibility_new,add,arrow_downward,arrow_upward,blender,bolt,calendar_month,check,check_circle,chevron_left,chevron_right,close,delete,diamond,dinner_dining,download,edit,edit_note,egg,egg_alt,emoji_events,error,event_available,fitness_center,flag,free_breakfast,glass_cup,grain,info,inventory_2,kebab_dining,local_fire_department,lunch_dining,military_tech,monitor_weight,nutrition,person,ramen_dining,remove,restart_alt,restaurant,rice_bowl,search,sports_score,sprint,star,target,trending_down,unfold_less,unfold_more,verified,vertical_align_bottom,water_bottle,water_bottle_large,water_drop,water_full&display=block" rel="stylesheet">
 
     <style>
         :root {
@@ -47,6 +47,9 @@
             --c-protein: #E5476A;
             --c-carbs: #C27F00;
             --c-fat: #159E80;
+            --water: #3D7BFF;
+            --water-deep: var(--cobalt);
+            --water-soft: #EAF0FF;
 
             --locked-bg: #E8EBF0;
             --locked-medal: #CDD2DB;
@@ -351,12 +354,12 @@
         .diary-grid {
             display: grid;
             grid-template-columns: minmax(0, 1fr) 368px;
-            grid-template-areas: "board quick" "quote quick" "log quick";
-            grid-template-rows: auto auto 1fr;
+            grid-template-areas: "board quick" "water quick" "quote quick" "log quick";
+            grid-template-rows: auto auto auto 1fr;
             gap: 14px;
             align-items: start;
         }
-        .diary-grid:has(> .quote-card[hidden]) { grid-template-areas: "board quick" "log quick"; grid-template-rows: auto 1fr; }
+        .diary-grid:has(> .quote-card[hidden]) { grid-template-areas: "board quick" "water quick" "log quick"; grid-template-rows: auto auto 1fr; }
 
         /* ── Scoreboard ── */
         .board {
@@ -742,6 +745,106 @@
         .temp-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
         .temp-grid .wide { grid-column: 1 / -1; }
 
+        /* ── Water ── */
+        .water { grid-area: water; }
+        .water-body { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 18px; align-items: center; padding: 14px 16px 16px; }
+        /* The glass is clipped to a tumbler; the drop and splash sit outside the clip so they can fall in from above */
+        .water-vis { position: relative; width: 76px; height: 104px; transition: transform .3s var(--ease-spring); }
+        .water-glass {
+            position: absolute;
+            inset: 0;
+            clip-path: path('M0 0H76L67 97Q66.4 104 59 104H17Q9.6 104 9 97Z');
+            background: linear-gradient(180deg, var(--water-soft), #F5F8FF);
+        }
+        /* Gloss on the left and 25% graduations on the right, drawn over the water like marks on glass */
+        .water-glass::before, .water-glass::after { content: ""; position: absolute; z-index: 1; pointer-events: none; }
+        .water-glass::before { left: 16px; top: 10px; bottom: 14px; width: 5px; border-radius: 3px; background: rgba(255, 255, 255, .6); }
+        .water-glass::after { right: 15px; top: 0; bottom: 0; width: 8px; background: repeating-linear-gradient(0deg, transparent 0 calc(25% - 1.5px), rgba(28, 47, 209, .22) calc(25% - 1.5px) 25%); }
+        .water-level {
+            position: absolute;
+            inset: auto 0 0;
+            height: var(--level, 0%);
+            background: linear-gradient(180deg, var(--water), var(--water-deep));
+            transition: height 1s var(--ease-spring);
+        }
+        .water-vis.is-pouring .water-level { transition-delay: .32s; }
+        .water-surface { position: absolute; left: 0; right: 0; bottom: calc(100% - 1px); height: 9px; transform-origin: bottom; }
+        /* Two periods wide; sliding by one period loops seamlessly */
+        .water-wave { position: absolute; left: 0; bottom: 0; width: 200%; height: 100%; animation: waveDrift 2.6s linear infinite; transition: opacity .3s; }
+        .water-wave path { fill: var(--water); }
+        .water-wave.is-back { height: 130%; opacity: .4; animation-duration: 4.2s; animation-direction: reverse; animation-delay: -1.3s; }
+        .bubble { position: absolute; bottom: 0; width: 5px; height: 5px; border-radius: 50%; background: rgba(255, 255, 255, .6); opacity: 0; animation: bubble 3.4s ease-in infinite; }
+        .bubble:nth-child(2) { left: 30%; }
+        .bubble:nth-child(3) { left: 52%; width: 4px; height: 4px; animation-delay: 1.2s; animation-duration: 2.8s; }
+        .bubble:nth-child(4) { left: 64%; width: 6px; height: 6px; animation-delay: 2.1s; }
+        .water.is-empty .water-wave { opacity: 0; animation-play-state: paused; }
+        .water.is-empty .bubble { animation: none; }
+        .water-drop { position: absolute; left: 50%; top: 0; margin-left: -9px; font-size: 18px; color: var(--water); font-variation-settings: 'FILL' 1, 'wght' 500, 'opsz' 20; opacity: 0; pointer-events: none; z-index: 2; }
+        .water-splash { position: absolute; left: 50%; top: calc(var(--surface, 104px) - 5px); width: 44px; height: 10px; margin-left: -22px; border-radius: 50%; border: 2px solid var(--water); opacity: 0; pointer-events: none; z-index: 2; }
+        .water-vis.is-pouring .water-drop { animation: dropFall .38s cubic-bezier(.55, 0, 1, .45); }
+        .water-vis.is-pouring .water-splash { animation: splash .6s var(--ease-out) .34s; }
+        .water-vis.is-pouring .water-surface { animation: slosh .9s var(--ease-out) .32s; }
+        .water-vis:has(+ .water-main .water-add:active) { transform: scale(.96); }
+        @keyframes waveDrift { to { transform: translateX(-50%); } }
+        @keyframes bubble { 0% { bottom: 0; opacity: 0; } 20% { opacity: 1; } 100% { bottom: 92%; opacity: 0; } }
+        @keyframes dropFall {
+            0%   { opacity: 0; transform: translateY(-22px) scale(.5); }
+            25%  { opacity: 1; transform: translateY(-12px) scale(1); }
+            100% { opacity: 1; transform: translateY(calc(var(--surface, 104px) - 16px)) scale(.9, 1.2); }
+        }
+        @keyframes splash { 0% { opacity: 1; transform: scale(.2); } 100% { opacity: 0; transform: scale(1.6); } }
+        @keyframes slosh { 25% { transform: scaleY(2.2); } 55% { transform: scaleY(.7); } 80% { transform: scaleY(1.3); } }
+
+        .water-main { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+        .water-stat { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 8px; }
+        .water-num { font-size: 40px; line-height: .9; font-stretch: 66%; }
+        .water-of { font-size: 13px; font-weight: 600; color: var(--muted); }
+        .water-flag { display: none; align-items: center; gap: 2px; padding: 0 8px 0 4px; border-radius: 999px; background: var(--ok-bg); color: var(--ok); font-size: 12px; font-weight: 700; line-height: 20px; align-self: center; }
+        .water-flag .ms { font-size: 15px; }
+        .water.is-full .water-flag { display: inline-flex; }
+        .water-left { margin-left: auto; font-size: 12px; color: var(--muted); }
+        .water.is-celebrating .water-flag { animation: stamp .45s var(--ease-spring) .5s backwards; }
+        .water.is-celebrating .water-vis { animation: glassGlow 1.4s var(--ease-out) .4s; }
+        @keyframes glassGlow { 30% { filter: drop-shadow(0 0 14px rgba(61, 123, 255, .65)); transform: scale(1.06); } }
+
+        .water-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+        .water-add {
+            height: 34px;
+            padding: 0 12px 0 8px;
+            border-radius: 9px;
+            background: var(--cobalt-soft);
+            color: var(--cobalt);
+            font-size: 13px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+            transition: background-color .15s, transform .12s var(--ease-out), opacity .15s;
+        }
+        .water-add .ms { font-size: 18px; font-variation-settings: 'FILL' 1, 'wght' 500, 'opsz' 20; transition: transform .25s var(--ease-spring); }
+        .water-add:hover { background: #D7DCFB; }
+        .water-add:hover .ms { transform: rotate(-12deg) scale(1.12); }
+        .water-add:active { transform: scale(.94); }
+        .water-add:disabled { opacity: .5; cursor: progress; }
+        .water-form { display: flex; gap: 6px; margin-left: auto; }
+        .water-form .input { width: 84px; height: 34px; border-radius: 9px; }
+        .seg.water-unit { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 3px; border-radius: 10px; }
+        .water-unit .seg-opt { height: 28px; padding: 0 9px; border-radius: 7px; font-size: 12px; }
+        .water-unit .seg-thumb { border-radius: 7px; }
+
+        .water-log { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; }
+        .water-log:empty { display: none; }
+        .water-entry { display: inline-flex; align-items: center; gap: 3px; height: 28px; padding: 0 2px 0 10px; border-radius: 999px; background: var(--paper); font-size: 12px; color: var(--muted); }
+        .water-entry b { font-size: 15px; color: var(--ink); }
+        .water-entry small { margin-left: 4px; font-size: 11px; color: var(--subtle); }
+        .water-entry .icon-btn { width: 24px; height: 24px; border-radius: 50%; }
+        .water-entry .icon-btn .ms { font-size: 15px; }
+        .water-entry.is-new { animation: chipIn .5s var(--ease-spring) .3s backwards; }
+        .water-entry.is-leaving { animation: chipOut .2s var(--ease-out) forwards; pointer-events: none; }
+        @keyframes chipIn { from { opacity: 0; transform: scale(.5); } }
+        @keyframes chipOut { to { opacity: 0; transform: scale(.6); } }
+
         /* ── Diary log ── */
         .log { grid-area: log; }
         .log-cols, .meal-head, .entry {
@@ -972,6 +1075,10 @@
         .cal-day.is-today .cal-date::after { content: "今天"; margin-left: 4px; font-size: 10px; color: var(--cobalt); }
         .cal-grid.is-entering .cal-day { animation: calIn .4s var(--ease-out) backwards; animation-delay: calc(var(--i) * 12ms); }
         @keyframes calIn { from { opacity: 0; transform: scale(.94); } }
+        /* Filled drop: the day's water goal was reached; hollow: some water logged, goal missed */
+        .cal-water { position: absolute; top: 28px; right: 7px; font-size: 15px; color: var(--water); font-variation-settings: 'FILL' 0, 'wght' 500, 'opsz' 20; }
+        .cal-water.is-full, .cal-legend .lg-water { color: var(--water); font-variation-settings: 'FILL' 1, 'wght' 500, 'opsz' 20; }
+        .cal-grid.is-entering .cal-water { animation: tierPop .4s var(--ease-spring) backwards; animation-delay: calc(var(--i) * 12ms + 250ms); }
         .cal-grid.is-entering .cal-bar i { transform-origin: left; animation: growX .5s var(--ease-out) backwards; animation-delay: calc(var(--i) * 12ms + 150ms); }
 
         /* ── Settings ── */
@@ -1054,6 +1161,8 @@
         .split-legend span { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 4px; }
         .split-legend b { font-size: 22px; }
         .split-legend small { font-size: 12px; color: var(--muted); }
+        .plan-water { padding-top: 14px; border-top: 1px solid var(--line-soft); }
+        .plan-water .input { max-width: 220px; }
         .formula { font-size: 12px; color: var(--muted); line-height: 1.7; border-top: 1px solid var(--line-soft); padding-top: 12px; }
         .formula code { font-family: inherit; color: var(--ink); background: var(--paper); padding: 1px 5px; border-radius: 4px; }
         .data-panel { display: flex; align-items: center; gap: 12px; padding: 14px 16px; margin-top: 14px; }
@@ -1335,6 +1444,20 @@
         .mbar-col.is-current i { background: var(--cobalt-deep); }
         .mbar-col span { position: absolute; bottom: 2px; font-size: 11px; color: var(--muted); white-space: nowrap; }
         .mbar-col.is-empty span { color: var(--subtle); }
+        .water-sum { margin-top: 14px; }
+        .wsum-body { display: grid; grid-template-columns: 240px minmax(0, 1fr); align-items: center; }
+        .wsum-body > .empty { grid-column: 1 / -1; }
+        .wsum-stats { display: flex; flex-direction: column; gap: 14px; padding: 16px; border-right: 1px solid var(--line-soft); align-self: stretch; }
+        .wsum-hero span { display: block; font-size: 12px; color: var(--muted); }
+        .wsum-hero b { font-size: 40px; line-height: 1; font-stretch: 66%; }
+        .wsum-hero small { margin-left: 4px; font-size: 13px; font-weight: 600; color: var(--muted); }
+        .wsum-stats .ins-track i { background: var(--water); }
+        .mbar-chart.wsum-chart { height: 180px; margin-top: 24px; }
+        .wsum-chart .mbar-col i { width: min(70%, 22px); background: color-mix(in srgb, var(--water) 30%, var(--surface)); }
+        .wsum-chart .mbar-col.is-hit i { background: var(--water); }
+        .wsum-chart div.mbar-col:hover { background: none; }
+        .water-sum.is-entering .mbar-col i { animation: growY .6s var(--ease-out) backwards; animation-delay: calc(var(--i) * 18ms); }
+        .water-sum.is-entering .ins-track i { animation: growX .6s var(--ease-out) backwards; }
         .year-grid.is-entering .mbar-col i { animation: growY .6s var(--ease-out) backwards; animation-delay: calc(var(--i) * 30ms); }
         @keyframes growY { from { transform: scaleY(0); } }
 
@@ -1495,8 +1618,8 @@
 
         /* ── Responsive ── */
         @media (max-width: 1100px) {
-            .diary-grid { grid-template-columns: minmax(0, 1fr); grid-template-areas: "board" "quote" "quick" "log"; }
-            .diary-grid:has(> .quote-card[hidden]) { grid-template-areas: "board" "quick" "log"; grid-template-rows: auto; }
+            .diary-grid { grid-template-columns: minmax(0, 1fr); grid-template-areas: "board" "quote" "quick" "water" "log"; }
+            .diary-grid:has(> .quote-card[hidden]) { grid-template-areas: "board" "quick" "water" "log"; grid-template-rows: auto; }
             .quick { position: static; max-height: none; }
             .food-list { max-height: 240px; }
             .new-food-form { grid-template-columns: repeat(4, minmax(0, 1fr)); }
@@ -1506,6 +1629,8 @@
             .weight-body { grid-template-columns: minmax(0, 1fr); }
             .weight-side { border-right: 0; border-bottom: 1px solid var(--line-soft); }
             .weight-chart { order: -1; }
+            .wsum-body { grid-template-columns: minmax(0, 1fr); }
+            .wsum-stats { border-right: 0; border-bottom: 1px solid var(--line-soft); }
         }
         @media (max-width: 720px) {
             body { display: block; height: auto; min-height: 100vh; overflow: auto; }
@@ -1591,10 +1716,15 @@
             .cal-top { flex-direction: column; align-items: flex-start; }
             .cal-kcal { font-size: 12px; line-height: 1.1; }
             .cal-day.is-today .cal-date::after { content: none; }
+            .cal-water { top: 4px; right: 4px; font-size: 13px; }
             .settings-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
             .settings-form .span-3 { grid-column: 1 / -1; }
             .cycle-rows { grid-template-columns: minmax(0, 1fr); }
             .temp-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .water-body { gap: 14px; padding: 12px; }
+            .water-left { flex-basis: 100%; margin-left: 0; }
+            .water-form { flex-basis: 100%; margin-left: 0; }
+            .water-form .input { flex: 1; width: auto; }
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -1734,6 +1864,47 @@
                     </div>
                 </aside>
 
+                <section class="water panel" id="water-card" aria-labelledby="water-title">
+                    <div class="panel-head"><h2 id="water-title">饮水</h2><span class="hint">目标可在「身体数据」设定，未设定时按体重 35 ml/kg 计算，喝到杯口即达标</span></div>
+                    <div class="water-body">
+                        <div class="water-vis" id="water-vis" aria-hidden="true">
+                            <div class="water-glass">
+                                <div class="water-level">
+                                    <div class="water-surface" id="water-surface">
+                                        <svg class="water-wave is-back" viewBox="0 0 120 10" preserveAspectRatio="none"><path d="M0 5Q15 0 30 5T60 5T90 5T120 5V10H0Z"/></svg>
+                                        <svg class="water-wave" viewBox="0 0 120 10" preserveAspectRatio="none"><path d="M0 5Q15 0 30 5T60 5T90 5T120 5V10H0Z"/></svg>
+                                    </div>
+                                    <i class="bubble"></i><i class="bubble"></i><i class="bubble"></i>
+                                </div>
+                            </div>
+                            <span class="ms water-drop">water_drop</span>
+                            <i class="water-splash"></i>
+                        </div>
+                        <div class="water-main">
+                            <div class="water-stat">
+                                <b class="num water-num" id="water-num">0</b>
+                                <span class="water-of">/ <span id="water-goal">0</span> ml</span>
+                                <span class="water-flag"><span class="ms" aria-hidden="true">check</span>达标</span>
+                                <span class="water-left" id="water-left"></span>
+                            </div>
+                            <div class="water-actions">
+                                <button type="button" class="water-add" onclick="addWater(250, this)"><span class="ms" aria-hidden="true">glass_cup</span>250 ml</button>
+                                <button type="button" class="water-add" onclick="addWater(500, this)"><span class="ms" aria-hidden="true">water_bottle</span>500 ml</button>
+                                <button type="button" class="water-add" onclick="addWater(1000, this)"><span class="ms" aria-hidden="true">water_bottle_large</span>1 L</button>
+                                <form class="water-form" onsubmit="event.preventDefault(); addCustomWater();">
+                                    <input type="number" id="water-amount" class="input" min="0" step="any" inputmode="decimal" placeholder="自定义" aria-label="饮水量">
+                                    <fieldset class="seg water-unit" aria-label="单位">
+                                        <label><input type="radio" name="water-unit" value="ml" checked><span class="seg-opt">ml</span></label>
+                                        <label><input type="radio" name="water-unit" value="l"><span class="seg-opt">L</span></label>
+                                    </fieldset>
+                                    <button type="submit" class="btn btn-sm" id="water-go"><span class="ms" aria-hidden="true">add</span>记录</button>
+                                </form>
+                            </div>
+                            <ul class="water-log" id="water-log" aria-label="饮水记录"></ul>
+                        </div>
+                    </div>
+                </section>
+
                 <section class="quote-card" id="quote-card" aria-label="今日一句" aria-busy="true">
                     <span class="quote-mark" aria-hidden="true">&rdquo;</span>
                     <button type="button" class="icon-btn quote-close" onclick="closeQuote()" aria-label="关闭今日一句"><span class="ms" aria-hidden="true">close</span></button>
@@ -1841,6 +2012,7 @@
                     <span class="lg-ok"><span class="ms" aria-hidden="true">check</span>达标（目标 -300 至 +50 kcal）</span>
                     <span class="lg-over"><span class="ms" aria-hidden="true">arrow_upward</span>超标（高于 +50）</span>
                     <span class="lg-under"><span class="ms" aria-hidden="true">arrow_downward</span>缺口过大（低于 -300）</span>
+                    <span><span class="ms lg-water" aria-hidden="true">water_drop</span>喝够饮水目标（空心为没喝够）</span>
                     <span>点日期可查看当天明细</span>
                 </div>
                 <div class="cal-week" aria-hidden="true"><div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div></div>
@@ -1872,6 +2044,11 @@
                     <span><i class="lg-band"></i>达标区间（目标 -300 至 +50）</span>
                 </div>
                 <div class="trend-chart" id="trend-chart" data-tip-host></div>
+            </section>
+
+            <section class="panel water-sum" id="water-sum" aria-labelledby="water-sum-title">
+                <div class="panel-head"><h2 id="water-sum-title">饮水</h2><span class="hint">柱子是每天的饮水量（年视图为每月日均），虚线为目标，深色表示喝够目标</span></div>
+                <div class="wsum-body" id="wsum-body"></div>
             </section>
 
             <div class="insight-grid" id="insight-grid">
@@ -1957,6 +2134,9 @@
                             </div>
                             <div class="split-legend" id="split-legend"></div>
                         </div>
+                        <label class="field plan-water"><span>每日饮水 ml <small>留空则按体重 35 ml/kg 自动计算</small></span>
+                            <input type="number" id="user-water-target" form="settings-form" class="input" step="any" min="500" max="10000" inputmode="numeric" oninput="onSettingsInput()">
+                        </label>
                         <!-- <p class="formula">
                             BMR 用 Mifflin-St Jeor 公式：男 <code>10×体重 + 6.25×身高 - 5×年龄 + 5</code>，女末项为 <code>-161</code>。
                             TDEE = BMR × 活动量系数，目标摄入 = TDEE - 550 kcal。
@@ -2227,9 +2407,11 @@
             state = await api('/api/state');
             $('diary-date').value = localDate();
             fillSettingsForm();
+            fillCustomWater();
         }
 
         // ── Targets (Mifflin-St Jeor) ──
+        const autoWaterTarget = weight => Math.round(weight * 35 / 50) * 50;
         function computePlan(user) {
             const { height, weight, activity, age = 27, gender = 'male' } = user;
             const bmr = 10 * weight + 6.25 * height - 5 * age + (gender === 'male' ? 5 : -161);
@@ -2238,7 +2420,8 @@
             const protein = Math.round(weight * 2.1);
             const fat = Math.round((kcal * 0.25) / 9);
             const carbs = Math.round((kcal - protein * 4 - fat * 9) / 4);
-            return { bmr, tdee, kcal, protein, carbs, fat };
+            const water = user.waterTarget || autoWaterTarget(weight);
+            return { bmr, tdee, kcal, protein, carbs, fat, water };
         }
         // A carb-cycling type picked for a date shifts that date's carbs and fat by gram offsets from the
         // auto plan. Protein and the base kcal stay on the plan, so every type follows weight changes.
@@ -2308,10 +2491,13 @@
             { id: 'new_lows',       group: 'weight',    name: '刷新最低',   desc: '体重创下新低的次数',                       unit: '次',   tiers: [1, 5, 10, 20] },
             { id: 'goal_weight',    group: 'weight',    name: '目标体重',   desc: '从第一次称重到目标体重的完成度',           unit: '%',    tiers: [25, 50, 75, 100] },
             { id: 'bmi',            group: 'weight',    name: 'BMI 达标',   desc: 'BMI 降到 28 以下告别肥胖，降到 24 以下告别超重', unit: '以下', tiers: [28, 24], lower: true, format: fmt1 },
+            { id: 'water_streak',   group: 'water',     name: '水分满格',   desc: '连续每天喝够饮水目标',                     unit: '天',   tiers: [3, 7, 14, 30, 60, 100] },
+            { id: 'water_days',     group: 'water',     name: '饮水达人',   desc: '累计喝够饮水目标的天数',                   unit: '天',   tiers: [10, 50, 100, 365] },
+            { id: 'water_total',    group: 'water',     name: '人形水库',   desc: '累计喝掉的水',                             unit: 'L',    tiers: [100, 500, 1000, 3000] },
             { id: 'first_entry',    group: 'milestone', name: '第一步',     desc: '记下第一笔',                               unit: '条',   tiers: [1] },
             { id: 'comebacks',      group: 'milestone', name: '重新出发',   desc: '中断 3 天以上后重新开始记录',              unit: '次',   tiers: [1] }
         ];
-        const ACHIEVEMENT_GROUPS = { all: '全部', streak: '连续', total: '累计', period: '周期', food: '食物', weight: '体重', milestone: '里程碑' };
+        const ACHIEVEMENT_GROUPS = { all: '全部', streak: '连续', total: '累计', period: '周期', food: '食物', weight: '体重', water: '饮水', milestone: '里程碑' };
 
         // Food counters match warehouse foods by category or name. Amounts are logged in the food's own
         // unit, so `factor` converts them: eggs count 粒 directly, weighed foods turn grams into kg, and
@@ -2333,17 +2519,18 @@
         // Replays history day by day. Target-based checks only count finished days (today can
         // still go over), and an unfinished today never breaks a streak. Streak values are the
         // current run, so progress toward the next tier reads "current / next".
-        function evaluateAchievements(diary, weights, user, foodList, dayTargets, today = localDate()) {
+        function evaluateAchievements(diary, weights, water, user, foodList, dayTargets, today = localDate()) {
             const progress = Object.fromEntries(ACHIEVEMENTS.map(a => [a.id, { value: a.lower ? null : 0, reached: [] }]));
             if (!user.targetWeight) progress.goal_weight.unavailable = '先在「身体数据」设定目标体重';
             if (!weights.some(w => w.date <= today)) progress.bmi.unavailable = '记录第一次称重后开始计算';
             const weightByDate = Object.fromEntries(weights.map(w => [w.date, w.weight]));
-            const first = [...Object.keys(diary).filter(ds => diary[ds].length), ...Object.keys(weightByDate)]
+            const first = [...Object.keys(diary).filter(ds => diary[ds].length), ...Object.keys(weightByDate),
+                ...Object.keys(water).filter(ds => water[ds].length)]
                 .filter(ds => ds <= today).sort()[0];
             if (!first) return progress;
 
-            const run = { record: 0, ok: 0, protein: 0, perfect: 0, meals: 0, weigh: 0 };
-            const total = { recordDays: 0, okDays: 0, entries: 0, workouts: 0, fullMonths: 0, greatMonths: 0, perfectWeeks: 0, comebacks: 0, newLows: 0 };
+            const run = { record: 0, ok: 0, protein: 0, perfect: 0, meals: 0, weigh: 0, water: 0 };
+            const total = { waterDays: 0, waterMl: 0, recordDays: 0, okDays: 0, entries: 0, workouts: 0, fullMonths: 0, greatMonths: 0, perfectWeeks: 0, comebacks: 0, newLows: 0 };
             const foods = new Set();
             const month = { recorded: 0, tracked: 0, ok: 0 };
             let weekOk = 0, gap = 0, weekWeighed = false;
@@ -2367,14 +2554,19 @@
                 const protein = finished && t.protein >= targets.protein;
                 const perfect = ok && protein && t.carbs <= targets.carbs * 1.05 && t.fat <= targets.fat * 1.05;
                 const meals = ['breakfast', 'lunch', 'dinner'].every(m => list.some(e => e.meal === m));
+                // Unlike kcal, water can't overshoot, so today counts as soon as the goal is reached
+                const drank = (water[ds] || []).reduce((sum, w) => sum + w.ml, 0);
+                const hydrated = drank > 0 && drank >= targets.water;
 
                 const bump = (key, hit) => { if (hit) run[key]++; else if (finished) run[key] = 0; };
-                bump('record', recorded); bump('ok', ok); bump('protein', protein); bump('perfect', perfect); bump('meals', meals);
+                bump('record', recorded); bump('ok', ok); bump('protein', protein); bump('perfect', perfect); bump('meals', meals); bump('water', hydrated);
 
                 if (recorded && gap >= 3 && total.recordDays > 0) total.comebacks++;
                 gap = recorded ? 0 : finished ? gap + 1 : gap;
                 total.recordDays += recorded;
                 total.okDays += ok;
+                total.waterDays += hydrated;
+                total.waterMl += drank;
                 total.entries += list.length;
                 total.workouts += list.some(e => e.meal === 'post_workout');
                 list.forEach(e => {
@@ -2428,7 +2620,8 @@
                     eggs: Math.floor(eaten.eggs + 1e-9), protein_powder: Math.floor(eaten.protein_powder + 1e-9),
                     chicken: Math.floor(eaten.chicken * 10 + 1e-9) / 10, rice: Math.floor(eaten.rice * 10 + 1e-9) / 10,
                     oats: Math.floor(eaten.oats * 10 + 1e-9) / 10, nuts: Math.floor(eaten.nuts * 10 + 1e-9) / 10,
-                    first_entry: total.entries, comebacks: total.comebacks
+                    first_entry: total.entries, comebacks: total.comebacks,
+                    water_streak: run.water, water_days: total.waterDays, water_total: Math.floor(total.waterMl / 1000)
                 };
                 for (const a of ACHIEVEMENTS) {
                     const p = progress[a.id];
@@ -2443,7 +2636,7 @@
 
         // Fire-and-forget after any data change; marks tiers locally first so overlapping calls don't double-announce
         async function syncAchievements() {
-            const progress = evaluateAchievements(state.diary, state.weights, state.user, state.foods, targetsFor);
+            const progress = evaluateAchievements(state.diary, state.weights, state.water, state.user, state.foods, targetsFor);
             const unlocks = ACHIEVEMENTS.flatMap(a => progress[a.id].reached.map((date, i) =>
                 ({ id: `${a.id}:${a.tiers[i]}`, date, label: tierName(a, a.tiers[i]) })))
                 .filter(u => !state.achievements[u.id]);
@@ -2469,7 +2662,7 @@
 
         const badgeViews = new Map();
         function renderAchievements() {
-            const progress = evaluateAchievements(state.diary, state.weights, state.user, state.foods, targetsFor);
+            const progress = evaluateAchievements(state.diary, state.weights, state.water, state.user, state.foods, targetsFor);
             let unlockedCount = 0, tierCount = 0;
 
             // Unlocked series first; sort is stable, so each half keeps the definition order
@@ -2910,6 +3103,7 @@
             const entries = state.diary[date] || [];
             const totals = sumEntries(entries);
             renderScoreboard(totals, celebrate);
+            renderWater(celebrate);
             $('log-count').textContent = entries.length ? `${entries.length} 项` : '';
 
             const grouped = Object.fromEntries(MEAL_ORDER.map(m => [m, []]));
@@ -3176,6 +3370,88 @@
             showToast('记录已删除', 'info');
             syncAchievements();
         }
+
+        // ── Water ──
+        const GLASS_ML = 250;
+        const waterTotal = date => (state.water[date] || []).reduce((sum, w) => sum + w.ml, 0);
+        let lastWaterId = null;
+
+        function renderWater(celebrate = false) {
+            const date = diaryDate();
+            const goal = targetsFor(date).water;
+            const total = waterTotal(date);
+            const full = total >= goal;
+            const card = $('water-card');
+            if (celebrate && full && !card.classList.contains('is-full')) {
+                replay(card, 'is-celebrating');
+                showToast('今日饮水达标，继续保持', 'success');
+            }
+            card.classList.toggle('is-full', full);
+            card.classList.toggle('is-empty', !total);
+            card.style.setProperty('--level', `${Math.min(total / goal, 1) * 100}%`);
+            tweenNumber($('water-num'), total);
+            $('water-goal').textContent = fmt(goal);
+            $('water-left').textContent = full ? '' : `还差 ${fmt(goal - total)} ml，约 ${Math.ceil((goal - total) / GLASS_ML)} 杯`;
+            $('water-log').innerHTML = (state.water[date] || []).map(w => `
+                <li class="water-entry${w.id === lastWaterId ? ' is-new' : ''}" data-id="${w.id}">
+                    <b class="num">${fmt(w.ml)}</b>ml${w.time ? `<small>${w.time}</small>` : ''}
+                    <button type="button" class="icon-btn" onclick="deleteWater(${w.id})" aria-label="删除 ${fmt(w.ml)} ml 饮水"><span class="ms" aria-hidden="true">close</span></button>
+                </li>`).join('');
+            lastWaterId = null;
+        }
+
+        function addWater(ml, btn, customUnit = null) {
+            return withBusy(btn, async () => {
+                const date = diaryDate();
+                // The drop lands on the current surface; the level rises after it hits
+                const before = Math.min(waterTotal(date) / targetsFor(date).water, 1);
+                $('water-card').style.setProperty('--surface', `${(1 - before) * $('water-vis').offsetHeight}px`);
+                const time = date === localDate() ? new Date().toTimeString().slice(0, 5) : null;
+                const created = await api('/api/water', 'POST', { date, ml, time, customUnit });
+                (state.water[date] ||= []).push(created);
+                if (customUnit) state.user.lastWater = { ml, unit: customUnit };
+                lastWaterId = created.id;
+                replay($('water-vis'), 'is-pouring');
+                renderWater(true);
+                syncAchievements();
+            });
+        }
+
+        // Prefill with the last custom amount, in the unit it was entered in; it stays after recording for one-tap repeats
+        function fillCustomWater() {
+            const last = state.user.lastWater;
+            if (!last) return;
+            const input = document.querySelector(`input[name="water-unit"][value="${last.unit}"]`);
+            input.checked = true;
+            moveSegThumb(input.closest('.seg'));
+            $('water-amount').value = last.unit === 'l' ? last.ml / 1000 : last.ml;
+        }
+
+        async function addCustomWater() {
+            const value = parseFloat($('water-amount').value);
+            const unit = document.querySelector('input[name="water-unit"]:checked').value;
+            const ml = Math.round(unit === 'l' ? value * 1000 : value);
+            if (!(ml > 0 && ml <= 5000)) { showToast('请填写 1 ml 到 5 L 之间的饮水量', 'error'); $('water-amount').focus(); return; }
+            await addWater(ml, $('water-go'), unit);
+        }
+
+        async function deleteWater(id) {
+            const date = diaryDate();
+            await api(`/api/water/${id}`, 'DELETE');
+            const chip = document.querySelector(`.water-entry[data-id="${id}"]`);
+            if (chip && !reduceMotion.matches) {
+                chip.classList.add('is-leaving');
+                await new Promise(r => setTimeout(r, 200));
+            }
+            state.water[date] = state.water[date].filter(w => w.id !== id);
+            renderWater();
+            showToast('已删除这条饮水记录', 'info');
+        }
+
+        // Drops the pour delay once the slosh settles, so later level changes (e.g. switching days) start at once
+        $('water-surface').addEventListener('animationend', e => {
+            if (e.animationName === 'slosh') $('water-vis').classList.remove('is-pouring');
+        });
 
         // ── Warehouse ──
         // Collapsed category names live outside `state` so exports stay pure data
@@ -3457,6 +3733,21 @@
             return stats;
         }
 
+        // Only days with a drink logged count; each is judged against its own goal
+        function waterStats(from, to) {
+            const days = Object.keys(state.water).filter(ds => ds >= from && ds <= to && state.water[ds].length).sort();
+            const daily = Object.fromEntries(days.map(ds => [ds, waterTotal(ds)]));
+            const total = days.reduce((sum, ds) => sum + daily[ds], 0);
+            return {
+                days: days.length,
+                daily,
+                hydrated: days.filter(ds => daily[ds] >= targetsFor(ds).water).length,
+                avg: days.length ? total / days.length : 0,
+                best: days.reduce((best, ds) => (best && daily[best] >= daily[ds] ? best : ds), null),
+                goal: days.length ? days.reduce((sum, ds) => sum + targetsFor(ds).water, 0) / days.length : targetsFor(localDate()).water
+            };
+        }
+
         function renderSummary(animate = false) {
             const year  = summaryCurrentDate.getFullYear();
             const month = summaryCurrentDate.getMonth();
@@ -3475,6 +3766,7 @@
             const from = isYear ? ymd(year, 0, 1) : ymd(year, month, 1);
             const to = isYear ? ymd(year, 11, 31) : ymd(year, month, monthDays);
             const stats = periodStats(from, to);
+            const water = waterStats(from, to);
             const targets = stats.target;
             const totalDays = isYear ? yearDays : monthDays;
             const today = localDate();
@@ -3483,13 +3775,14 @@
 
             if (isYear) renderYearView(year, stats, targets, animate);
             else renderCalendar(year, month, targets, animate);
-            renderSummaryBoard(stats, targets, totalDays, isYear);
+            renderSummaryBoard(stats, water, targets, totalDays, isYear);
+            renderWaterSummary(water, year, isYear ? null : month, animate);
             summaryTrend = { from, totalDays, daily: stats.daily, target: targets.kcal, isYear };
             renderTrendChart(animate);
             renderInsights(stats, targets, elapsed, animate);
         }
 
-        function renderSummaryBoard(stats, targets, totalDays, isYear) {
+        function renderSummaryBoard(stats, water, targets, totalDays, isYear) {
             tweenNumber($('sum-streak'), recordingStreak());
             const { recorded, compliant, weightChange } = stats;
             const avgKcal = Math.round(stats.avg.kcal);
@@ -3500,6 +3793,7 @@
                 <div class="stat"><span>达标天数</span><b class="num">${compliant}<small>天</small></b></div>
                 <div class="stat"><span>达标率</span><b class="num">${recorded ? compliance : '-'}<small>${recorded ? '%' : ''}</small></b></div>
                 <div class="stat"><span>日均热量</span><b class="num">${avgKcal ? fmt(avgKcal) : '-'}<small>${avgKcal ? `/ ${fmt(targets.kcal)}` : ''}</small></b></div>
+                <div class="stat"><span>饮水达标</span><b class="num">${water.hydrated}<small>天</small></b></div>
                 <div class="stat"><span>体重变化</span><b class="num">${weightText}<small>${weightChange === null ? '' : 'kg'}</small></b></div>`;
         }
 
@@ -3525,10 +3819,14 @@
                     inner += `<div class="cal-status"><span class="ms" aria-hidden="true">${STATUS_ICONS[status]}</span><span>${label}</span></div>
                               <div class="cal-bar"><i style="width:${width}%"></i></div>`;
                 }
+                const drank = waterTotal(dateStr);
+                const hydrated = drank > 0 && drank >= targetsFor(dateStr).water;
+                if (drank > 0) inner += `<span class="ms cal-water${hydrated ? ' is-full' : ''}" aria-hidden="true">water_drop</span>`;
+                const waterLabel = drank > 0 ? `，饮水 ${fmt(drank)} ml${hydrated ? '，已喝够' : ''}` : '';
 
                 html += isFuture
                     ? `<div class="${cls}" style="--i:${i}">${inner}</div>`
-                    : `<button class="${cls}" style="--i:${i}" onclick="navigateToDay('${dateStr}')" aria-label="${month + 1}月${day}日${kcal > 0 ? `，${fmt(kcal)} kcal` : '，无记录'}">${inner}</button>`;
+                    : `<button class="${cls}" style="--i:${i}" onclick="navigateToDay('${dateStr}')" aria-label="${month + 1}月${day}日${kcal > 0 ? `，${fmt(kcal)} kcal` : '，无记录'}${waterLabel}">${inner}</button>`;
             }
 
             const grid = $('calendar-grid');
@@ -3583,6 +3881,60 @@
             grid.classList.remove('is-entering');
             $('heatmap').classList.remove('is-entering');
             if (animate && !reduceMotion.matches) { replay(grid, 'is-entering'); replay($('heatmap'), 'is-entering'); }
+        }
+
+        // `month` is null for the year view, which shows each month's average over its logged days
+        function renderWaterSummary(water, year, month, animate) {
+            const body = $('wsum-body');
+            const panel = $('water-sum');
+            panel.classList.remove('is-entering');
+            if (!water.days) { body.innerHTML = '<div class="empty">这段时间还没有饮水记录</div>'; return; }
+
+            const today = localDate();
+            const cols = month === null
+                ? Array.from({ length: 12 }, (_, m) => {
+                    const days = Object.keys(water.daily).filter(ds => Number(ds.slice(5, 7)) === m + 1);
+                    const avg = days.length ? days.reduce((sum, ds) => sum + water.daily[ds], 0) / days.length : 0;
+                    const goal = days.length ? days.reduce((sum, ds) => sum + targetsFor(ds).water, 0) / days.length : water.goal;
+                    const tip = days.length ? `${m + 1}月<b class="num">日均 ${fmt(avg)} ml</b>记录 ${days.length} 天` : `${m + 1}月<br>没有饮水记录`;
+                    return { ml: avg, hit: days.length && avg >= goal, label: `${m + 1}月`, tip, action: `openSummaryMonth(${year}, ${m})` };
+                })
+                : Array.from({ length: new Date(year, month + 1, 0).getDate() }, (_, i) => {
+                    const ds = ymd(year, month, i + 1);
+                    const ml = water.daily[ds] || 0;
+                    const goal = targetsFor(ds).water;
+                    const tip = `${month + 1}月${i + 1}日<b class="num">${fmt(ml)} ml</b>${ml >= goal ? '喝够目标' : `目标 ${fmt(goal)} ml`}`;
+                    return { ml, hit: ml > 0 && ml >= goal, label: i === 0 || (i + 1) % 5 === 0 ? i + 1 : '', tip, action: ds > today ? null : `navigateToDay('${ds}')` };
+                });
+
+            const maxMl = Math.max(...cols.map(c => c.ml), water.goal);
+            const step = maxMl > 2500 ? 1000 : 500;
+            const top = Math.ceil(maxMl * 1.08 / step) * step;
+            const pct = v => v / top * 100;
+            const ticks = Array.from({ length: top / step + 1 }, (_, i) => i * step)
+                .map(v => `<div class="mbar-tick" style="bottom:${pct(v)}%"><span>${fmt(v)}</span></div>`).join('');
+            const bars = cols.map((c, i) => {
+                const cls = `mbar-col${c.ml ? '' : ' is-empty'}${c.hit ? ' is-hit' : ''}`;
+                const inner = `<i style="height:${pct(c.ml)}%"></i><span>${c.label}</span>`;
+                return c.action
+                    ? `<button class="${cls}" style="--i:${i}" data-tip="${esc(c.tip)}" onclick="${c.action}" aria-label="${esc(c.tip.replace(/<[^>]+>/g, ' '))}">${inner}</button>`
+                    : `<div class="${cls}" style="--i:${i}" aria-hidden="true">${inner}</div>`;
+            }).join('');
+
+            const best = water.best;
+            body.innerHTML = `
+                <div class="wsum-stats">
+                    <div class="wsum-hero"><span>日均饮水</span><b class="num">${fmt(water.avg)}</b><small>/ ${fmt(water.goal)} ml</small></div>
+                    <div class="ins-row">
+                        <div class="ins-head"><span class="ms" aria-hidden="true">water_full</span><span class="ins-name">喝够目标</span><b class="num">${water.hydrated}</b><small>/ ${water.days} 天</small></div>
+                        <div class="ins-track"><i style="width:${water.hydrated / water.days * 100}%"></i></div>
+                    </div>
+                    <div class="ins-row">
+                        <div class="ins-head"><span class="ms" aria-hidden="true">emoji_events</span><span class="ins-name">单日最多</span><b class="num">${fmt(water.daily[best])}</b><small>ml · ${fmtMonthDay(best)}</small></div>
+                    </div>
+                </div>
+                <div class="mbar-chart wsum-chart">${ticks}<div class="mbar-target" style="bottom:${pct(water.goal)}%"><span>目标 ${fmt(water.goal)}</span></div><div class="mbar-cols" style="grid-template-columns: repeat(${cols.length}, minmax(0, 1fr))">${bars}</div></div>`;
+            if (animate && !reduceMotion.matches) replay(panel, 'is-entering');
         }
 
         function renderInsights(stats, targets, elapsed, animate) {
@@ -3827,6 +4179,7 @@
             $('user-gender').value   = state.user.gender;
             $('user-activity').value = String(state.user.activity);
             $('user-target-weight').value = state.user.targetWeight ?? '';
+            $('user-water-target').value = state.user.waterTarget ?? '';
             $('dirty-note').hidden = true;
             $('save-settings').disabled = true;
             renderPlan(state.user);
@@ -3839,7 +4192,8 @@
                 age:      parseInt($('user-age').value)      || 25,
                 gender:   $('user-gender').value,
                 activity: $('user-activity').value,
-                targetWeight: parseFloat($('user-target-weight').value) || null
+                targetWeight: parseFloat($('user-target-weight').value) || null,
+                waterTarget: parseFloat($('user-water-target').value) || null
             };
         }
 
@@ -3847,7 +4201,8 @@
             const draft = readSettingsForm();
             const dirty = ['height', 'age', 'gender'].some(k => String(draft[k]) !== String(state.user[k]))
                 || parseFloat(draft.activity) !== parseFloat(state.user.activity)
-                || draft.targetWeight !== (state.user.targetWeight ?? null);
+                || draft.targetWeight !== (state.user.targetWeight ?? null)
+                || draft.waterTarget !== (state.user.waterTarget ?? null);
             $('dirty-note').hidden = !dirty;
             $('save-settings').disabled = !dirty;
             renderPlan(draft);
@@ -3858,6 +4213,7 @@
             tweenNumber($('plan-bmr'), p.bmr);
             tweenNumber($('plan-tdee'), p.tdee);
             tweenNumber($('plan-kcal'), p.kcal);
+            $('user-water-target').placeholder = `自动 ${fmt(autoWaterTarget(user.weight))}`;
             const split = [
                 { key: 'protein', label: '蛋白', g: p.protein, kcal: p.protein * 4 },
                 { key: 'carbs',   label: '碳水', g: p.carbs,   kcal: p.carbs * 4 },

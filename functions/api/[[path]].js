@@ -14,7 +14,8 @@ function entryToJson(row) {
     };
 }
 function userToJson(u) {
-    return { height: u.height, weight: u.weight, age: u.age, gender: u.gender, activity: u.activity, targetWeight: u.target_weight };
+    return { height: u.height, weight: u.weight, age: u.age, gender: u.gender, activity: u.activity, targetWeight: u.target_weight, waterTarget: u.water_target,
+        lastWater: u.last_water_ml == null ? null : { ml: u.last_water_ml, unit: u.last_water_unit } };
 }
 
 const json = (data, status = 200) => Response.json(data, { status });
@@ -24,14 +25,15 @@ const DAY_TYPE_IDS = ['high', 'medium', 'low'];
 
 // ── Full state bootstrap ──
 async function getState({ db }) {
-    const [foods, entries, achievements, weights, user, dayTypes, dayPlan] = await db.batch([
+    const [foods, entries, achievements, weights, user, dayTypes, dayPlan, water] = await db.batch([
         db.prepare('SELECT * FROM foods'),
         db.prepare('SELECT * FROM diary_entries ORDER BY id'),
         db.prepare('SELECT id, unlocked_at FROM achievements'),
         db.prepare('SELECT date, weight FROM weight_log ORDER BY date'),
         db.prepare('SELECT * FROM user_settings WHERE id = 1'),
         db.prepare('SELECT id, carbs_offset AS carbs, fat_offset AS fat FROM day_types'),
-        db.prepare('SELECT date, type FROM day_plan')
+        db.prepare('SELECT date, type FROM day_plan'),
+        db.prepare('SELECT id, date, time, ml FROM water_log ORDER BY id')
     ]);
 
     const diary = {};
@@ -39,6 +41,8 @@ async function getState({ db }) {
         if (!diary[row.date]) diary[row.date] = [];
         diary[row.date].push(entryToJson(row));
     }
+    const waterByDate = {};
+    for (const { date, ...drink } of water.results) (waterByDate[date] ||= []).push(drink);
 
     return json({
         user: userToJson(user.results[0]),
@@ -47,7 +51,8 @@ async function getState({ db }) {
         achievements: Object.fromEntries(achievements.results.map(r => [r.id, r.unlocked_at])),
         weights: weights.results,
         dayTypes: Object.fromEntries(dayTypes.results.map(({ id, ...macros }) => [id, macros])),
-        dayPlan: Object.fromEntries(dayPlan.results.map(r => [r.date, r.type]))
+        dayPlan: Object.fromEntries(dayPlan.results.map(r => [r.date, r.type])),
+        water: waterByDate
     });
 }
 
@@ -58,12 +63,16 @@ async function putUser({ db, body }) {
     if (targetWeight !== null && !(targetWeight >= 20 && targetWeight <= 400)) {
         return json({ error: 'targetWeight must be null or between 20 and 400' }, 400);
     }
+    const waterTarget = body.waterTarget == null ? null : Number(body.waterTarget);
+    if (waterTarget !== null && !(waterTarget >= 500 && waterTarget <= 10000)) {
+        return json({ error: 'waterTarget must be null or between 500 and 10000' }, 400);
+    }
     await db.prepare(`
-        INSERT INTO user_settings (id, height, weight, age, gender, activity, target_weight) VALUES (1, ?, ?, ?, ?, ?, ?)
+        INSERT INTO user_settings (id, height, weight, age, gender, activity, target_weight, water_target) VALUES (1, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(id) DO UPDATE SET height = excluded.height, weight = excluded.weight,
             age = excluded.age, gender = excluded.gender, activity = excluded.activity,
-            target_weight = excluded.target_weight
-    `).bind(height, weight, age, gender, activity, targetWeight).run();
+            target_weight = excluded.target_weight, water_target = excluded.water_target
+    `).bind(height, weight, age, gender, activity, targetWeight, waterTarget).run();
     // The weight log is the source of truth for weight whenever it has entries
     return json(await syncSettingsWeight(db));
 }
@@ -183,6 +192,28 @@ async function putWeight({ db, body, params: [date] }) {
 async function deleteWeight({ db, params: [date] }) {
     await db.prepare('DELETE FROM weight_log WHERE date = ?').bind(date).run();
     return json({ user: await syncSettingsWeight(db) });
+}
+
+// ── Water log ──
+async function postWater({ db, body }) {
+    const { date, time = null, customUnit = null } = body;
+    const ml = Number(body.ml);
+    if (!DATE_RE.test(date ?? '') || !(ml > 0 && ml <= 5000) || (time !== null && !/^\d{2}:\d{2}$/.test(time))
+        || (customUnit !== null && !['ml', 'l'].includes(customUnit))) {
+        return json({ error: 'expected date YYYY-MM-DD, ml between 0 and 5000, optional time HH:MM, optional customUnit ml or l' }, 400);
+    }
+    // A custom amount (customUnit set) is remembered for the next prefill; presets are not
+    const statements = [db.prepare('INSERT INTO water_log (date, time, ml) VALUES (?, ?, ?) RETURNING id, time, ml').bind(date, time, ml)];
+    if (customUnit) {
+        statements.push(db.prepare('UPDATE user_settings SET last_water_ml = ?, last_water_unit = ? WHERE id = 1').bind(ml, customUnit));
+    }
+    const [inserted] = await db.batch(statements);
+    return json(inserted.results[0], 201);
+}
+
+async function deleteWater({ db, params: [id] }) {
+    await db.prepare('DELETE FROM water_log WHERE id = ?').bind(id).run();
+    return noContent();
 }
 
 // ── Carb cycling ──
@@ -316,6 +347,8 @@ const ROUTES = [
     ['DELETE', /^\/api\/diary\/([^/]+)$/,        deleteDiary],
     ['PUT',    /^\/api\/weights\/([^/]+)$/,      putWeight],
     ['DELETE', /^\/api\/weights\/([^/]+)$/,      deleteWeight],
+    ['POST',   /^\/api\/water$/,                postWater],
+    ['DELETE', /^\/api\/water\/([^/]+)$/,        deleteWater],
     ['PUT',    /^\/api\/day-types$/,            putDayTypes],
     ['PUT',    /^\/api\/day-plan\/([^/]+)$/,     putDayPlan],
     ['DELETE', /^\/api\/day-plan\/([^/]+)$/,     deleteDayPlan],
