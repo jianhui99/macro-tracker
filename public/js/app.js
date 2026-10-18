@@ -20,7 +20,7 @@ function switchPage(pageId) {
     resetDiaryAnimation();
     hideFloatTip();
     if (pageId === 'diary')     { renderFoodPicker(); renderDiary(); }
-    if (pageId === 'warehouse') renderWarehouse();
+    if (pageId === 'warehouse') renderWarehouse(true);
     if (pageId === 'summary')   renderSummary(true);
     if (pageId === 'achievements') renderAchievements();
     if (pageId === 'settings')  { fillSettingsForm(); fillCycleForm(); renderWeights(); }

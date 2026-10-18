@@ -1,43 +1,33 @@
 import { groupFoodsByCategory } from './foods.js';
-import { $, esc, fmt, fmt1 } from './helpers.js';
+import { $, esc, fmt, fmt1, reduceMotion } from './helpers.js';
 import { state } from './state.js';
-import { showToast, showConfirm } from './ui.js';
+import { showToast, showConfirm, replay } from './ui.js';
 import { api } from './api.js';
 import { renderFoodPicker } from './diary.js';
 import { syncAchievements } from './achievements.js';
 
 let currentWarehouseEditId = null;
 
-// ── Warehouse ──
-// Collapsed category names live outside `state` so exports stay pure data
-let collapsedCats = new Set();
+// ── Warehouse: inventory grid + item card ──
+const ALL = '';
+let activeCat = ALL;
+let selectedId = null;
+let renderedId = null;
+let newFoodId = null;
 
-function saveCollapsedCats() {
-    try { localStorage.setItem('macro_tracker_collapsed', JSON.stringify([...collapsedCats])); } catch { /* storage unavailable */ }
-}
-
-// Set only for the render that expands a category, so its rows stagger in once
-let expandingCat = null;
-
-function toggleCategory(cat) {
-    const expanding = collapsedCats.has(cat);
-    expanding ? collapsedCats.delete(cat) : collapsedCats.add(cat);
-    saveCollapsedCats();
-    expandingCat = expanding ? cat : null;
-    renderWarehouse();
-    expandingCat = null;
-}
-
-function toggleAllCategories() {
-    const allCats = Object.keys(groupFoodsByCategory());
-    const anyExpanded = allCats.some(c => !collapsedCats.has(c));
-    collapsedCats = anyExpanded ? new Set(allCats) : new Set();
-    saveCollapsedCats();
-    renderWarehouse();
-}
+// Below this width the item card is a bottom sheet opened by tapping a slot
+const sheetMq = matchMedia('(max-width: 1100px)');
 
 // Item rarity by how often a food was logged, reusing the badge tiers
-const RARITY = [[100, 'diamond', '传说'], [30, 'gold', '史诗'], [10, 'silver', '稀有'], [3, 'bronze', '优秀']];
+const RARITY = [[100, 'diamond', '传说'], [30, 'gold', '史诗'], [10, 'silver', '稀有'], [3, 'bronze', '优秀'], [0, '', '普通']];
+
+// Slot icon and tint follow the macro that supplies most of the item's energy
+const MACROS = [['protein', 4, 'egg_alt', '蛋白', 'g'], ['carbs', 4, 'rice_bowl', '碳水', 'g'], ['fat', 9, 'water_drop', '脂肪', 'g']];
+
+function mainMacro(food) {
+    const [key, , icon] = MACROS.reduce((best, m) => food[m[0]] * m[1] > food[best[0]] * best[1] ? m : best);
+    return food[key] > 0 ? { key, icon } : { key: 'kcal', icon: 'bolt' };
+}
 
 function useCounts() {
     const counts = {};
@@ -45,70 +35,134 @@ function useCounts() {
     return counts;
 }
 
-function rarityHtml(uses) {
-    const [, tier, label] = RARITY.find(([min]) => uses >= min) || [];
-    return tier ? `<span class="rarity r-${tier}" role="img" data-tip="${label} · 记录 ${uses} 次" aria-label="${label}，记录 ${uses} 次"></span>` : '';
+function slotHtml(food, uses, i) {
+    const [, tier, label] = RARITY.find(([min]) => uses >= min);
+    const macro = mainMacro(food);
+    const isActive = food.active !== false;
+    const cls = `slot${tier ? ` r-${tier}` : ''}${isActive ? '' : ' is-off'}${food.id === newFoodId ? ' is-new' : ''}`;
+    return `
+        <button type="button" class="${cls}" data-food-id="${esc(food.id)}" aria-pressed="${food.id === selectedId}" style="--i:${Math.min(i, 24)}"
+            aria-label="${esc(food.name)}，${label}，${esc(food.unit)}${isActive ? '' : '，已停用'}">
+            <span class="ms slot-icon" data-macro="${macro.key}" aria-hidden="true">${macro.icon}</span>
+            <span class="slot-name">${esc(food.name)}</span>
+            <span class="slot-qty">${esc(food.unit)}</span>
+            <span class="ms slot-off" aria-hidden="true">ac_unit</span>
+        </button>`;
 }
 
-function renderWarehouse() {
-    const tbody = $('warehouse-table-body');
-    const groups = groupFoodsByCategory();
-    const keyword = $('warehouse-search').value.trim().toLowerCase();
+function updateCount() {
     const activeCount = state.foods.filter(f => f.active !== false).length;
     $('warehouse-count').textContent = `${state.foods.length} 种，${activeCount} 种启用`;
+}
 
+// Foods in a tab that match the search box, in category order
+function visibleFoods(cat) {
+    const groups = groupFoodsByCategory();
+    const keyword = $('warehouse-search').value.trim().toLowerCase();
+    return (cat === ALL ? Object.values(groups).flat() : groups[cat] || [])
+        .filter(f => !keyword || f.name.toLowerCase().includes(keyword) || (f.category || '未分类').toLowerCase().includes(keyword));
+}
+
+function renderWarehouse(entering = false) {
+    const cats = Object.keys(groupFoodsByCategory());
+    if (!cats.includes(activeCat)) activeCat = ALL;
+    if (entering) $('item-card').classList.remove('is-open');
+    updateCount();
+    $('inv-tabs').innerHTML = [ALL, ...cats].map(cat => `
+        <button type="button" class="mode-tab" role="tab" data-cat="${esc(cat)}" aria-selected="${cat === activeCat}" aria-controls="inv-grid">
+            ${cat === ALL ? '<span class="ms" aria-hidden="true">inventory_2</span>全部' : esc(cat)}<small>${visibleFoods(cat).length}</small>
+        </button>`).join('');
+    $('exist-categories').innerHTML = cats.map(cat => `<option value="${esc(cat)}">`).join('');
+    renderGrid(entering);
+}
+
+function renderGrid(entering = false) {
+    const grid = $('inv-grid');
+    const foods = visibleFoods(activeCat);
+    if (!foods.some(f => f.id === selectedId)) selectedId = foods[0]?.id ?? null;
     const counts = useCounts();
-    let html = '';
-    for (const cat in groups) {
-        const foods = groups[cat].filter(f => !keyword || f.name.toLowerCase().includes(keyword) || cat.toLowerCase().includes(keyword));
-        if (!foods.length) continue;
-        // Searching shows every match regardless of collapse state
-        const isCollapsed = !keyword && collapsedCats.has(cat);
-        html += `
-            <tr class="cat-row"><td colspan="8">
-                <button class="cat-toggle" data-cat="${esc(cat)}" aria-expanded="${!isCollapsed}">
-                    <span class="ms" aria-hidden="true">chevron_right</span>${esc(cat)} <small>${foods.length}</small>
-                </button>
-            </td></tr>`;
-        if (isCollapsed) continue;
-        for (const [i, food] of foods.entries()) {
-            const isActive = food.active !== false;
-            const name = esc(food.name);
-            const id = esc(food.id);
-            const enterAttr = cat === expandingCat ? ` style="--i:${Math.min(i, 12)}"` : '';
-            html += `
-                <tr class="w-row${isActive ? '' : ' is-off'}${enterAttr ? ' is-entering' : ''}"${enterAttr}>
-                    <td class="w-name">${rarityHtml(counts[food.id] || 0)}<span class="w-title">${name}</span>${isActive ? '' : '<span class="tag">已停用</span>'}<span class="w-sub">${esc(food.unit)}</span></td>
-                    <td class="w-unit">${esc(food.unit)}</td>
-                    <td class="r w-kcal num">${fmt(food.kcal)}</td>
-                    <td class="r w-m">${fmt1(food.protein)}</td>
-                    <td class="r w-m">${fmt1(food.carbs)}</td>
-                    <td class="r w-m">${fmt1(food.fat)}</td>
-                    <td><label class="switch"><input type="checkbox" role="switch" ${isActive ? 'checked' : ''}
-                        aria-label="在日记中启用 ${name}" data-food-id="${id}"><span></span></label></td>
-                    <td><div class="w-actions">
-                        <button class="icon-btn" data-action="edit" data-food-id="${id}" aria-label="编辑 ${name}"><span class="ms" aria-hidden="true">edit</span></button>
-                        <button class="icon-btn danger" data-action="delete" data-food-id="${id}" aria-label="删除 ${name}"><span class="ms" aria-hidden="true">delete</span></button>
-                    </div></td>
-                </tr>`;
-        }
-    }
-
     if (!state.foods.length) {
-        html = `<tr><td colspan="8"><div class="empty">仓库是空的。点上方「新建食品」，录入第一个常吃的食物。</div></td></tr>`;
+        grid.innerHTML = '<div class="empty">背包是空的。点上方「新建食品」，录入第一个常吃的食物。</div>';
         $('new-food').open = true;
-    } else if (!html) {
-        html = `<tr><td colspan="8"><div class="empty">没有匹配「${esc(keyword)}」的食品</div></td></tr>`;
+    } else if (!foods.length) {
+        grid.innerHTML = `<div class="empty">没有匹配「${esc($('warehouse-search').value.trim())}」的食品</div>`;
+    } else {
+        grid.innerHTML = foods.map((food, i) => slotHtml(food, counts[food.id] || 0, i)).join('');
     }
-    tbody.innerHTML = html;
+    newFoodId = null;
+    grid.classList.remove('is-entering');
+    if (entering && !reduceMotion.matches) replay(grid, 'is-entering');
+    renderItemCard(counts);
+}
 
-    const allCats = Object.keys(groups);
-    const anyExpanded = allCats.some(c => !collapsedCats.has(c));
-    $('collapse-all-btn').hidden = !allCats.length || !!keyword;
-    $('collapse-all-icon').textContent = anyExpanded ? 'unfold_less' : 'unfold_more';
-    $('collapse-all-label').textContent = anyExpanded ? '全部收起' : '全部展开';
+function renderItemCard(counts = useCounts()) {
+    const card = $('item-card');
+    const body = $('item-body');
+    const food = state.foods.find(f => f.id === selectedId);
+    const swapped = selectedId !== renderedId;
+    renderedId = selectedId;
+    card.classList.toggle('is-off', !!food && food.active === false);
+    if (!food) {
+        closeSheet();
+        body.innerHTML = '<div class="empty">点选背包里的物品查看属性</div>';
+        return;
+    }
 
-    $('exist-categories').innerHTML = allCats.map(cat => `<option value="${esc(cat)}">`).join('');
+    const uses = counts[food.id] || 0;
+    const [, tier, label] = RARITY.find(([min]) => uses >= min);
+    const macro = mainMacro(food);
+    const name = esc(food.name);
+    const energy = MACROS.map(([key, k]) => food[key] * k);
+    const total = energy.reduce((a, b) => a + b, 0);
+    const pct = energy.map(e => total ? Math.round(e / total * 100) : 0);
+    body.innerHTML = `
+        <div class="item-head${tier ? ` r-${tier}` : ''}">
+            <span class="slot" aria-hidden="true"><span class="ms slot-icon" data-macro="${macro.key}">${macro.icon}</span></span>
+            <div class="item-title">
+                <h2 class="item-name">${name}</h2>
+                <span class="item-rarity">${label} · 记录 ${uses} 次</span>
+            </div>
+        </div>
+        <p class="item-meta">消耗品 · ${esc(food.category || '未分类')} · 基准分量 ${esc(food.unit)}<span class="tag item-off">已停用</span></p>
+        <h3 class="item-sub">属性加成</h3>
+        <ul class="item-stats">
+            <li data-macro="kcal"><span class="ms" aria-hidden="true">bolt</span>热量<b class="num">+${fmt(food.kcal)}</b><small>kcal</small></li>
+            ${MACROS.map(([key, , icon, text, unit], i) => `<li data-macro="${key}"><span class="ms" aria-hidden="true">${icon}</span>${text}<b class="num">+${fmt1(food[key])}</b><small>${unit}${total ? ` · ${pct[i]}%` : ''}</small></li>`).join('')}
+        </ul>
+        ${total ? `<div class="item-split" role="img" aria-label="能量来源：${MACROS.map(([, , , text], i) => `${text} ${pct[i]}%`).join('，')}">${MACROS.map(([key], i) => `<i data-macro="${key}" style="--w:${pct[i]}%"></i>`).join('')}</div>` : ''}
+        <div class="item-actions">
+            <label class="item-toggle">在日记中启用<span class="switch"><input type="checkbox" role="switch" ${food.active !== false ? 'checked' : ''}
+                aria-label="在日记中启用 ${name}" data-food-id="${esc(food.id)}"><span></span></span></label>
+            <button type="button" class="btn btn-ghost btn-sm" data-action="edit"><span class="ms" aria-hidden="true">edit</span>编辑</button>
+            <button type="button" class="icon-btn danger" data-action="delete" aria-label="删除 ${name}"><span class="ms" aria-hidden="true">delete</span></button>
+        </div>`;
+    body.classList.remove('is-swapping');
+    if (swapped && !reduceMotion.matches) replay(body, 'is-swapping');
+}
+
+function selectSlot(slot) {
+    $('inv-grid').querySelectorAll('.slot').forEach(s => s.setAttribute('aria-pressed', String(s === slot)));
+    selectedId = slot.dataset.foodId;
+    renderItemCard();
+    if (sheetMq.matches) {
+        $('item-card').classList.add('is-open');
+        document.querySelector('.item-close').focus();
+    }
+}
+
+function closeSheet() {
+    const card = $('item-card');
+    if (!card.classList.contains('is-open')) return;
+    card.classList.remove('is-open');
+    const slot = [...$('inv-grid').children].find(s => s.dataset.foodId === selectedId);
+    slot?.focus();
+}
+
+function selectCategory(cat) {
+    activeCat = cat;
+    // Patch the tabs in place so the underline slides instead of re-rendering
+    $('inv-tabs').querySelectorAll('.mode-tab').forEach(t => t.setAttribute('aria-selected', String(t.dataset.cat === cat)));
+    renderGrid(true);
 }
 
 async function addCustomFood() {
@@ -125,9 +179,9 @@ async function addCustomFood() {
         fat:     parseFloat($('food-fat').value)     || 0
     });
     state.foods.push(food);
-    // Make sure the freshly added item is visible even if its category was collapsed
-    collapsedCats.delete(category);
-    saveCollapsedCats();
+    // Open the new item's tab with it selected so it is visible right away
+    activeCat = food.category || '未分类';
+    selectedId = newFoodId = food.id;
     $('warehouse-search').value = '';
     renderWarehouse();
     renderFoodPicker();
@@ -188,12 +242,19 @@ async function deleteWarehouseItem(foodId) {
     const food = state.foods.find(f => f.id === foodId);
     if (!(await showConfirm(`删除「${food ? food.name : '此食品'}」？已记录的历史日记会保留。`))) return;
     await api(`/api/foods/${encodeURIComponent(foodId)}`, 'DELETE');
+    closeSheet();
+    const slot = [...$('inv-grid').children].find(s => s.dataset.foodId === foodId);
+    if (slot && !reduceMotion.matches) {
+        slot.classList.add('is-leaving');
+        await new Promise(r => setTimeout(r, 200));
+    }
     state.foods = state.foods.filter(f => f.id !== foodId);
     renderWarehouse();
     renderFoodPicker();
     showToast('食品已删除', 'info');
 }
 
+// Patches the slot and card in place so the switch thumb and the slot's frost fade animate
 async function toggleFoodActive(foodId, input) {
     const food = state.foods.find(f => f.id === foodId);
     if (!food) return;
@@ -205,36 +266,41 @@ async function toggleFoodActive(foodId, input) {
         input.checked = !nextActive;
         return;
     }
-    renderWarehouse();
+    input.checked = food.active;
+    [...$('inv-grid').children].find(s => s.dataset.foodId === foodId)?.classList.toggle('is-off', !food.active);
+    if (food.id === selectedId) $('item-card').classList.toggle('is-off', !food.active);
+    updateCount();
     renderFoodPicker();
     showToast(food.active ? `「${food.name}」已启用` : `「${food.name}」已停用，不再出现在日记里`, food.active ? 'success' : 'info');
 }
 
 function initWarehouse() {
     $('warehouse-dialog').addEventListener('close', () => { currentWarehouseEditId = null; });
-
-    try {
-        collapsedCats = new Set(JSON.parse(localStorage.getItem('macro_tracker_collapsed') || '[]'));
-    } catch { collapsedCats = new Set(); }
-
-    $('warehouse-table-body').addEventListener('click', e => {
-        const btn = e.target.closest('.cat-toggle');
-        if (btn) toggleCategory(btn.dataset.cat);
+    $('inv-tabs').addEventListener('click', e => {
+        const tab = e.target.closest('.mode-tab');
+        if (tab && tab.dataset.cat !== activeCat) selectCategory(tab.dataset.cat);
     });
-    $('warehouse-search').addEventListener('input', renderWarehouse);
-    $('collapse-all-btn').addEventListener('click', toggleAllCategories);
+    $('inv-grid').addEventListener('click', e => {
+        const slot = e.target.closest('.slot');
+        if (slot) selectSlot(slot);
+    });
+    $('item-card').addEventListener('click', e => {
+        if (e.target.closest('.item-close')) closeSheet();
+        const btn = e.target.closest('button[data-action]');
+        if (btn?.dataset.action === 'edit') openWarehouseModal(selectedId);
+        if (btn?.dataset.action === 'delete') deleteWarehouseItem(selectedId);
+    });
+    $('item-card').addEventListener('change', e => {
+        if (e.target.matches('input[data-food-id]')) toggleFoodActive(e.target.dataset.foodId, e.target);
+    });
+    document.querySelector('.item-scrim').addEventListener('click', closeSheet);
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && $('item-card').classList.contains('is-open') && !document.querySelector('dialog[open]')) closeSheet();
+    });
+    $('warehouse-search').addEventListener('input', () => renderWarehouse());
     document.querySelector('.new-food-form').addEventListener('submit', e => { e.preventDefault(); addCustomFood(); });
     $('warehouse-dialog').querySelector('form').addEventListener('submit', e => { e.preventDefault(); saveWarehouseEdit(); });
     document.querySelector('[data-close-warehouse]').addEventListener('click', closeWarehouseModal);
-    $('warehouse-table-body').addEventListener('click', e => {
-        const btn = e.target.closest('button[data-action]');
-        if (!btn) return;
-        if (btn.dataset.action === 'edit') openWarehouseModal(btn.dataset.foodId);
-        if (btn.dataset.action === 'delete') deleteWarehouseItem(btn.dataset.foodId);
-    });
-    $('warehouse-table-body').addEventListener('change', e => {
-        if (e.target.matches('input[data-food-id]')) toggleFoodActive(e.target.dataset.foodId, e.target);
-    });
 }
 
 export { renderWarehouse, initWarehouse };
