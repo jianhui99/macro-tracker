@@ -143,6 +143,9 @@ button { cursor: pointer; background: none; border: 0; }
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--lv, var(--accent)) 55%, transparent);
     animation: chipIn .4s var(--ease-spring);
 }
+.rail-level { transition: background-color .15s, transform .12s var(--ease-out); }
+.rail-level:hover { background: color-mix(in srgb, var(--lv, var(--accent)) 18%, transparent); }
+.rail-level:active { transform: scale(.92); }
 .rail-item {
     width: 60px;
     padding: 8px 0 6px;
@@ -1569,7 +1572,7 @@ button.cal-day:hover { transform: translateY(-2px); border-color: var(--accent);
     background: radial-gradient(circle at 30% 25%, color-mix(in srgb, var(--lv, var(--accent)) 50%, #fff), var(--lv, var(--accent)) 55%, color-mix(in srgb, var(--lv, var(--accent)) 70%, #000));
     box-shadow: 0 0 0 3px rgba(0, 0, 0, .45), 0 0 0 4px color-mix(in srgb, var(--lv, var(--accent)) 60%, transparent), 0 0 20px color-mix(in srgb, var(--lv, var(--accent)) 40%, transparent);
 }
-#page-achievements.is-active .lv-emblem { animation: medalIn .7s var(--ease-spring) .1s backwards; }
+#page-settings.is-active .lv-emblem { animation: medalIn .7s var(--ease-spring) .1s backwards; }
 .lv-body { display: flex; flex-direction: column; gap: 7px; flex: 1; min-width: 0; }
 .lv-head { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
 .lv-head > b { font-size: 17px; letter-spacing: .04em; color: var(--lv, var(--accent)); white-space: nowrap; }

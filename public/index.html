@@ -20,7 +20,7 @@
 
     <nav class="rail" aria-label="主导航">
         <div class="brand-mark num" aria-label="MacroTracker">MT</div>
-        <span class="rail-level num" id="rail-level" hidden></span>
+        <button type="button" class="rail-level num" id="rail-level" aria-label="查看角色面板" hidden></button>
         <button class="rail-item" data-page="diary" aria-current="page">
             <span class="ms" aria-hidden="true">restaurant</span>日记
         </button>
@@ -34,7 +34,7 @@
             <span class="ms" aria-hidden="true">military_tech</span>成就
         </button>
         <button class="rail-item" data-page="settings">
-            <span class="ms" aria-hidden="true">person</span>身体
+            <span class="ms" aria-hidden="true">person</span>角色
         </button>
     </nav>
 
@@ -153,7 +153,7 @@
                 </aside>
 
                 <section class="water panel" id="water-card" aria-labelledby="water-title">
-                    <div class="panel-head"><h2 id="water-title">饮水</h2><span class="hint">目标可在「身体数据」设定，未设定时按体重 35 ml/kg 计算，喝到瓶口即达标</span></div>
+                    <div class="panel-head"><h2 id="water-title">饮水</h2><span class="hint">目标可在「角色面板」设定，未设定时按体重 35 ml/kg 计算，喝到瓶口即达标</span></div>
                     <div class="water-body">
                         <div class="water-vis" id="water-vis" aria-hidden="true">
                             <div class="water-glass">
@@ -349,6 +349,12 @@
                 <h1 class="page-title">成就勋章<small id="achievements-count"></small></h1>
                 <fieldset class="seg seg-inline badge-tabs" id="badge-tabs" aria-label="勋章系列"></fieldset>
             </div>
+            <ul class="panel badge-grid" id="badge-grid"></ul>
+        </div>
+
+        <!-- ── Settings ── -->
+        <div id="page-settings" class="page">
+            <div class="topbar"><h1 class="page-title">角色面板</h1></div>
             <section class="level-card" id="level-card" aria-label="冒险者等级" hidden>
                 <span class="lv-emblem num" id="lv-num"></span>
                 <div class="lv-body">
@@ -357,12 +363,6 @@
                     <div class="lv-foot"><span class="num" id="lv-xp"></span><span id="lv-next"></span></div>
                 </div>
             </section>
-            <ul class="panel badge-grid" id="badge-grid"></ul>
-        </div>
-
-        <!-- ── Settings ── -->
-        <div id="page-settings" class="page">
-            <div class="topbar"><h1 class="page-title">身体数据</h1></div>
             <div class="settings-grid">
                 <div class="panel">
                     <div class="panel-head"><h2>角色属性</h2></div>

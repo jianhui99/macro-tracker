@@ -58,6 +58,7 @@ initUi();
 document.querySelectorAll('.rail-item').forEach(btn =>
     btn.addEventListener('click', () => switchPage(btn.dataset.page)));
 $('export-data').addEventListener('click', exportData);
+$('rail-level').addEventListener('click', () => switchPage('settings'));
 
 async function init() {
     setMeal(getDefaultMeal());

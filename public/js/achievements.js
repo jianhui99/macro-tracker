@@ -72,7 +72,7 @@ const tierName = (a, tier) => a.tiers.length > 1 ? `${a.name} · ${tier} ${a.uni
 // current run, so progress toward the next tier reads "current / next".
 function evaluateAchievements(diary, weights, water, user, foodList, dayTargets, today = localDate()) {
     const progress = Object.fromEntries(ACHIEVEMENTS.map(a => [a.id, { value: a.lower ? null : 0, reached: [] }]));
-    if (!user.targetWeight) progress.goal_weight.unavailable = '先在「身体数据」设定目标体重';
+    if (!user.targetWeight) progress.goal_weight.unavailable = '先在「角色面板」设定目标体重';
     if (!weights.some(w => w.date <= today)) progress.bmi.unavailable = '记录第一次称重后开始计算';
     const weightByDate = Object.fromEntries(weights.map(w => [w.date, w.weight]));
     const first = [...Object.keys(diary).filter(ds => diary[ds].length), ...Object.keys(weightByDate),
