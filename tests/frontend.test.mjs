@@ -118,7 +118,6 @@ test('quotes display only Chinese and cycle once per local day across years', as
         const text = html.replace(/<[^>]*>/g, '');
         const quote = pool.quotes.find(quote => esc(quote.zh) === text);
         assert.ok(quote);
-        assert.equal(app.element('quote-tag').textContent, quote.tag.split('/')[0].trim());
         assert.equal(app.element('quote-card').hidden, false);
         assert.equal(app.element('quote-card')['aria-busy'], 'false');
         rendered.push(text);

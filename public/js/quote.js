@@ -25,12 +25,11 @@ async function loadQuote() {
         const { quotes } = await res.json();
         if (!Array.isArray(quotes) || !quotes.length) throw new Error('Empty quote pool');
         const dayIndex = Math.floor(Date.parse(`${localDate()}T00:00:00Z`) / 86400000);
-        const { zh, tag = '' } = quotes[dayIndex % quotes.length];
+        const { zh } = quotes[dayIndex % quotes.length];
         if (typeof zh !== 'string' || !zh.trim()) throw new Error('Missing Chinese quote');
         // Keep punctuation attached to each phrase during the reveal.
         const phrases = zh.match(/[^，。；！？、]+[，。；！？、]?/g) || [zh];
         $('quote-text').innerHTML = quoteLineHtml(phrases, '', 0);
-        $('quote-tag').textContent = tag.split('/')[0].trim();
     } catch (err) {
         console.error('[quote] failed to load quote of the day', err);
         card.hidden = true;
