@@ -1094,7 +1094,7 @@
         .badge-body { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
         .badge-head { display: flex; align-items: baseline; gap: 8px; }
         .badge-head h3 { font-size: 14px; font-weight: 700; margin-right: auto; }
-        .badge-head span { font-size: 12px; color: var(--muted); white-space: nowrap; }
+        .badge-head > span { font-size: 12px; color: var(--muted); white-space: nowrap; }
         .badge-body p { font-size: 12px; color: var(--muted); line-height: 1.4; }
         .tier-row { display: flex; flex-wrap: wrap; gap: 4px; }
         .tier {
@@ -2209,7 +2209,7 @@
                 .map(r => ({ ...r, dates: r.ids.map(id => state.achievements[id]) }))
                 .sort((x, y) => !x.dates.some(Boolean) - !y.dates.some(Boolean));
 
-            $('badge-grid').innerHTML = rows.map(({ a, ids, dates }, i) => {
+            $('badge-grid').innerHTML = rows.map(({ a, ids, dates }) => {
                 const level = dates.filter(Boolean).length;
                 unlockedCount += level;
                 tierCount += a.tiers.length;
@@ -2238,7 +2238,7 @@
 
                 const sparks = metal === 'diamond' ? '<i class="spark"></i><i class="spark"></i><i class="spark"></i>' : '';
                 const burst = isNew ? `<span class="burst" aria-hidden="true">${BURST_ANGLES.map(deg => `<i style="--a:${deg}deg"></i>`).join('')}</span>` : '';
-                return `<li class="badge m-${metal}${isNew ? ' is-new' : ''}" data-group="${a.group}" style="--i:${i}">
+                return `<li class="badge m-${metal}${isNew ? ' is-new' : ''}" data-group="${a.group}">
                         <span class="medal"><span class="ms" aria-hidden="true">${a.icon}</span>${sparks}${burst}</span>
                         <div class="badge-body">
                             <div class="badge-head"><h3>${a.name}${isNew ? '<span class="new-chip">NEW</span>' : ''}</h3><span>${latest ? `${fmtMonthDay(latest)}解锁` : '未解锁'}</span></div>
@@ -2256,10 +2256,13 @@
             try { localStorage.setItem('macro_tracker_seen_badges', JSON.stringify([...seenBadges])); } catch { /* storage unavailable */ }
         }
 
+        // The entrance stagger counts only visible badges, so a filtered tab doesn't wait on hidden ones
         function filterBadges() {
             const group = document.querySelector('input[name="badge-group"]:checked').value;
+            let i = 0;
             document.querySelectorAll('#badge-grid .badge').forEach(li => {
                 li.hidden = group !== 'all' && li.dataset.group !== group;
+                if (!li.hidden) li.style.setProperty('--i', i++);
             });
         }
 
