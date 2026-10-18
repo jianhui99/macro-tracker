@@ -1,5 +1,5 @@
 import { parseLocalDate, diaryDate, $, localDate, reduceMotion, esc, fmt, fmt1, WEEKDAYS } from './helpers.js';
-import { MEAL_ORDER, MEALS, macroIcon, targetsFor, sumEntries, recordingStreak, MACRO_KEYS, FINISH_SCALE } from './nutrition.js';
+import { MEAL_ORDER, MEALS, macroIcon, targetsFor, sumEntries, recordingStreak, MACRO_KEYS, FINISH_SCALE, dayStars } from './nutrition.js';
 import { moveSegThumb, replay, tweenNumber, showToast, withBusy, showConfirm } from './ui.js';
 import { groupFoodsByCategory, unitText, unitBase, scaleFood } from './foods.js';
 import { state } from './state.js';
@@ -261,6 +261,22 @@ function renderScoreboard(totals, celebrate) {
     const streak = recordingStreak();
     $('chip-streak').classList.toggle('is-hot', streak >= 3);
     tweenNumber($('streak-days'), streak);
+
+    const starsEl = $('day-stars');
+    const stars = dayStars(diaryDate());
+    const prevStars = Number(starsEl.dataset.stars || 0);
+    starsEl.dataset.stars = stars;
+    starsEl.setAttribute('aria-label', `星级 ${stars} / 3`);
+    starsEl.querySelectorAll('.ms').forEach((star, i) => {
+        const lit = i < stars;
+        if (celebrate && lit && !star.classList.contains('is-on')) replay(star, 'is-lighting');
+        star.classList.toggle('is-on', lit);
+    });
+    starsEl.classList.remove('is-complete');
+    if (celebrate && stars === 3 && prevStars < 3) {
+        replay(starsEl, 'is-complete');
+        showToast('今日三星达成', 'award');
+    }
 
     const proteinGap = t.protein - totals.protein;
     $('chip-protein').innerHTML = proteinGap > 0

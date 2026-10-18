@@ -500,6 +500,110 @@ select.input { padding-right: 8px; }
     filter: drop-shadow(0 3px 0 var(--rim)) drop-shadow(0 0 16px rgba(255, 75, 38, .45));
 }
 
+/* Day rating: the summary calendar's three stars in the board's top-right corner.
+   Lit stars use the energy number's molten gold; the glow steps up with each star, and three stars add a sheen,
+   a breathing halo and sparks */
+.board-head { min-height: 96px; }
+.board-stars {
+    --gold: linear-gradient(180deg, #FFF8E6 15%, #F6D28A 55%, var(--accent));
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 1;
+    isolation: isolate;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    border-radius: 8px;
+    cursor: help;
+}
+.board-stars .ms {
+    font-size: 40px;
+    color: #3A3050;
+    background: linear-gradient(115deg, transparent 40%, rgba(255, 255, 255, .95) 50%, transparent 60%) 150% 0 / 250% 100% no-repeat, var(--gold);
+    -webkit-background-clip: text;
+    background-clip: text;
+    font-variation-settings: 'FILL' 1, 'wght' 500, 'opsz' 24;
+    filter: drop-shadow(0 2px 0 var(--rim));
+    transition: color .4s, filter .4s;
+    animation: var(--star-fx, none);
+}
+.board-stars .is-on { color: transparent; }
+.board-stars[data-stars="1"] .is-on { filter: drop-shadow(0 2px 0 var(--rim)) brightness(.8); }
+.board-stars[data-stars="2"] .is-on { filter: drop-shadow(0 2px 0 var(--rim)) drop-shadow(0 0 7px rgba(245, 196, 81, .55)); }
+.board-stars[data-stars="3"] .is-on {
+    --star-fx: sheen 3.2s ease-in-out infinite, starPulse 2.4s ease-in-out infinite;
+    filter: drop-shadow(0 2px 0 var(--rim)) drop-shadow(0 0 4px rgba(255, 248, 230, .9)) drop-shadow(0 0 14px rgba(255, 214, 120, 1));
+}
+.board-stars[data-stars="3"] .ms:nth-child(2) { animation-delay: 0s, .2s; }
+.board-stars[data-stars="3"] .ms:nth-child(3) { animation-delay: 0s, .4s; }
+/* Lighting pop runs last in the list so it wins over the pulse while it plays */
+.board-stars .is-on.is-lighting { animation: var(--star-fx, none), starLight .7s var(--ease-spring); }
+@keyframes starLight {
+    0%  { transform: scale(.3) rotate(-90deg); }
+    60% { transform: scale(1.35) rotate(10deg); filter: drop-shadow(0 2px 0 var(--rim)) drop-shadow(0 0 16px rgba(255, 214, 120, 1)); }
+}
+@keyframes starPulse { 50% { transform: scale(1.1); filter: drop-shadow(0 2px 0 var(--rim)) drop-shadow(0 0 6px rgba(255, 248, 230, 1)) drop-shadow(0 0 22px rgba(255, 214, 120, 1)); } }
+/* Glow centred on the row; three stars turn it into a slowly spinning ray burst */
+.board-stars::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    z-index: -1;
+    width: 170px;
+    height: 170px;
+    margin: -85px 0 0 -85px;
+    border-radius: 50%;
+    pointer-events: none;
+    background: radial-gradient(closest-side, rgba(255, 200, 90, .5), transparent);
+    opacity: 0;
+    transition: opacity .5s;
+}
+.board-stars[data-stars="2"]::before { opacity: .45; }
+.board-stars[data-stars="3"]::before {
+    opacity: 1;
+    background:
+        radial-gradient(closest-side, rgba(255, 214, 120, .65), rgba(255, 200, 90, .15) 60%, transparent),
+        repeating-conic-gradient(rgba(255, 224, 150, .22) 0 9deg, transparent 9deg 30deg);
+    -webkit-mask: radial-gradient(closest-side, #000 35%, transparent);
+    mask: radial-gradient(closest-side, #000 35%, transparent);
+    animation: raySpin 14s linear infinite, haloBreathe 2.4s ease-in-out infinite;
+}
+@keyframes raySpin { to { rotate: 360deg; } }
+@keyframes haloBreathe { 50% { scale: 1.15; opacity: .75; } }
+/* One-time shock ring when the third star lands */
+.board-stars.is-complete::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 60px;
+    height: 60px;
+    margin: -30px 0 0 -30px;
+    border: 2px solid #FFE3A0;
+    border-radius: 50%;
+    box-shadow: 0 0 16px rgba(255, 214, 120, .9);
+    pointer-events: none;
+    animation: starBurst .8s var(--ease-out) .35s both;
+}
+@keyframes starBurst { from { opacity: 1; transform: scale(.3); } to { opacity: 0; transform: scale(2.4); } }
+.star-spark {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: #FFF1C9;
+    clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
+    filter: drop-shadow(0 0 4px rgba(255, 214, 120, .9));
+    opacity: 0;
+    pointer-events: none;
+    display: none;
+}
+.board-stars[data-stars="3"] .star-spark { display: block; animation: twinkle 2.2s ease-in-out var(--d, 0s) infinite; }
+.star-spark:nth-of-type(4) { top: -8px; right: -6px; }
+.star-spark:nth-of-type(5) { top: -6px; left: -8px; width: 9px; height: 9px; --d: .7s; }
+.star-spark:nth-of-type(6) { bottom: -8px; left: 50%; width: 8px; height: 8px; --d: 1.4s; }
+
 .board-meta { display: flex; gap: 8px; flex-wrap: wrap; }
 .chip {
     display: inline-flex;
@@ -1919,6 +2023,11 @@ dialog[open]::backdrop { animation: fade .2s ease; }
     main { overflow: visible; padding: 12px 12px calc(96px + env(safe-area-inset-bottom)); }
     #toast-container { bottom: 88px; }
     .board { padding: 16px 16px 12px; border-radius: 16px; }
+    .board-head { min-height: 0; }
+    .board-stars { gap: 2px; }
+    .board-stars .ms { font-size: 26px; }
+    .board-stars.is-complete::after { width: 40px; height: 40px; margin: -20px 0 0 -20px; }
+    .board-stars::before { width: 116px; height: 116px; margin: -58px 0 0 -58px; }
     .lane { grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "name val" "track track"; gap: 4px 10px; padding: 6px 0 8px; }
     .lane-name { grid-area: name; }
     .lane-track { grid-area: track; }
