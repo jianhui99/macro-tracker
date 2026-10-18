@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,400..900;1,62..125,400..900&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..24,400..600,0..1,0&icon_names=accessibility_new,add,arrow_downward,arrow_upward,blender,bolt,calendar_month,check,check_circle,chevron_left,chevron_right,delete,diamond,dinner_dining,download,edit,edit_note,egg,egg_alt,emoji_events,error,event_available,fitness_center,flag,free_breakfast,grain,info,inventory_2,kebab_dining,local_fire_department,lunch_dining,military_tech,monitor_weight,nutrition,person,ramen_dining,remove,restart_alt,restaurant,rice_bowl,search,sports_score,sprint,star,target,trending_down,unfold_less,unfold_more,verified,vertical_align_bottom,water_drop&display=block" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..24,400..600,0..1,0&icon_names=accessibility_new,add,arrow_downward,arrow_upward,blender,bolt,calendar_month,check,check_circle,chevron_left,chevron_right,close,delete,diamond,dinner_dining,download,edit,edit_note,egg,egg_alt,emoji_events,error,event_available,fitness_center,flag,free_breakfast,grain,info,inventory_2,kebab_dining,local_fire_department,lunch_dining,military_tech,monitor_weight,nutrition,person,ramen_dining,remove,restart_alt,restaurant,rice_bowl,search,sports_score,sprint,star,target,trending_down,unfold_less,unfold_more,verified,vertical_align_bottom,water_drop&display=block" rel="stylesheet">
 
     <style>
         :root {
@@ -187,6 +187,13 @@
         }
         .panel-head h2 { font-size: 15px; font-weight: 700; margin-right: auto; white-space: nowrap; }
         .panel-head .hint { font-size: 12px; color: var(--muted); }
+        .panel > .panel-head { cursor: pointer; user-select: none; }
+        .panel-toggle { margin: -6px -8px -6px 0; }
+        .panel-toggle .ms { transform: rotate(90deg); transition: transform .25s var(--ease-spring); }
+        .panel.is-collapsed { align-self: start; }
+        .panel.is-collapsed > .panel-head { border-bottom: 0; }
+        .panel.is-collapsed > :not(.panel-head) { display: none; }
+        .panel.is-collapsed .panel-toggle .ms { transform: none; }
 
         /* ── Buttons & inputs ── */
         .btn {
@@ -309,6 +316,7 @@
             gap: 14px;
             align-items: start;
         }
+        .diary-grid:has(> .quote-card[hidden]) { grid-template-areas: "board quick" "log quick"; grid-template-rows: auto 1fr; }
 
         /* ── Scoreboard ── */
         .board {
@@ -459,7 +467,7 @@
             grid-area: quote;
             position: relative;
             overflow: hidden;
-            padding: 14px 20px 14px 24px;
+            padding: 14px 44px 14px 24px;
             border-radius: 14px;
             background: var(--surface);
             border: 1px solid var(--line);
@@ -494,6 +502,7 @@
             pointer-events: none;
             user-select: none;
         }
+        .quote-close { position: absolute; top: 8px; right: 8px; z-index: 1; }
         .quote-head { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
         .quote-chip { display: inline-flex; align-items: center; gap: 3px; padding: 2px 9px 2px 6px; border-radius: 999px; background: var(--cobalt); color: #fff; font-size: 12px; font-weight: 700; }
         .quote-chip .ms { font-size: 15px; color: var(--medal-on-ink); font-variation-settings: 'FILL' 1, 'wght' 600, 'opsz' 20; animation: boltPulse 2.4s ease-in-out infinite; }
@@ -700,7 +709,7 @@
             color: var(--muted);
             border-bottom: 1px solid var(--line-soft);
         }
-        .log-cols > span:not(:first-child) { text-align: right; display: flex; align-items: center; justify-content: flex-end; gap: 5px; }
+        .log-cols > span:not(:first-child) { text-align: right; display: flex; align-items: center; justify-content: flex-end; gap: 5px; white-space: nowrap; }
 
         .meal + .meal { border-top: 1px solid var(--line); }
         .meal-head { min-height: 46px; }
@@ -1305,6 +1314,7 @@
         /* ── Responsive ── */
         @media (max-width: 1100px) {
             .diary-grid { grid-template-columns: minmax(0, 1fr); grid-template-areas: "board" "quote" "quick" "log"; }
+            .diary-grid:has(> .quote-card[hidden]) { grid-template-areas: "board" "quick" "log"; grid-template-rows: auto; }
             .quick { position: static; max-height: none; }
             .food-list { max-height: 240px; }
             .new-food-form { grid-template-columns: repeat(4, minmax(0, 1fr)); }
@@ -1339,6 +1349,7 @@
             .lane-val b { font-size: 16px; }
             .log-cols, .meal-head, .entry { grid-template-columns: minmax(0, 1fr) 52px 40px 60px; padding: 0 12px; }
             .entry { padding: 0 6px; }
+            .log-cols > span:not(:first-child) { gap: 2px; }
             .c-carbs, .c-fat { display: none !important; }
             .entry-main { padding-left: 0; flex-wrap: wrap; row-gap: 0; }
             .entry-actions .icon-btn { width: 28px; }
@@ -1350,6 +1361,10 @@
             .data-table th, .data-table td { padding-inline: 6px; }
             .w-name { padding-block: 6px; padding-left: 12px !important; }
             .w-sub { display: block; font-size: 12px; }
+            .w-title { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+            /* The dimmed row and the off switch already say "disabled" */
+            .w-name .tag { display: none; }
+            .w-actions .icon-btn { width: 28px; }
             .toolbar-search { width: 100%; order: 3; }
             .new-food-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
             .new-food-form .wide, .new-food-form .btn { grid-column: 1 / -1; }
@@ -1503,6 +1518,7 @@
 
                 <section class="quote-card" id="quote-card" aria-label="今日一句" aria-busy="true">
                     <span class="quote-mark" aria-hidden="true">&rdquo;</span>
+                    <button type="button" class="icon-btn quote-close" onclick="$('quote-card').hidden = true" aria-label="关闭今日一句"><span class="ms" aria-hidden="true">close</span></button>
                     <div class="quote-head">
                         <!-- <span class="quote-chip"><span class="ms" aria-hidden="true">bolt</span>今日一句</span> -->
                         <a class="quote-credit" id="quote-credit" href="https://zenquotes.io/" target="_blank" rel="noopener noreferrer" hidden></a>
@@ -1733,7 +1749,7 @@
             </div>
 
             <section class="panel weight-panel" aria-labelledby="weight-title">
-                <div class="panel-head"><h2 id="weight-title">体重记录</h2><span class="hint">最新称重会自动更新每日目标</span></div>
+                <div class="panel-head"><h2 id="weight-title">体重记录</h2></div>
                 <div class="weight-body">
                     <div class="weight-side">
                         <form class="weight-form" onsubmit="event.preventDefault(); logWeight();">
@@ -2805,7 +2821,7 @@
                     const id = esc(food.id);
                     html += `
                         <tr class="${isActive ? '' : 'is-off'}">
-                            <td class="w-name">${name}${isActive ? '' : '<span class="tag">已停用</span>'}<span class="w-sub">${esc(food.unit)}</span></td>
+                            <td class="w-name"><span class="w-title">${name}</span>${isActive ? '' : '<span class="tag">已停用</span>'}<span class="w-sub">${esc(food.unit)}</span></td>
                             <td class="w-unit">${esc(food.unit)}</td>
                             <td class="r w-kcal num">${fmt(food.kcal)}</td>
                             <td class="r w-m">${fmt1(food.protein)}</td>
@@ -3676,6 +3692,36 @@
             <label><input type="radio" name="badge-group" value="${value}"${i ? '' : ' checked'}><span class="seg-opt">${label}</span></label>`).join('');
         $('meal-seg').addEventListener('change', updateGoLabels);
         $('diary-date').value = localDate();
+
+        // ── Collapsible panels ──
+        // Keyed by panel title, which is static markup
+        const PANEL_STORAGE = 'macro_tracker_collapsed_panels';
+        let collapsedPanels = new Set();
+        try {
+            collapsedPanels = new Set(JSON.parse(localStorage.getItem(PANEL_STORAGE) || '[]'));
+        } catch { collapsedPanels = new Set(); }
+
+        function setPanelCollapsed(panel, collapsed) {
+            panel.classList.toggle('is-collapsed', collapsed);
+            panel.querySelector('.panel-toggle').setAttribute('aria-expanded', String(!collapsed));
+        }
+
+        document.querySelectorAll('.panel > .panel-head').forEach(head => {
+            const title = head.querySelector('h2').textContent;
+            head.insertAdjacentHTML('beforeend', `<button type="button" class="icon-btn panel-toggle" aria-label="${esc(title)}"><span class="ms" aria-hidden="true">chevron_right</span></button>`);
+            setPanelCollapsed(head.parentElement, collapsedPanels.has(title));
+        });
+
+        document.addEventListener('click', e => {
+            const head = e.target.closest('.panel > .panel-head');
+            if (!head) return;
+            const panel = head.parentElement;
+            const title = head.querySelector('h2').textContent;
+            const collapsed = !panel.classList.contains('is-collapsed');
+            setPanelCollapsed(panel, collapsed);
+            collapsed ? collapsedPanels.add(title) : collapsedPanels.delete(title);
+            try { localStorage.setItem(PANEL_STORAGE, JSON.stringify([...collapsedPanels])); } catch { /* storage unavailable */ }
+        });
 
         (async function init() {
             setMeal(getDefaultMeal());
