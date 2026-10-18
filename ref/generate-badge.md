@@ -36,3 +36,6 @@ comebacks       | a phoenix rising from glowing embers
 water_streak    | a water droplet knight in shining armor charging forward, leaving a trail of splashing footprints
 water_days      | a heroic glass of water champion raising a full cup like a trophy, water sparkling over the brim
 water_total     | a giant reservoir titan made of living water, holding back a crashing tidal wave with bare hands
+star_streak     | a shooting-star knight dashing forward with three golden stars orbiting its helmet, leaving a blazing comet trail
+star_days       | a star-collector astrologer mage in a starry robe, hugging a glass jar full of glowing golden stars
+star_total      | a cheerful star-forging dwarf blacksmith hammering glowing golden stars on an anvil, a growing pile of finished stars nearby

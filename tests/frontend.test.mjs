@@ -211,6 +211,24 @@ test('calendar stars: one for recording, one for kcal in range, one for protein 
     assert.equal(stars(t.kcal - 301, t.protein - 1), 1);
 });
 
+test('star achievements count finished days, and today only earns its recording star', async () => {
+    const app = await loadApp();
+    const { evaluateAchievements } = await app.get('achievements.js');
+    const targets = { kcal: 2000, protein: 150, carbs: 200, fat: 60, water: 2000 };
+    const day = (kcal, protein) => [{ meal: 'lunch', kcal, protein, carbs: 0, fat: 0 }];
+    const diary = {
+        '2030-01-01': day(2000, 150), // 3 stars
+        '2030-01-02': day(2000, 100), // 2 stars, breaks the streak
+        '2030-01-03': day(2000, 150), // 3 stars
+        '2030-01-04': day(1900, 160), // 3 stars
+        '2030-01-05': day(2000, 150)  // today: unfinished, recording star only
+    };
+    const p = evaluateAchievements(diary, [], {}, { height: 175 }, [], () => targets, '2030-01-05');
+    assert.equal(p.star_streak.value, 2);
+    assert.equal(p.star_days.value, 3);
+    assert.equal(p.star_total.value, 12);
+});
+
 test('weight goal progress counts toward loss or gain goals and clamps', async () => {
     const app = await loadApp();
     const { weightProgress } = await app.get('settings.js');

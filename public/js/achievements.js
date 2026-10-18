@@ -13,9 +13,12 @@ const ACHIEVEMENTS = [
     { id: 'ok_streak',      group: 'streak',    name: '稳定达标',   desc: '连续热量达标',                             unit: '天',   tiers: [3, 7, 14, 30, 60, 100] },
     { id: 'protein_streak', group: 'streak',    name: '蛋白质战士', desc: '连续蛋白质吃够目标',                       unit: '天',   tiers: [3, 7, 14, 30] },
     { id: 'perfect_streak', group: 'streak',    name: '完美一天',   desc: '热量达标、蛋白质吃够，碳水和脂肪不超目标 5%', unit: '天',   tiers: [1, 3, 7] },
+    { id: 'star_streak',    group: 'streak',    name: '三星连击',   desc: '连续拿满三星：有记录、热量达标、蛋白质吃够', unit: '天',   tiers: [3, 7, 14, 30] },
     { id: 'meals_streak',   group: 'streak',    name: '三餐齐全',   desc: '连续记录早餐、午餐和晚餐',                 unit: '天',   tiers: [1, 7, 30] },
     { id: 'record_days',    group: 'total',     name: '记录老手',   desc: '累计有记录的天数',                         unit: '天',   tiers: [10, 50, 100, 365] },
     { id: 'ok_days',        group: 'total',     name: '达标达人',   desc: '累计热量达标的天数',                       unit: '天',   tiers: [10, 50, 100, 200] },
+    { id: 'star_days',      group: 'total',     name: '三星收藏家', desc: '累计拿满三星的天数',                       unit: '天',   tiers: [10, 50, 100, 365] },
+    { id: 'star_total',     group: 'total',     name: '星星锻造师', desc: '累计获得的星星，每天最多 3 颗',            unit: '颗',   tiers: [30, 100, 300, 1000] },
     { id: 'entries',        group: 'total',     name: '数据狂人',   desc: '累计记录条目',                             unit: '条',   tiers: [100, 500, 1000, 5000] },
     { id: 'workouts',       group: 'total',     name: '训练打卡',   desc: '累计记录了练后餐的天数',                   unit: '天',   tiers: [10, 50, 100] },
     { id: 'foods',          group: 'food',      name: '美食家',     desc: '累计吃过的不同仓库食品',                   unit: '种',   tiers: [10, 25, 50] },
@@ -76,8 +79,8 @@ function evaluateAchievements(diary, weights, water, user, foodList, dayTargets,
         .filter(ds => ds <= today).sort()[0];
     if (!first) return progress;
 
-    const run = { record: 0, ok: 0, protein: 0, perfect: 0, meals: 0, weigh: 0, water: 0 };
-    const total = { waterDays: 0, waterMl: 0, recordDays: 0, okDays: 0, entries: 0, workouts: 0, fullMonths: 0, greatMonths: 0, perfectWeeks: 0, comebacks: 0, newLows: 0 };
+    const run = { record: 0, ok: 0, protein: 0, perfect: 0, star: 0, meals: 0, weigh: 0, water: 0 };
+    const total = { waterDays: 0, waterMl: 0, recordDays: 0, okDays: 0, starDays: 0, stars: 0, entries: 0, workouts: 0, fullMonths: 0, greatMonths: 0, perfectWeeks: 0, comebacks: 0, newLows: 0 };
     const foods = new Set();
     const month = { recorded: 0, tracked: 0, ok: 0 };
     let weekOk = 0, gap = 0, weekWeighed = false;
@@ -101,17 +104,21 @@ function evaluateAchievements(diary, weights, water, user, foodList, dayTargets,
         const protein = finished && t.protein >= targets.protein;
         const perfect = ok && protein && t.carbs <= targets.carbs * 1.05 && t.fat <= targets.fat * 1.05;
         const meals = ['breakfast', 'lunch', 'dinner'].every(m => list.some(e => e.meal === m));
+        // The calendar's dayStars, except the kcal and protein stars wait for the day to finish
+        const stars = t.kcal > 0 ? 1 + ok + protein : 0;
         // Unlike kcal, water can't overshoot, so today counts as soon as the goal is reached
         const drank = (water[ds] || []).reduce((sum, w) => sum + w.ml, 0);
         const hydrated = drank > 0 && drank >= targets.water;
 
         const bump = (key, hit) => { if (hit) run[key]++; else if (finished) run[key] = 0; };
-        bump('record', recorded); bump('ok', ok); bump('protein', protein); bump('perfect', perfect); bump('meals', meals); bump('water', hydrated);
+        bump('record', recorded); bump('ok', ok); bump('protein', protein); bump('perfect', perfect); bump('star', stars === 3); bump('meals', meals); bump('water', hydrated);
 
         if (recorded && gap >= 3 && total.recordDays > 0) total.comebacks++;
         gap = recorded ? 0 : finished ? gap + 1 : gap;
         total.recordDays += recorded;
         total.okDays += ok;
+        total.starDays += stars === 3;
+        total.stars += stars;
         total.waterDays += hydrated;
         total.waterMl += drank;
         total.entries += list.length;
@@ -158,8 +165,8 @@ function evaluateAchievements(diary, weights, water, user, foodList, dayTargets,
 
         const values = {
             record_streak: run.record, ok_streak: run.ok, protein_streak: run.protein,
-            perfect_streak: run.perfect, meals_streak: run.meals,
-            record_days: total.recordDays, ok_days: total.okDays, entries: total.entries,
+            perfect_streak: run.perfect, star_streak: run.star, meals_streak: run.meals,
+            record_days: total.recordDays, ok_days: total.okDays, star_days: total.starDays, star_total: total.stars, entries: total.entries,
             workouts: total.workouts, foods: foods.size, full_months: total.fullMonths,
             great_months: total.greatMonths, perfect_weeks: total.perfectWeeks,
             weight_loss: lossKg, weigh_weeks: run.weigh, new_lows: total.newLows, goal_weight: goalPct, bmi,
