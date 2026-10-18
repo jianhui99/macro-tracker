@@ -1546,8 +1546,9 @@ button.cal-day:hover { transform: translateY(-2px); border-color: var(--accent);
 /* ── Achievements ── */
 .seg.seg-inline { display: inline-grid; grid-template-columns: none; grid-auto-flow: column; background: rgba(255, 255, 255, .05); }
 .seg-inline .seg-opt { padding: 0 16px; }
-/* Adventurer level card on the achievements page */
+/* Adventurer level card on the character page; the whole card opens the level list */
 .level-card {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 16px;
@@ -1573,6 +1574,56 @@ button.cal-day:hover { transform: translateY(-2px); border-color: var(--accent);
     box-shadow: 0 0 0 3px rgba(0, 0, 0, .45), 0 0 0 4px color-mix(in srgb, var(--lv, var(--accent)) 60%, transparent), 0 0 20px color-mix(in srgb, var(--lv, var(--accent)) 40%, transparent);
 }
 #page-settings.is-active .lv-emblem { animation: medalIn .7s var(--ease-spring) .1s backwards; }
+.level-card { transition: transform .2s var(--ease-out), box-shadow .2s; }
+.level-card:has(.level-open:hover) { transform: translateY(-2px); box-shadow: 0 0 0 1px var(--rim), inset 0 1px 0 var(--glint), 0 6px 0 var(--rim), 0 0 24px rgba(110, 76, 200, .35); }
+.level-card:has(.level-open:active) { transform: scale(.98); transition-duration: .08s; }
+/* Above the XP bar notches, which sit at z-index 1 */
+.level-open { position: absolute; inset: 0; z-index: 2; border-radius: inherit; }
+.level-chip:hover { box-shadow: inset 0 0 0 1px var(--lv, var(--accent)), 0 0 12px color-mix(in srgb, var(--lv, var(--accent)) 35%, transparent); }
+
+/* All-levels dialog: rank headers stick while the rows scroll; the current level glows */
+/* Solid background so the sticky rank headers blend in */
+.level-dialog { width: min(440px, calc(100vw - 32px)); background: var(--surface); }
+.level-dialog .dialog-body { position: relative; padding-bottom: 12px; }
+.ld-close { position: absolute; top: 12px; right: 12px; }
+.ld-head { display: flex; align-items: center; gap: 14px; padding-right: 32px; }
+.ld-head .lv-emblem { width: 52px; height: 52px; font-size: 24px; }
+.level-dialog[open] .ld-head .lv-emblem { animation: stamp .45s var(--ease-spring) .1s backwards; }
+.ld-sub { margin-top: 2px; font-size: 12px; color: var(--muted); }
+.ld-list { list-style: none; max-height: min(60vh, 520px); overflow-y: auto; overscroll-behavior: contain; margin: 0 -8px; padding: 0 8px 4px; }
+.ld-rank {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    padding: 10px 4px 6px;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    color: var(--lv, var(--muted));
+    background: var(--surface);
+}
+.ld-row {
+    display: grid;
+    grid-template-columns: 52px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    min-height: 40px;
+    padding: 0 10px;
+    border-radius: 8px;
+    animation: badgeIn .35s var(--ease-out) backwards;
+    animation-delay: calc(var(--j) * 25ms + 120ms);
+}
+.ld-row + .ld-row { box-shadow: 0 -1px 0 var(--line-soft); }
+.ld-lv { font-size: 15px; color: var(--lv, var(--accent)); }
+.ld-title { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ld-xp { display: inline-flex; align-items: center; justify-content: flex-end; gap: 6px; font-size: 12px; color: var(--muted); white-space: nowrap; }
+.ld-xp .ms { font-size: 16px; color: var(--done); }
+.ld-row.is-locked { opacity: .5; }
+.ld-row.is-locked .ld-lv { color: var(--muted); }
+.ld-row.is-current { background: var(--accent-soft); box-shadow: inset 0 0 0 1px rgba(232, 176, 75, .55), 0 0 16px rgba(232, 176, 75, .18); }
+.ld-row.is-current + .ld-row { box-shadow: none; }
+.ld-row.is-current .ld-title { color: var(--accent); }
+.ld-row.is-current .ld-xp { color: var(--ink); }
 .lv-body { display: flex; flex-direction: column; gap: 7px; flex: 1; min-width: 0; }
 .lv-head { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
 .lv-head > b { font-size: 17px; letter-spacing: .04em; color: var(--lv, var(--accent)); white-space: nowrap; }

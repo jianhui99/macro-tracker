@@ -9,7 +9,25 @@ import { ACHIEVEMENTS, tierMetal } from './achievements.js';
 // data: deleting records can lower it. Only the level-up celebration remembers anything.
 const XP = { star: 10, water: 10, weigh: 5, medal: { bronze: 50, silver: 100, gold: 200, diamond: 400 } };
 
-const TITLES = [[30, '钻石传奇', 'diamond'], [20, '黄金勇者', 'gold'], [15, '白银骑士', 'silver'], [10, '青铜战士', 'bronze'], [5, '见习冒险者', ''], [1, '新手村民', '']];
+// One title per level up to 30; past that the last title gains a "+N"
+const LEVEL_TITLES = [
+    '新手村民', '拾荒学徒', '林间行者', '篝火守望者',
+    '见习冒险者', '公会新人', '地牢探路人', '草原游侠', '铁剑佣兵',
+    '青铜战士', '青铜盾卫', '荒野猎手', '秘境探索者', '青铜队长',
+    '白银骑士', '白银游侠', '月光剑士', '圣殿守卫', '白银统领',
+    '黄金勇者', '黄金圣骑士', '烈焰剑豪', '龙鳞斗士', '王国守护者', '黄金英雄', '天空征服者', '星辰贤者', '不朽战神', '半神勇者',
+    '钻石传奇'
+];
+
+// Ranks group the levels and set their metal tint: [first level, metal, name]
+const RANKS = [[30, 'diamond', '钻石'], [20, 'gold', '黄金'], [15, 'silver', '白银'], [10, 'bronze', '青铜'], [5, '', '见习'], [1, '', '新手']];
+
+const rankOf = level => RANKS.find(([min]) => level >= min);
+
+const titleOf = level => LEVEL_TITLES[level - 1] ?? `${LEVEL_TITLES.at(-1)} +${level - LEVEL_TITLES.length}`;
+
+// Total XP at which a level starts: the sum of 100 + 25 × (k - 1) over k < level
+const levelStart = level => 100 * (level - 1) + 12.5 * (level - 1) * (level - 2);
 
 const SEEN_KEY = 'macro_tracker_seen_level';
 
@@ -44,8 +62,7 @@ function xpTotals(today = localDate()) {
 function levelFor(xp) {
     let level = 1, need = 100;
     while (xp >= need) { xp -= need; level++; need += 25; }
-    const [, title, metal] = TITLES.find(([min]) => level >= min);
-    return { level, into: xp, need, title, metal };
+    return { level, into: xp, need, title: titleOf(level), metal: rankOf(level)[1] };
 }
 
 function floatXp(gain) {
@@ -70,6 +87,39 @@ function celebrateLevelUp({ level, title }) {
     document.body.append(el);
 }
 
+function openLevelDialog() {
+    const total = xpTotals().total;
+    const lv = levelFor(total);
+    $('ld-num').textContent = lv.level;
+    $('ld-num').className = `lv-emblem num${lv.metal ? ` lv-${lv.metal}` : ''}`;
+    $('ld-title').textContent = `Lv ${lv.level} · ${lv.title}`;
+    $('ld-sub').textContent = `累计 ${fmt(total)} XP，距 Lv ${lv.level + 1} 还差 ${fmt(lv.need - lv.into)}`;
+
+    let html = '', rank = null;
+    for (let level = 1; level <= Math.max(LEVEL_TITLES.length, lv.level); level++) {
+        const r = rankOf(level);
+        if (r !== rank) {
+            rank = r;
+            const next = RANKS[RANKS.indexOf(r) - 1];
+            html += `<li class="ld-rank${r[1] ? ` lv-${r[1]}` : ''}">${r[2]} · Lv ${level}${next ? `–${next[0] - 1}` : '+'}</li>`;
+        }
+        const status = level < lv.level ? 'is-done' : level === lv.level ? 'is-current' : 'is-locked';
+        const side = status === 'is-current'
+            ? `<span class="xp-track is-mini" aria-hidden="true"><i style="--p:${lv.into / lv.need}"></i></span>${fmt(lv.into)} / ${fmt(lv.need)}`
+            : `${status === 'is-done' ? '<span class="ms" aria-hidden="true">check</span>' : ''}${fmt(levelStart(level))} XP`;
+        html += `<li class="ld-row ${status}${r[1] ? ` lv-${r[1]}` : ''}" style="--j:${Math.min(level - 1, 14)}"${status === 'is-current' ? ' aria-current="true"' : ''}>
+                <b class="num ld-lv">Lv ${level}</b><span class="ld-title">${titleOf(level)}</span><span class="ld-xp num">${side}</span>
+            </li>`;
+    }
+    $('level-list').innerHTML = html;
+    $('level-dialog').showModal();
+    $('level-list').querySelector('.is-current')?.scrollIntoView({ block: 'center' });
+}
+
+function initLevel() {
+    document.addEventListener('click', e => { if (e.target.closest('[data-level-open]')) openLevelDialog(); });
+}
+
 let lastXp = null;
 
 function renderLevel() {
@@ -86,7 +136,7 @@ function renderLevel() {
     const chip = $('chip-level');
     chip.hidden = false;
     chip.className = `chip level-chip${metalCls}`;
-    chip.setAttribute('aria-label', `等级 ${lv.level}，${lv.title}，${fmt(lv.into)} / ${fmt(lv.need)} XP`);
+    chip.setAttribute('aria-label', `等级 ${lv.level}，${lv.title}，${fmt(lv.into)} / ${fmt(lv.need)} XP，查看全部等级`);
     $('lv-chip-num').textContent = `Lv ${lv.level}`;
     $('lv-chip-title').textContent = lv.title;
     $('lv-chip-bar').style.setProperty('--p', progress);
@@ -113,4 +163,4 @@ function renderLevel() {
     if (seen !== lv.level) try { localStorage.setItem(SEEN_KEY, String(lv.level)); } catch { /* storage unavailable */ }
 }
 
-export { renderLevel, levelFor, xpTotals };
+export { renderLevel, initLevel, levelFor, xpTotals, levelStart };

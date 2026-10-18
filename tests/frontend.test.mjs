@@ -242,14 +242,16 @@ test('weight goal progress counts toward loss or gain goals and clamps', async (
 
 test('level curve: Lv L to L+1 costs 100 + 25 x (L - 1) XP', async () => {
     const app = await loadApp();
-    const { levelFor } = await app.get('level.js');
+    const { levelFor, levelStart } = await app.get('level.js');
     assert.deepEqual(plain(levelFor(0)), { level: 1, into: 0, need: 100, title: '新手村民', metal: '' });
     assert.equal(levelFor(99).level, 1);
-    assert.deepEqual(plain(levelFor(100)), { level: 2, into: 0, need: 125, title: '新手村民', metal: '' });
+    assert.deepEqual(plain(levelFor(100)), { level: 2, into: 0, need: 125, title: '拾荒学徒', metal: '' });
     assert.equal(levelFor(549).level, 4);
     assert.equal(levelFor(550).title, '见习冒险者');
     assert.equal(levelFor(1800).metal, 'bronze');
     assert.deepEqual([levelFor(13049).level, levelFor(13050).level, levelFor(13050).metal], [29, 30, 'diamond']);
+    assert.deepEqual([levelFor(13050).title, levelFor(13050 + 825).title], ['钻石传奇', '钻石传奇 +1']);
+    for (const level of [1, 2, 5, 10, 30, 31]) assert.equal(levelFor(levelStart(level)).level, level);
 });
 
 test('XP sums stars, water, weigh-ins and unlocked medal tiers', async () => {

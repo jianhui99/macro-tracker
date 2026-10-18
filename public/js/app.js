@@ -9,6 +9,7 @@ import { state, loadState } from './state.js';
 import { initApi } from './api.js';
 import { initWater, fillCustomWater } from './water.js';
 import { initQuote, loadQuote } from './quote.js';
+import { initLevel } from './level.js';
 
 // ── Navigation ──
 function switchPage(pageId) {
@@ -54,11 +55,11 @@ initSummary(navigateToDay);
 initAchievements();
 initSettings();
 initQuote();
+initLevel();
 initUi();
 document.querySelectorAll('.rail-item').forEach(btn =>
     btn.addEventListener('click', () => switchPage(btn.dataset.page)));
 $('export-data').addEventListener('click', exportData);
-$('rail-level').addEventListener('click', () => switchPage('settings'));
 
 async function init() {
     setMeal(getDefaultMeal());

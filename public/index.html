@@ -20,7 +20,7 @@
 
     <nav class="rail" aria-label="主导航">
         <div class="brand-mark num" aria-label="MacroTracker">MT</div>
-        <button type="button" class="rail-level num" id="rail-level" aria-label="查看角色面板" hidden></button>
+        <button type="button" class="rail-level num" id="rail-level" data-level-open aria-label="查看全部等级" aria-haspopup="dialog" hidden></button>
         <button class="rail-item" data-page="diary" aria-current="page">
             <span class="ms" aria-hidden="true">restaurant</span>日记
         </button>
@@ -71,7 +71,7 @@
                             <span class="star-spark" aria-hidden="true"></span><span class="star-spark" aria-hidden="true"></span><span class="star-spark" aria-hidden="true"></span>
                         </div>
                         <div class="board-meta">
-                            <span id="chip-level" class="chip level-chip" role="img" hidden><b class="num" id="lv-chip-num"></b><span class="level-title" id="lv-chip-title"></span><span class="xp-track is-mini" aria-hidden="true"><i id="lv-chip-bar"></i></span></span>
+                            <button type="button" id="chip-level" class="chip level-chip" data-level-open aria-haspopup="dialog" hidden><b class="num" id="lv-chip-num"></b><span class="level-title" id="lv-chip-title"></span><span class="xp-track is-mini" aria-hidden="true"><i id="lv-chip-bar"></i></span></button>
                             <span id="chip-streak" class="chip"><span class="ms" aria-hidden="true">local_fire_department</span><span>连击 <b class="num" id="streak-days">0</b> 天</span></span>
                             <span id="chip-protein" class="chip"></span>
                             <label class="chip day-type-chip">
@@ -356,6 +356,7 @@
         <div id="page-settings" class="page">
             <div class="topbar"><h1 class="page-title">角色面板</h1></div>
             <section class="level-card" id="level-card" aria-label="冒险者等级" hidden>
+                <button type="button" class="level-open" data-level-open aria-haspopup="dialog" aria-label="查看全部等级"></button>
                 <span class="lv-emblem num" id="lv-num"></span>
                 <div class="lv-body">
                     <div class="lv-head"><b id="lv-title"></b><span>今日 <b class="num" id="lv-today">+0</b> XP</span></div>
@@ -475,6 +476,17 @@
     </dialog>
 
     <!-- ── Edit warehouse item ── -->
+    <dialog id="level-dialog" class="level-dialog" aria-labelledby="ld-title">
+        <form method="dialog" class="dialog-body">
+            <button type="submit" class="icon-btn ld-close" value="cancel" aria-label="关闭"><span class="ms" aria-hidden="true">close</span></button>
+            <div class="ld-head">
+                <span class="lv-emblem num" id="ld-num"></span>
+                <div><h3 class="dialog-title" id="ld-title"></h3><p class="ld-sub" id="ld-sub"></p></div>
+            </div>
+            <ul class="ld-list" id="level-list" aria-label="全部等级"></ul>
+        </form>
+    </dialog>
+
     <dialog id="badge-dialog" class="badge-dialog" aria-labelledby="bd-name"></dialog>
 
     <dialog id="warehouse-dialog" aria-labelledby="w-modal-title">
