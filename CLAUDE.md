@@ -6,12 +6,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A single-user diet diary (macros, water, weight, carb cycling, achievement badges) on Cloudflare Pages Functions + D1.
 The UI text is Chinese (`zh-CN`).
-There is no build step, bundler, framework, linter, or test suite: `public/` is served as-is and `functions/api/[[path]].js` is the whole backend.
+There is no build step, bundler, framework, or linter: `public/` is served as-is and `functions/api/[[path]].js` is the whole backend. Frontend regression tests use Node's built-in test runner.
 
 ## Commands
 
 ```sh
 npm start                  # wrangler pages dev (local Pages + Functions + local D1)
+npm test                   # frontend calculation, state and API regression checks
 npm run db:migrate         # apply db/migrations to the local D1
 npm run db:migrate:remote  # apply db/migrations to the production D1
 npm run deploy             # wrangler pages deploy
@@ -27,9 +28,9 @@ Run `npm run db:migrate` once before the first `npm start`, and after adding a m
   Every request needs `Authorization: Bearer <API_KEY>`.
   Handlers receive `{ db, env, body, params }`; snake_case rows are mapped to the camelCase JSON the frontend uses by `foodToJson` / `entryToJson` / `userToJson`.
   Multi-statement writes use `db.batch` because a D1 batch is one transaction.
-- **Frontend** (`public/index.html`, ~4.6k lines): one file holding all CSS and a single inline `<script>` with plain global functions, sections marked by `// ── Name ──` comments.
-  Pages (`page-diary`, `page-warehouse`, `page-summary`, `page-achievements`, `page-settings`) are toggled by `switchPage`.
-  `GET /api/state` loads everything into the global `state` once; mutations call `api()` and then patch `state` locally and re-render, rather than refetching.
+- **Frontend**: `public/index.html` holds the markup, `public/css/app.css` holds styles, and `public/js/app.js` loads native ES modules with no build step. Feature modules own their event listeners; dynamic lists use event delegation, with no inline handlers or global function bridge.
+  Pages (`page-diary`, `page-warehouse`, `page-summary`, `page-achievements`, `page-settings`) are toggled by `switchPage` in `app.js`. Shared helpers, nutrition calculations, food utilities, API access and UI controls live in their corresponding modules; settings also owns the weight log.
+  `GET /api/state` loads everything into the shared binding exported by `state.js` once; mutations call `api()` and then patch `state` locally and re-render, rather than refetching.
   `api()` re-prompts for the key on 401 and stores it in `localStorage` (`macro_tracker_api_key`); other `localStorage` keys are UI-only conveniences.
 - **Database** (`db/migrations/*.sql`): add a new numbered migration for any schema change; never edit applied ones.
   `user_settings` is a single row with `id = 1`.
