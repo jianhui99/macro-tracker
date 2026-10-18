@@ -53,6 +53,13 @@
             </div>
 
             <div class="diary-grid">
+                <section class="quote-card" id="quote-card" aria-label="冒险者公告" aria-busy="true">
+                    <button type="button" class="icon-btn quote-close" aria-label="关闭公告"><span class="ms" aria-hidden="true">close</span></button>
+                    <div class="quote-head"><span class="quote-chip"><span class="ms" aria-hidden="true">campaign</span>冒险者公告</span><span class="quote-cycle">每日寄语</span></div>
+                    <h2 class="quote-title" id="quote-tag"></h2>
+                    <p class="quote-text is-zh" id="quote-text" lang="zh-CN"><span class="quote-skel"></span><span class="quote-skel is-short"></span></p>
+                </section>
+
                 <section id="board" class="board" aria-label="今日进度">
                     <div class="board-head">
                         <div class="hero">
@@ -179,21 +186,6 @@
                             </div>
                             <ul class="water-log" id="water-log" aria-label="饮水记录"></ul>
                         </div>
-                    </div>
-                </section>
-
-                <section class="quote-card" id="quote-card" aria-label="今日一句" aria-busy="true">
-                    <span class="quote-mark" aria-hidden="true">&rdquo;</span>
-                    <button type="button" class="icon-btn quote-close" aria-label="关闭今日一句"><span class="ms" aria-hidden="true">close</span></button>
-                    <div class="quote-head">
-                        <!-- <span class="quote-chip"><span class="ms" aria-hidden="true">bolt</span>今日一句</span> -->
-                        <a class="quote-credit" id="quote-credit" href="https://zenquotes.io/" target="_blank" rel="noopener noreferrer" hidden></a>
-                    </div>
-                    <blockquote class="quote-text" id="quote-text"><span class="quote-skel"></span><span class="quote-skel is-short"></span></blockquote>
-                    <p class="quote-author" id="quote-author" hidden><img class="quote-photo" id="quote-photo" alt="" hidden><span id="quote-author-name"></span></p>
-                    <div class="quote-zh" id="quote-zh" hidden>
-                        <blockquote class="quote-text is-zh" id="quote-zh-text" lang="zh-CN"></blockquote>
-                        <p class="quote-author" id="quote-zh-author"></p>
                     </div>
                 </section>
 

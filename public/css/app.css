@@ -407,7 +407,7 @@ select.input { padding-right: 8px; }
 .diary-grid {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 368px;
-    grid-template-areas: "board quick" "water quick" "quote quick" "log quick";
+    grid-template-areas: "quote quick" "board quick" "water quick" "log quick";
     grid-template-rows: auto auto auto 1fr;
     gap: 14px;
     align-items: start;
@@ -636,19 +636,19 @@ select.input { padding-right: 8px; }
     grid-area: quote;
     position: relative;
     overflow: hidden;
-    padding: 18px 44px 18px 24px;
-    border-radius: 12px;
-    background: linear-gradient(180deg, #1B1630, #141022);
+    padding: 0 0 22px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--surface-2), var(--surface) 65%);
     border: 1px solid var(--line);
     box-shadow: 0 0 0 1px var(--rim), inset 0 1px 0 var(--glint), 0 4px 0 var(--rim);
 }
-/* RPG dialogue box: an inner brass frame, and a bobbing "continue" arrow in the corner */
+/* Inset brass frame and a dialogue cursor echo the game's panels. */
 .quote-card::after {
     content: "";
     position: absolute;
     inset: 5px;
     border: 1px solid rgba(232, 176, 75, .35);
-    border-radius: 8px;
+    border-radius: 4px;
     pointer-events: none;
 }
 .quote-card::before {
@@ -665,23 +665,16 @@ select.input { padding-right: 8px; }
     animation: promptBob 1s ease-in-out infinite;
 }
 @keyframes promptBob { 50% { transform: translateY(3px); opacity: .6; } }
-.quote-mark {
-    position: absolute;
-    right: 26px;
-    bottom: -78px;
-    font: italic 900 168px/1 'Archivo', serif;
-    color: var(--accent-soft);
-    pointer-events: none;
-    user-select: none;
-}
 .quote-close { position: absolute; top: 8px; right: 8px; z-index: 1; }
 .quote-card.is-leaving { animation: entryOut .22s var(--ease-out) forwards; pointer-events: none; }
-.quote-head { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
-.quote-chip { display: inline-flex; align-items: center; gap: 3px; padding: 2px 9px 2px 6px; border-radius: 999px; background: var(--accent); color: var(--on-accent); font-size: 12px; font-weight: 700; }
-.quote-chip .ms { font-size: 15px; color: var(--medal-on-ink); font-variation-settings: 'FILL' 1, 'wght' 600, 'opsz' 20; animation: boltPulse 2.4s ease-in-out infinite; }
+.quote-head { position: relative; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px 12px; padding: 12px 48px 12px 20px; border-bottom: 1px solid var(--line); background: linear-gradient(90deg, var(--accent-soft), transparent); }
+.quote-chip { display: inline-flex; align-items: center; gap: 7px; color: var(--accent); font-size: 12px; font-weight: 700; letter-spacing: .08em; }
+.quote-chip .ms { font-size: 18px; font-variation-settings: 'FILL' 1, 'wght' 600, 'opsz' 20; }
+.quote-cycle { color: var(--muted); font-size: 11px; letter-spacing: .06em; }
+.quote-title { margin: 14px 20px 6px; color: var(--accent); font-size: 16px; font-weight: 700; overflow-wrap: anywhere; }
 .quote-credit { font-size: 11px; color: var(--subtle); text-decoration: none; }
 .quote-credit:hover { color: var(--accent); text-decoration: underline; }
-.quote-text { position: relative; font-size: 17px; font-weight: 700; line-height: 1.55; color: var(--ink); max-width: 64ch; }
+.quote-text { position: relative; margin: 0 20px; font-weight: 500; line-height: 1.85; color: var(--ink); }
 .quote-mark-line {
     background: linear-gradient(transparent 60%, rgba(232, 176, 75, .13) 60%) no-repeat 0 0 / 0% 100%;
     -webkit-box-decoration-break: clone;
@@ -695,6 +688,7 @@ select.input { padding-right: 8px; }
 .quote-photo { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 2px var(--surface), 0 0 0 3.5px var(--accent); animation: wordIn .5s var(--ease-out) backwards; animation-delay: var(--photo-delay, 0ms); }
 .quote-zh { position: relative; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--line); }
 .quote-text.is-zh { font-size: 15px; letter-spacing: .03em; }
+.quote-text.is-zh .qw { max-width: 100%; overflow-wrap: anywhere; }
 .quote-zh .quote-author { font-style: normal; }
 .quote-skel { display: block; height: 14px; margin: 7px 0; border-radius: 6px; background: linear-gradient(90deg, var(--line-soft), var(--surface-2), var(--line-soft)) 0 0 / 200% 100%; animation: skel 1.2s linear infinite; }
 .quote-skel.is-short { width: 55%; }
@@ -1836,7 +1830,7 @@ dialog[open]::backdrop { animation: fade .2s ease; }
 
 /* ── Responsive ── */
 @media (max-width: 1100px) {
-    .diary-grid { grid-template-columns: minmax(0, 1fr); grid-template-areas: "board" "quote" "quick" "water" "log"; }
+    .diary-grid { grid-template-columns: minmax(0, 1fr); grid-template-areas: "quote" "board" "quick" "water" "log"; }
     .diary-grid:has(> .quote-card[hidden]) { grid-template-areas: "board" "quick" "water" "log"; grid-template-rows: auto; }
     .quick { position: static; max-height: none; }
     .food-list { max-height: 240px; }

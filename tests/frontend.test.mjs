@@ -15,6 +15,7 @@ async function loadApp(overrides = {}) {
         if (!elements.has(id)) elements.set(id, {
             value: id === 'diary-date' ? '2026-10-18' : '', hidden: false, listeners: {}, children: [],
             addEventListener(type, fn) { (this.listeners[type] ||= []).push(fn); },
+            setAttribute(name, value) { this[name] = value; },
             showModal() { this.open = true; this.openCount = (this.openCount || 0) + 1; },
             close() { this.open = false; },
             appendChild(child) { this.children.push(child); },
@@ -91,6 +92,56 @@ test('local calendar dates round-trip without UTC conversion', async () => {
     for (const date of ['2024-02-29', '2026-01-01', '2026-12-31']) {
         assert.equal(helpers.localDate(helpers.parseLocalDate(date)), date);
     }
+});
+
+test('quotes display only Chinese and cycle once per local day across years', async () => {
+    const pool = JSON.parse(await readFile(new URL('data/quote.json', root), 'utf8'));
+    assert.equal(pool.quotes.length, 100);
+    assert.equal(new Set(pool.quotes.map(quote => quote.id)).size, 100);
+    assert.ok(pool.quotes.every(quote => typeof quote.zh === 'string' && quote.zh.trim()));
+    let now = new Date(2026, 11, 31, 0, 1);
+    const calls = [];
+    const app = await loadApp({
+        Date: class extends Date { constructor(...args) { super(...(args.length ? args : [now])); } },
+        fetch: async (...args) => {
+            calls.push(args);
+            return { ok: true, json: async () => pool };
+        }
+    });
+    const { loadQuote } = await app.get('quote.js');
+    const { esc } = await app.get('helpers.js');
+    const rendered = [];
+    for (let day = 0; day <= pool.quotes.length; day++) {
+        now = new Date(2026, 11, 31 + day, 0, 1);
+        await loadQuote();
+        const html = app.element('quote-text').innerHTML;
+        const text = html.replace(/<[^>]*>/g, '');
+        const quote = pool.quotes.find(quote => esc(quote.zh) === text);
+        assert.ok(quote);
+        assert.equal(app.element('quote-tag').textContent, quote.tag.split('/')[0].trim());
+        assert.equal(app.element('quote-card').hidden, false);
+        assert.equal(app.element('quote-card')['aria-busy'], 'false');
+        rendered.push(text);
+        now.setHours(23, 59);
+        await loadQuote();
+        assert.equal(app.element('quote-text').innerHTML, html);
+    }
+    assert.equal(new Set(rendered.slice(0, 100)).size, 100);
+    assert.equal(rendered[0], rendered[100]);
+    assert.ok(calls.every(args => args.length === 1 && args[0] === '/data/quote.json'));
+});
+
+test('quote loading hides the card on failure and escapes quote markup', async () => {
+    for (const payload of [null, {}, { quotes: [] }, { quotes: [{ zh: '' }] }, { quotes: [{ zh: 1 }] }]) {
+        const app = await loadApp({ fetch: async () => ({ ok: payload !== null, status: 500, json: async () => payload }) });
+        await (await app.get('quote.js')).loadQuote();
+        assert.equal(app.element('quote-card').hidden, true);
+        assert.equal(app.element('quote-card')['aria-busy'], 'false');
+    }
+    const app = await loadApp({ fetch: async () => ({ ok: true, json: async () => ({ quotes: [{ zh: '<img src=x onerror=alert(1)>你好。', en: 'English' }] }) }) });
+    await (await app.get('quote.js')).loadQuote();
+    assert.match(app.element('quote-text').innerHTML, /&lt;img/);
+    assert.doesNotMatch(app.element('quote-text').innerHTML, /<img|English/);
 });
 
 test('concurrent 401 responses share one dialog and retry the original payload', async () => {
