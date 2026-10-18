@@ -816,7 +816,7 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
 .water-add:disabled { opacity: .5; cursor: progress; }
 .water-form { display: flex; gap: 6px; margin-left: auto; }
 .water-form .input { width: 84px; height: 34px; border-radius: 9px; }
-.seg.water-unit { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 3px; border-radius: 10px; }
+.seg.water-unit { grid-template-columns: repeat(2, minmax(0, 1fr)); flex-shrink: 0; padding: 3px; border-radius: 10px; }
 .water-unit .seg-opt { height: 28px; padding: 0 9px; border-radius: 7px; font-size: 12px; }
 .water-unit .seg-thumb { border-radius: 7px; }
 
@@ -1710,8 +1710,8 @@ dialog[open]::backdrop { animation: fade .2s ease; }
     .temp-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .water-body { gap: 14px; padding: 12px; }
     .water-left { flex-basis: 100%; margin-left: 0; }
-    .water-form { flex-basis: 100%; margin-left: 0; }
-    .water-form .input { flex: 1; width: auto; }
+    .water-form { flex-basis: 100%; min-width: 0; margin-left: 0; }
+    .water-form .input { flex: 1; width: auto; min-width: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {

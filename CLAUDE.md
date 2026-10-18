@@ -57,4 +57,7 @@ Run `npm run db:migrate` once before the first `npm start`, and after adding a m
   - JS helpers `replay(el, cls)` to restart a CSS animation and `tweenNumber(el, to)` for changing numbers.
   - Exits follow the `is-leaving` pattern: add the class, wait for the animation, then update `state` and re-render (see `deleteWater`).
   - Respect reduced motion: the global `prefers-reduced-motion` CSS block covers CSS animations, but JS-driven motion and animation waits must check `reduceMotion.matches` and skip.
+- **UI work must be checked in mobile view and across the responsive breakpoints.** After finishing any UI change, check the affected page at phone width (390px) and on both sides of the `max-width: 1100px` and `max-width: 720px` breakpoints in `app.css`.
+  Confirm nothing overflows its card or the viewport (`scrollWidth` equals `clientWidth`), nothing collapses or overlaps, and segmented-control thumbs still line up.
+  Flex rows that hold inputs or `.seg` controls are the usual culprits: shrinking children need `min-width: 0`, and controls that must keep their size need `flex-shrink: 0`.
 - **Quote of the day** (`GET /api/quote`) proxies ZenQuotes (no CORS) with a per-isolate daily cache and local fallbacks; Chinese quotes rotate through the curated `ZH_QUOTES` list.
