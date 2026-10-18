@@ -22,7 +22,7 @@ const ACHIEVEMENTS = [
     { id: 'star_total',     group: 'total',     name: '星星锻造师', desc: '累计获得的星星，每天最多 3 颗',            unit: '颗',   tiers: [30, 100, 300, 1000] },
     { id: 'entries',        group: 'total',     name: '数据狂人',   desc: '累计记录条目',                             unit: '条',   tiers: [100, 500, 1000, 5000] },
     { id: 'workouts',       group: 'total',     name: '训练打卡',   desc: '累计记录了练后餐的天数',                   unit: '天',   tiers: [10, 50, 100] },
-    { id: 'foods',          group: 'food',      name: '美食家',     desc: '累计吃过的不同仓库食品',                   unit: '种',   tiers: [10, 25, 50] },
+    { id: 'foods',          group: 'food',      name: '美食家',     desc: '累计吃过的不同背包食物',                   unit: '种',   tiers: [10, 25, 50] },
     { id: 'eggs',           group: 'food',      name: '鸡蛋终结者', desc: '累计吃掉的鸡蛋',                           unit: '颗',   tiers: [50, 100, 200, 500, 1000] },
     { id: 'chicken',        group: 'food',      name: '鸡胸肉狂魔', desc: '累计吃掉的鸡胸肉',                         unit: 'kg',   tiers: [5, 10, 25, 50, 100], format: fmt1 },
     { id: 'rice',           group: 'food',      name: '干饭人',     desc: '累计吃掉的米饭',                           unit: 'kg',   tiers: [5, 10, 25, 50], format: fmt1 },

@@ -103,8 +103,8 @@ function renderFoodPicker() {
     }
     list.innerHTML = html || `
         <div class="pick-empty">
-            ${keyword ? `没有匹配「${esc(keyword)}」的食品` : '仓库里还没有启用的食品'}
-            <button type="button" class="btn btn-ghost btn-sm" data-new-food>去仓库新建</button>
+            ${keyword ? `没有匹配「${esc(keyword)}」的食品` : '背包里还没有启用的食物'}
+            <button type="button" class="btn btn-ghost btn-sm" data-new-food>去背包新建</button>
         </div>`;
     $('quick-hint').textContent = visibleIds.length ? `${visibleIds.length} 种可选` : '';
 
@@ -328,7 +328,7 @@ function addDiaryEntry() {
         const userAmount = parseFloat($('food-amount').value) || 0;
         const meal = getMeal();
         const food = currentFood();
-        if (!food) { showToast('先选一个食物，或去仓库新建', 'error'); return; }
+        if (!food) { showToast('先选一个食物，或去背包新建', 'error'); return; }
         if (userAmount <= 0) { showToast('请填写大于 0 的分量', 'error'); $('food-amount').focus(); return; }
 
         const created = await api('/api/diary', 'POST', {
@@ -421,7 +421,7 @@ async function saveDiaryEdit() {
         const amount = parseFloat($('modal-food-amount').value) || 0;
         if (amount <= 0) { showToast('请填写大于 0 的分量', 'error'); return; }
         const food = state.foods.find(f => f.id === entry.foodId);
-        if (!food) { showToast('这个食品已从仓库删除，无法按分量重算', 'error'); closeModal(); return; }
+        if (!food) { showToast('这个食物已从背包删除，无法按分量重算', 'error'); closeModal(); return; }
         payload = {
             meal, name: entry.name,
             rawAmount: amount, displayAmount: amount + unitText(food.unit),

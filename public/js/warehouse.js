@@ -187,7 +187,7 @@ async function addCustomFood() {
     renderFoodPicker();
     ['food-name', 'food-unit', 'food-kcal', 'food-protein', 'food-carbs', 'food-fat'].forEach(id => { $(id).value = ''; });
     $('food-name').focus();
-    showToast(`「${name}」已入库`);
+    showToast(`「${name}」已放入背包`);
 }
 
 function openWarehouseModal(foodId) {

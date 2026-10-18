@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,400..900;1,62..125,400..900&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..24,400..600,0..1,0&icon_names=ac_unit,accessibility_new,add,arrow_downward,arrow_upward,blender,bolt,calendar_month,check,check_circle,chevron_left,chevron_right,close,delete,diamond,dinner_dining,download,edit,edit_note,egg,egg_alt,emoji_events,error,event_available,fitness_center,flag,free_breakfast,glass_cup,grain,info,inventory_2,kebab_dining,local_fire_department,lunch_dining,military_tech,monitor_weight,nutrition,person,ramen_dining,remove,restart_alt,restaurant,rice_bowl,search,sports_score,sprint,star,target,trending_down,unfold_less,unfold_more,verified,vertical_align_bottom,water_bottle,water_bottle_large,water_drop,water_full&display=block" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..24,400..600,0..1,0&icon_names=ac_unit,accessibility_new,add,arrow_downward,arrow_upward,backpack,blender,bolt,calendar_month,check,check_circle,chevron_left,chevron_right,close,delete,diamond,dinner_dining,download,edit,edit_note,egg,egg_alt,emoji_events,error,event_available,fitness_center,flag,free_breakfast,glass_cup,grain,info,inventory_2,kebab_dining,local_fire_department,lunch_dining,military_tech,monitor_weight,nutrition,person,ramen_dining,remove,restart_alt,restaurant,rice_bowl,search,sports_score,sprint,star,target,trending_down,unfold_less,unfold_more,verified,vertical_align_bottom,water_bottle,water_bottle_large,water_drop,water_full&display=block" rel="stylesheet">
 
     <link rel="stylesheet" href="/css/app.css">
 </head>
@@ -25,10 +25,10 @@
             <span class="ms" aria-hidden="true">restaurant</span>日记
         </button>
         <button class="rail-item" data-page="warehouse">
-            <span class="ms" aria-hidden="true">inventory_2</span>仓库
+            <span class="ms" aria-hidden="true">backpack</span>背包
         </button>
         <button class="rail-item" data-page="summary">
-            <span class="ms" aria-hidden="true">calendar_month</span>汇总
+            <span class="ms" aria-hidden="true">calendar_month</span>战绩
         </button>
         <button class="rail-item" data-page="achievements">
             <span class="ms" aria-hidden="true">military_tech</span>成就
@@ -117,8 +117,8 @@
                         <fieldset class="seg" id="meal-seg" aria-label="餐次"></fieldset>
 
                         <div class="mode-tabs" role="tablist">
-                            <button class="mode-tab" role="tab" id="tab-food" aria-selected="true" aria-controls="form-food">仓库食品</button>
-                            <button class="mode-tab" role="tab" id="tab-temp" aria-selected="false" aria-controls="form-temp">临时记录（不入库）</button>
+                            <button class="mode-tab" role="tab" id="tab-food" aria-selected="true" aria-controls="form-food">背包食物</button>
+                            <button class="mode-tab" role="tab" id="tab-temp" aria-selected="false" aria-controls="form-temp">临时记录（不进背包）</button>
                         </div>
 
                         <form id="form-food" class="add-form" role="tabpanel">
@@ -211,7 +211,7 @@
         <!-- ── Warehouse ── -->
         <div id="page-warehouse" class="page">
             <div class="topbar">
-                <h1 class="page-title">食品仓库<small id="warehouse-count"></small></h1>
+                <h1 class="page-title">食物背包<small id="warehouse-count"></small></h1>
                 <div class="search toolbar-search">
                     <span class="ms" aria-hidden="true">search</span>
                     <input type="search" id="warehouse-search" class="input" placeholder="搜索名称或分类">
@@ -229,7 +229,7 @@
                     <label class="field"><span>蛋白 g</span><input type="number" id="food-protein" class="input" placeholder="0" min="0" step="any"></label>
                     <label class="field"><span>碳水 g</span><input type="number" id="food-carbs" class="input" placeholder="0" min="0" step="any"></label>
                     <label class="field"><span>脂肪 g</span><input type="number" id="food-fat" class="input" placeholder="0" min="0" step="any"></label>
-                    <button type="submit" class="btn"><span class="ms" aria-hidden="true">add</span>入库</button>
+                    <button type="submit" class="btn"><span class="ms" aria-hidden="true">add</span>放入背包</button>
                 </form>
             </details>
 
@@ -249,8 +249,8 @@
         <!-- ── Summary ── -->
         <div id="page-summary" class="page">
             <div class="topbar">
-                <h1 class="page-title">汇总</h1>
-                <fieldset class="seg seg-inline" aria-label="汇总周期">
+                <h1 class="page-title">冒险战绩</h1>
+                <fieldset class="seg seg-inline" aria-label="战绩周期">
                     <label><input type="radio" name="summary-period" value="month" checked><span class="seg-opt">月</span></label>
                     <label><input type="radio" name="summary-period" value="year"><span class="seg-opt">年</span></label>
                 </fieldset>
