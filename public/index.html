@@ -955,11 +955,10 @@
         /* ── Weight log ── */
         .cycle-panel, .weight-panel { margin-top: 14px; }
         .cycle-rows { display: flex; flex-direction: column; gap: 14px; padding: 16px; }
-        .cycle-row { display: grid; grid-template-columns: 72px repeat(3, minmax(0, 1fr)) 104px; gap: 12px; align-items: end; }
-        .cycle-name, .cycle-kcal { height: 40px; display: flex; align-items: center; }
-        .cycle-name { font-weight: 700; }
-        .cycle-kcal { justify-content: flex-end; gap: 4px; font-size: 12px; color: var(--muted); }
-        .cycle-kcal b { font-size: 18px; color: var(--ink); }
+        .cycle-row { display: grid; grid-template-columns: 72px repeat(2, minmax(0, 180px)) minmax(0, 1fr); gap: 12px; align-items: end; }
+        .cycle-name { height: 40px; display: flex; align-items: center; font-weight: 700; }
+        .cycle-result { display: flex; flex-direction: column; align-items: flex-start; padding-left: 8px; justify-content: center; min-height: 40px; font-size: 12px; color: var(--muted); }
+        .cycle-result b { font-size: 18px; color: var(--ink); }
         .weight-body { display: grid; grid-template-columns: 360px minmax(0, 1fr); }
         .weight-side { display: flex; flex-direction: column; gap: 14px; padding: 16px; border-right: 1px solid var(--line-soft); min-width: 0; }
         .weight-form { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr) auto; gap: 8px; align-items: end; }
@@ -1437,10 +1436,12 @@
             .cal-day.is-today .cal-date::after { content: none; }
             .settings-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
             .settings-form .span-3 { grid-column: 1 / -1; }
-            .cycle-row { grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 6px; }
+            .cycle-row { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 6px; }
+            /* Name and kcal share the first line, the macro breakdown gets its own full-width line */
+            .cycle-result { display: contents; }
             .cycle-name, .cycle-kcal { grid-row: 1; height: auto; }
-            .cycle-name { grid-column: 1 / 3; }
-            .cycle-kcal { grid-column: 3; }
+            .cycle-kcal { justify-self: end; }
+            .cycle-macros { grid-row: 2; grid-column: 1 / -1; margin-top: -6px; }
             .temp-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         }
 
@@ -1814,8 +1815,8 @@
             </div>
 
             <section class="panel cycle-panel" aria-labelledby="cycle-title">
-                <div class="panel-head"><h2 id="cycle-title">碳循环</h2><span class="hint">在日记页为某天选类型后，当天改用这组目标</span></div>
-                <form id="cycle-form" oninput="renderCycleKcal()" onsubmit="event.preventDefault(); saveDayTypes();">
+                <div class="panel-head"><h2 id="cycle-title">碳循环</h2><span class="hint">在自动目标上增减碳水和脂肪</span></div>
+                <form id="cycle-form" oninput="renderCyclePreview()" onsubmit="event.preventDefault(); saveDayTypes();">
                     <div id="cycle-rows" class="cycle-rows"></div>
                 </form>
                 <div class="settings-foot">
@@ -2084,12 +2085,18 @@
             const carbs = Math.round((kcal - protein * 4 - fat * 9) / 4);
             return { bmr, tdee, kcal, protein, carbs, fat };
         }
-        // A carb-cycling type picked for a date replaces the auto plan on that date; its kcal follows the macros
+        // A carb-cycling type picked for a date shifts that date's carbs and fat by gram offsets from the
+        // auto plan. Protein and the base kcal stay on the plan, so every type follows weight changes.
         const DAY_TYPES = { high: '高碳日', medium: '中碳日', low: '低碳日' };
-        const typeTargets = m => ({ ...m, kcal: Math.round(m.protein * 4 + m.carbs * 4 + m.fat * 9) });
+        function applyOffset(plan, offset) {
+            const carbs = Math.max(0, plan.carbs + offset.carbs);
+            const fat = Math.max(0, plan.fat + offset.fat);
+            return { ...plan, carbs, fat, kcal: plan.kcal + (carbs - plan.carbs) * 4 + (fat - plan.fat) * 9 };
+        }
         function targetsFor(date) {
-            const macros = state.dayTypes[state.dayPlan[date]];
-            return macros ? typeTargets(macros) : computePlan(state.user);
+            const plan = computePlan(state.user);
+            const offset = state.dayTypes[state.dayPlan[date]];
+            return offset ? applyOffset(plan, offset) : plan;
         }
 
         function sumEntries(entries) {
@@ -3554,10 +3561,10 @@
             $('cycle-rows').innerHTML = Object.entries(DAY_TYPES).map(([id, label]) => `
                 <div class="cycle-row" data-type="${id}">
                     <span class="cycle-name">${label}</span>
-                    ${['protein', 'carbs', 'fat'].map(k => `<label class="field"><span>${MACRO_META[k][0]} g</span><input type="number" class="input" name="${k}" value="${state.dayTypes[id][k]}" min="0" max="1000" step="any" required></label>`).join('')}
-                    <span class="cycle-kcal"><b class="num"></b>kcal</span>
+                    ${['carbs', 'fat'].map(k => `<label class="field"><span>${MACRO_META[k][0]}增减 g</span><input type="number" class="input" name="${k}" value="${state.dayTypes[id][k]}" min="-500" max="500" step="any" required></label>`).join('')}
+                    <span class="cycle-result"></span>
                 </div>`).join('');
-            renderCycleKcal();
+            renderCyclePreview();
         }
 
         function readCycleForm() {
@@ -3565,10 +3572,12 @@
                 [row.dataset.type, Object.fromEntries([...row.querySelectorAll('input')].map(i => [i.name, Number(i.value)]))]));
         }
 
-        function renderCycleKcal() {
+        function renderCyclePreview() {
+            const plan = computePlan(state.user);
             const types = readCycleForm();
             document.querySelectorAll('.cycle-row').forEach(row => {
-                row.querySelector('.cycle-kcal b').textContent = fmt(typeTargets(types[row.dataset.type]).kcal);
+                const t = applyOffset(plan, types[row.dataset.type]);
+                row.querySelector('.cycle-result').innerHTML = `<span class="cycle-kcal"><b class="num">${fmt(t.kcal)}</b> kcal</span><span class="cycle-macros">蛋白 ${fmt(t.protein)} · 碳水 ${fmt(t.carbs)} · 脂肪 ${fmt(t.fat)} g</span>`;
             });
         }
 
@@ -3586,6 +3595,7 @@
             const btn = $('save-settings');
             await withBusy(btn, async () => {
                 state.user = await api('/api/user', 'PUT', readSettingsForm());
+                renderCyclePreview();
                 showToast('已保存，每日目标已更新');
                 syncAchievements();
             });

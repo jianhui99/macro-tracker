@@ -30,7 +30,7 @@ async function getState({ db }) {
         db.prepare('SELECT id, unlocked_at FROM achievements'),
         db.prepare('SELECT date, weight FROM weight_log ORDER BY date'),
         db.prepare('SELECT * FROM user_settings WHERE id = 1'),
-        db.prepare('SELECT id, protein, carbs, fat FROM day_types'),
+        db.prepare('SELECT id, carbs_offset AS carbs, fat_offset AS fat FROM day_types'),
         db.prepare('SELECT date, type FROM day_plan')
     ]);
 
@@ -186,18 +186,19 @@ async function deleteWeight({ db, params: [date] }) {
 }
 
 // ── Carb cycling ──
+// carbs / fat are gram offsets from the auto-calculated plan
 async function putDayTypes({ db, body }) {
-    const valid = DAY_TYPE_IDS.every(id => ['protein', 'carbs', 'fat'].every(k => {
+    const valid = DAY_TYPE_IDS.every(id => ['carbs', 'fat'].every(k => {
         const v = body[id]?.[k];
-        return typeof v === 'number' && v >= 0 && v <= 1000;
+        return typeof v === 'number' && v >= -500 && v <= 500;
     }));
-    if (!valid) return json({ error: 'expected { high, medium, low } each with protein, carbs, fat between 0 and 1000' }, 400);
+    if (!valid) return json({ error: 'expected { high, medium, low } each with carbs, fat offsets between -500 and 500' }, 400);
 
     const upsert = db.prepare(`
-        INSERT INTO day_types (id, protein, carbs, fat) VALUES (?, ?, ?, ?)
-        ON CONFLICT(id) DO UPDATE SET protein = excluded.protein, carbs = excluded.carbs, fat = excluded.fat
+        INSERT INTO day_types (id, carbs_offset, fat_offset) VALUES (?, ?, ?)
+        ON CONFLICT(id) DO UPDATE SET carbs_offset = excluded.carbs_offset, fat_offset = excluded.fat_offset
     `);
-    await db.batch(DAY_TYPE_IDS.map(id => upsert.bind(id, body[id].protein, body[id].carbs, body[id].fat)));
+    await db.batch(DAY_TYPE_IDS.map(id => upsert.bind(id, body[id].carbs, body[id].fat)));
     return noContent();
 }
 
