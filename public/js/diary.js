@@ -255,7 +255,7 @@ function renderScoreboard(totals, celebrate) {
     $('day-type').value = state.dayPlan[diaryDate()] || '';
     const remaining = t.kcal - totals.kcal;
     $('board').classList.toggle('is-over', remaining < 0);
-    $('hero-label').textContent = remaining < 0 ? '已超出' : '还能吃';
+    $('hero-label').textContent = remaining < 0 ? '能量溢出' : '剩余能量';
     tweenNumber($('hero-num'), Math.abs(remaining));
 
     const streak = recordingStreak();
@@ -296,6 +296,16 @@ function renderScoreboard(totals, celebrate) {
     }
 }
 
+function floatGain(kcal) {
+    if (reduceMotion.matches) return;
+    const el = document.createElement('span');
+    el.className = 'float-gain num';
+    el.setAttribute('aria-hidden', 'true');
+    el.innerHTML = `+${fmt(kcal)}<small>kcal</small>`;
+    el.addEventListener('animationend', () => el.remove(), { once: true });
+    document.querySelector('#board .hero').append(el);
+}
+
 function addDiaryEntry() {
     return withBusy($('go-food'), async () => {
         const date = diaryDate();
@@ -315,6 +325,7 @@ function addDiaryEntry() {
         food.lastAmount = userAmount;
         lastAddedId = created.id;
         renderDiary({ celebrate: true });
+        floatGain(created.kcal);
         showToast(`已记录「${food.name}」到${MEALS[meal].label}`);
         syncAchievements();
         $('food-amount').focus();
@@ -339,6 +350,7 @@ function addTemporaryDiaryEntry() {
         (state.diary[date] ||= []).push(created);
         lastAddedId = created.id;
         renderDiary({ celebrate: true });
+        floatGain(created.kcal);
         ['temp-food-name', 'temp-food-kcal', 'temp-food-protein', 'temp-food-carbs', 'temp-food-fat'].forEach(id => { $(id).value = ''; });
         showToast(`已记录「${name}」到${MEALS[meal].label}`);
         syncAchievements();

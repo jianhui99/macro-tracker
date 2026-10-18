@@ -56,16 +56,17 @@
                 <section id="board" class="board" aria-label="今日进度">
                     <div class="board-head">
                         <div class="hero">
-                            <span id="hero-label" class="hero-label">还能吃</span>
+                            <span id="hero-label" class="hero-label">剩余能量</span>
                             <span id="hero-num" class="hero-num num">0</span>
                             <span class="hero-unit">kcal</span>
                         </div>
                         <div class="board-meta">
-                            <span id="chip-streak" class="chip"><span class="ms" aria-hidden="true">local_fire_department</span><span>连续记录 <b class="num" id="streak-days">0</b> 天</span></span>
+                            <span id="chip-streak" class="chip"><span class="ms" aria-hidden="true">local_fire_department</span><span>连击 <b class="num" id="streak-days">0</b> 天</span></span>
                             <span id="chip-protein" class="chip"></span>
                             <label class="chip day-type-chip">
-                                <span class="ms" aria-hidden="true">rice_bowl</span>
-                                <select id="day-type" aria-label="当天目标">
+                                <span class="ms" aria-hidden="true">flag</span>
+                                <span class="chip-label">关卡</span>
+                                <select id="day-type" aria-label="关卡难度（当天目标）">
                                     <option value="">自动目标</option>
                                     <option value="high">高碳日</option>
                                     <option value="medium">中碳日</option>
@@ -141,7 +142,7 @@
                 </aside>
 
                 <section class="water panel" id="water-card" aria-labelledby="water-title">
-                    <div class="panel-head"><h2 id="water-title">饮水</h2><span class="hint">目标可在「身体数据」设定，未设定时按体重 35 ml/kg 计算，喝到杯口即达标</span></div>
+                    <div class="panel-head"><h2 id="water-title">饮水</h2><span class="hint">目标可在「身体数据」设定，未设定时按体重 35 ml/kg 计算，喝到瓶口即达标</span></div>
                     <div class="water-body">
                         <div class="water-vis" id="water-vis" aria-hidden="true">
                             <div class="water-glass">

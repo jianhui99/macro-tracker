@@ -437,19 +437,51 @@ select.input { padding-right: 8px; }
 .hero-label {
     font-size: 15px;
     font-weight: 700;
-    opacity: .85;
+    letter-spacing: .06em;
+    color: var(--accent);
     align-self: flex-start;
     margin-top: 10px;
 }
+/* Energy readout: molten-gold numerals; drop-shadow because text-shadow bleeds through clipped text */
 .hero-num {
     font-size: clamp(60px, 6.4vw, 88px);
     line-height: .86;
     letter-spacing: -0.025em;
     font-stretch: 66%;
-    transition: color .3s;
+    padding-right: .06em;
+    background: linear-gradient(180deg, #FFF8E6 15%, #F6D28A 55%, var(--accent));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    filter: drop-shadow(0 3px 0 var(--rim)) drop-shadow(0 0 16px rgba(232, 176, 75, .35));
 }
 .hero-unit { font-size: 16px; font-weight: 700; opacity: .8; }
-.board.is-over .hero-num { color: var(--hazard-on-cobalt); }
+#board .hero { position: relative; }
+/* Pickup readout: "+320 kcal" pops over the energy number and drifts up */
+.float-gain {
+    position: absolute;
+    left: calc(100% + 8px);
+    top: 4px;
+    z-index: 4;
+    font-size: 26px;
+    color: #FFE3A0;
+    white-space: nowrap;
+    pointer-events: none;
+    text-shadow: 0 2px 0 var(--rim), 0 0 12px rgba(232, 176, 75, .8);
+    animation: gainFloat 1.3s var(--ease-out) forwards;
+}
+.float-gain small { font-size: 13px; margin-left: 2px; }
+@keyframes gainFloat {
+    0%   { opacity: 0; transform: translateY(14px) scale(.5); }
+    18%  { opacity: 1; transform: translateY(0) scale(1.15); }
+    30%  { transform: translateY(-2px) scale(1); }
+    75%  { opacity: 1; }
+    100% { opacity: 0; transform: translateY(-34px) scale(.95); }
+}
+.board.is-over .hero-num {
+    background-image: linear-gradient(180deg, #FFE1D6 15%, var(--hazard-on-cobalt) 55%, var(--hazard));
+    filter: drop-shadow(0 3px 0 var(--rim)) drop-shadow(0 0 16px rgba(255, 75, 38, .45));
+}
 
 .board-meta { display: flex; gap: 8px; flex-wrap: wrap; }
 .chip {
@@ -472,6 +504,10 @@ select.input { padding-right: 8px; }
 .day-type-chip select { appearance: none; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; outline: none; }
 .day-type-chip option { color: var(--ink); }
 .day-type-chip .ms:last-child { font-size: 16px; opacity: .7; margin-left: -4px; }
+.chip-label { font-size: 11px; font-weight: 700; letter-spacing: .06em; color: var(--accent); }
+/* Combo: three or more days in a row sets the chip alight */
+.chip.is-hot { box-shadow: inset 0 0 0 1px rgba(255, 180, 92, .65), 0 0 14px rgba(255, 140, 60, .3); }
+.chip.is-hot b { color: #FFB45C; }
 .chip.is-hot .ms { color: #FFB45C; font-variation-settings: 'FILL' 1, 'wght' 600, 'opsz' 24; transform-origin: 50% 90%; animation: flicker 1.6s ease-in-out infinite; }
 @keyframes flicker { 50% { transform: scale(1.12) rotate(-4deg); filter: drop-shadow(0 0 4px rgba(255, 180, 92, .7)); } }
 
@@ -486,20 +522,31 @@ select.input { padding-right: 8px; }
 }
 .lane-name { font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
 .lane-name .ms { font-size: 18px; color: var(--c); }
+/* HP-style bars: a sunken socket, glossy fill, and segment notches every 10% of target */
 .lane-track {
     position: relative;
-    height: 10px;
-    border-radius: 999px;
+    height: 12px;
+    border-radius: 4px;
     background: rgba(0, 0, 0, .5);
-    box-shadow: inset 0 1px 2px rgba(0, 0, 0, .6), 0 1px 0 rgba(255, 228, 170, .08);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, .6), 0 0 0 1px rgba(232, 176, 75, .18), 0 1px 0 rgba(255, 228, 170, .08);
 }
-.lane[data-key="kcal"] .lane-track { height: 14px; }
+.lane[data-key="kcal"] .lane-track { height: 16px; }
+/* The finish line sits at 80% of the track (FINISH_SCALE), so 8% of the track is 10% of target */
+.lane-track::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    border-radius: inherit;
+    background: repeating-linear-gradient(90deg, transparent 0 calc(8% - 2px), rgba(0, 0, 0, .55) calc(8% - 2px) 8%);
+    pointer-events: none;
+}
 /* Beyond the finish line is the overshoot zone, faintly hatched */
 .lane-track::after {
     content: "";
     position: absolute;
     inset: 0 0 0 80%;
-    border-radius: 0 999px 999px 0;
+    border-radius: 0 4px 4px 0;
     background: repeating-linear-gradient(-45deg, rgba(255,255,255,.07) 0 3px, transparent 3px 7px);
 }
 .lane-finish {
@@ -508,7 +555,7 @@ select.input { padding-right: 8px; }
     top: -4px;
     bottom: -4px;
     width: 6px;
-    z-index: 2;
+    z-index: 3;
     border-radius: 1px;
     background: repeating-conic-gradient(var(--ink) 0 25%, #0B0910 0 50%) 0 0 / 6px 6px;
     opacity: .9;
@@ -517,13 +564,26 @@ select.input { padding-right: 8px; }
     position: absolute;
     inset: 0 auto 0 0;
     width: 0;
-    border-radius: 999px;
-    background: var(--c);
+    overflow: hidden;
+    border-radius: inherit;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--c) 55%, #fff) 0 30%, var(--c) 30% 70%, color-mix(in srgb, var(--c) 72%, #000) 70%);
+    box-shadow: 0 0 10px color-mix(in srgb, var(--c) 55%, transparent);
     z-index: 1;
     transition: width .9s var(--ease-spring), background-color .3s;
 }
+/* A light glint runs along the bar now and then, the same sweep as the medals */
+.lane-fill::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(115deg, transparent 38%, rgba(255, 255, 255, .55) 50%, transparent 62%) no-repeat;
+    background-size: 250% 100%;
+    background-position: 150% 0;
+    animation: sheen 6s ease-in-out infinite;
+}
 .lane.is-over .lane-fill {
     background: repeating-linear-gradient(-45deg, var(--hazard) 0 5px, #FF7752 5px 10px);
+    box-shadow: 0 0 12px rgba(255, 75, 38, .6);
 }
 .lane-val { font-size: 12px; text-align: right; white-space: nowrap; opacity: .9; }
 .lane-val b { font-size: 18px; margin-right: 2px; }
@@ -560,33 +620,35 @@ select.input { padding-right: 8px; }
     grid-area: quote;
     position: relative;
     overflow: hidden;
-    padding: 14px 44px 14px 24px;
+    padding: 18px 44px 18px 24px;
     border-radius: 12px;
-    background: linear-gradient(180deg, #211B2C, var(--surface));
+    background: linear-gradient(180deg, #1B1630, #141022);
     border: 1px solid var(--line);
     box-shadow: 0 0 0 1px var(--rim), inset 0 1px 0 var(--glint), 0 4px 0 var(--rim);
 }
-/* Accent rail with a slow light flow, plus faint stripes that echo the scoreboard */
-.quote-card::before {
-    content: "";
-    position: absolute;
-    inset: 0 auto 0 0;
-    width: 4px;
-    background: linear-gradient(180deg, var(--accent), #FFE3A0, var(--accent)) 0 0 / 100% 200%;
-    animation: railFlow 3.5s linear infinite;
-}
+/* RPG dialogue box: an inner brass frame, and a bobbing "continue" arrow in the corner */
 .quote-card::after {
     content: "";
     position: absolute;
-    inset: -30% -6% -30% auto;
-    width: 42%;
-    background: repeating-linear-gradient(115deg, rgba(232, 176, 75, .055) 0 12px, transparent 12px 30px);
-    transform: skewX(-12deg);
-    -webkit-mask-image: linear-gradient(90deg, transparent, #000 45%);
-    mask-image: linear-gradient(90deg, transparent, #000 45%);
-    animation: stripesDrift 9s linear infinite;
+    inset: 5px;
+    border: 1px solid rgba(232, 176, 75, .35);
+    border-radius: 8px;
     pointer-events: none;
 }
+.quote-card::before {
+    content: "";
+    position: absolute;
+    right: 16px;
+    bottom: 12px;
+    z-index: 1;
+    width: 10px;
+    height: 7px;
+    background: var(--accent);
+    clip-path: polygon(0 0, 100% 0, 50% 100%);
+    filter: drop-shadow(0 0 4px rgba(232, 176, 75, .8));
+    animation: promptBob 1s ease-in-out infinite;
+}
+@keyframes promptBob { 50% { transform: translateY(3px); opacity: .6; } }
 .quote-mark {
     position: absolute;
     right: 26px;
@@ -620,9 +682,6 @@ select.input { padding-right: 8px; }
 .quote-zh .quote-author { font-style: normal; }
 .quote-skel { display: block; height: 14px; margin: 7px 0; border-radius: 6px; background: linear-gradient(90deg, var(--line-soft), var(--surface-2), var(--line-soft)) 0 0 / 200% 100%; animation: skel 1.2s linear infinite; }
 .quote-skel.is-short { width: 55%; }
-@keyframes railFlow { to { background-position: 0 200%; } }
-/* One stripe period along x for a 115deg, 30px repeat: 30 / sin(115deg) */
-@keyframes stripesDrift { to { background-position: 33.1px 0; } }
 @keyframes boltPulse { 50% { transform: scale(1.18); filter: drop-shadow(0 0 4px rgba(245, 196, 81, .8)); } }
 @keyframes wordIn { from { opacity: 0; transform: translateY(6px); filter: blur(3px); } }
 @keyframes markSwipe { to { background-size: 100% 100%; } }
@@ -794,17 +853,24 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
 .water { grid-area: water; }
 .water-body { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 18px; align-items: center; padding: 14px 16px 16px; }
 /* The glass is clipped to a tumbler; the drop and splash sit outside the clip so they can fall in from above */
-.water-vis { position: relative; width: 76px; height: 104px; transition: transform .3s var(--ease-spring); }
+/* Potion flask: the glow outlines the clipped glass, which a border cannot follow */
+.water-vis {
+    position: relative;
+    width: 76px;
+    height: 104px;
+    filter: drop-shadow(0 0 1px rgba(142, 162, 255, .7)) drop-shadow(0 0 10px rgba(77, 139, 255, .22));
+    transition: transform .3s var(--ease-spring);
+}
 .water-glass {
     position: absolute;
     inset: 0;
-    clip-path: path('M0 0H76L67 97Q66.4 104 59 104H17Q9.6 104 9 97Z');
-    background: linear-gradient(180deg, var(--water-soft), #222B44);
+    clip-path: path('M27 0H49V6H46V26Q76 34 76 66Q76 104 38 104Q0 104 0 66Q0 34 30 26V6H27Z');
+    background: radial-gradient(circle at 38px 68px, #263258, var(--water-soft) 70%);
 }
 /* Gloss on the left and 25% graduations on the right, drawn over the water like marks on glass */
 .water-glass::before, .water-glass::after { content: ""; position: absolute; z-index: 1; pointer-events: none; }
-.water-glass::before { left: 16px; top: 10px; bottom: 14px; width: 5px; border-radius: 3px; background: rgba(255, 255, 255, .22); }
-.water-glass::after { right: 15px; top: 0; bottom: 0; width: 8px; background: repeating-linear-gradient(0deg, transparent 0 calc(25% - 1.5px), rgba(232, 176, 75, .22) calc(25% - 1.5px) 25%); }
+.water-glass::before { left: 11px; top: 46px; width: 16px; height: 38px; border-radius: 50%; border-left: 4px solid rgba(255, 255, 255, .28); }
+.water-glass::after { right: 13px; top: 34px; bottom: 8px; width: 8px; background: repeating-linear-gradient(0deg, transparent 0 calc(25% - 1.5px), rgba(232, 176, 75, .3) calc(25% - 1.5px) 25%); }
 .water-level {
     position: absolute;
     inset: auto 0 0;
@@ -850,7 +916,7 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
 .water-left { margin-left: auto; font-size: 12px; color: var(--muted); }
 .water.is-celebrating .water-flag { animation: stamp .45s var(--ease-spring) .5s backwards; }
 .water.is-celebrating .water-vis { animation: glassGlow 1.4s var(--ease-out) .4s; }
-@keyframes glassGlow { 30% { filter: drop-shadow(0 0 14px rgba(61, 123, 255, .65)); transform: scale(1.06); } }
+@keyframes glassGlow { 30% { filter: drop-shadow(0 0 1px rgba(142, 162, 255, .9)) drop-shadow(0 0 16px rgba(77, 139, 255, .7)); transform: scale(1.06); } }
 
 .water-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .water-add {
@@ -909,7 +975,7 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
 .log-cols > span:not(:first-child) { text-align: right; display: flex; align-items: center; justify-content: flex-end; gap: 5px; white-space: nowrap; }
 
 .meal + .meal { border-top: 1px solid var(--line); }
-.meal-head { min-height: 46px; }
+.meal-head { min-height: 46px; background: rgba(232, 176, 75, .035); }
 .meal-title { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .meal-title .ms {
     font-size: 18px;
@@ -920,6 +986,7 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
     place-items: center;
     background: var(--accent-soft);
     color: var(--accent);
+    box-shadow: inset 0 0 0 1px rgba(232, 176, 75, .45), 0 0 10px rgba(232, 176, 75, .15);
 }
 .meal-title h3 { font-size: 14px; font-weight: 700; }
 .meal-title .muted { font-size: 12px; color: var(--subtle); font-weight: 400; }
@@ -928,8 +995,24 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
 .meal-actions { display: flex; justify-content: flex-end; }
 .meal.is-empty .meal-title .ms { background: var(--line-soft); color: var(--subtle); }
 
-.entries { list-style: none; padding-bottom: 6px; }
-.entry { min-height: 42px; border-radius: 10px; margin: 0 6px; padding: 0 10px; transition: background-color .15s; }
+/* Battle log: a dashed thread drops from the meal icon (centred 30px in) with a rune on each entry */
+.entries { position: relative; list-style: none; padding-bottom: 6px; }
+.entries::before { content: ""; position: absolute; left: 29px; top: 0; bottom: 20px; border-left: 2px dashed rgba(232, 176, 75, .25); }
+.entry { position: relative; min-height: 42px; border-radius: 10px; margin: 0 6px; padding: 0 10px; transition: background-color .15s; }
+.entry::before {
+    content: "";
+    position: absolute;
+    left: 20px;
+    top: 50%;
+    width: 8px;
+    height: 8px;
+    margin-top: -4px;
+    transform: rotate(45deg);
+    background: var(--surface);
+    box-shadow: inset 0 0 0 2px var(--accent-deep);
+    transition: background-color .15s, box-shadow .15s;
+}
+.entry:hover::before, .entry:focus-within::before { background: var(--accent); box-shadow: 0 0 8px rgba(232, 176, 75, .7); }
 .entry:hover, .entry:focus-within { background: var(--surface-2); }
 .entry-main { display: flex; align-items: baseline; gap: 8px; min-width: 0; padding-left: 36px; }
 .entry-name { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -1705,6 +1788,7 @@ dialog[open]::backdrop { animation: fade .2s ease; }
     .log-cols > span:not(:first-child) { gap: 2px; }
     .c-carbs, .c-fat { display: none !important; }
     .entry-main { padding-left: 0; flex-wrap: wrap; row-gap: 0; }
+    .entries::before, .entry::before { display: none; }
     .entry-actions .icon-btn { width: 28px; }
     .entry-actions .act-portion { display: none; }
     /* Warehouse rows become cards: name and switch on top, labelled macros and actions below */
