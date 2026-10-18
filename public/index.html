@@ -292,6 +292,20 @@
         }
         .seg input:checked + .seg-opt .ms { font-variation-settings: 'FILL' 1, 'wght' 600, 'opsz' 24; }
         .seg input:focus-visible + .seg-opt { outline: 2px solid var(--cobalt); outline-offset: 1px; }
+        #meal-seg {
+            grid-template-columns: none;
+            grid-auto-flow: column;
+            grid-auto-columns: minmax(max-content, 1fr);
+            min-inline-size: 0;
+            overflow-x: auto;
+            overscroll-behavior-x: contain;
+            scroll-snap-type: x proximity;
+            scrollbar-width: none;
+            flex-shrink: 0;
+        }
+        #meal-seg::-webkit-scrollbar { display: none; }
+        #meal-seg label { scroll-snap-align: start; }
+        #meal-seg .seg-opt { padding: 0 14px; white-space: nowrap; }
 
         /* ── Diary layout ── */
         .date-nav { display: flex; align-items: center; gap: 4px; margin-right: auto; }
@@ -381,6 +395,11 @@
         }
         .chip .ms { font-size: 18px; }
         .chip b { font-size: 17px; }
+        .day-type-chip { position: relative; padding-right: 8px; cursor: pointer; }
+        .day-type-chip:focus-within { outline: 2px solid #fff; outline-offset: 2px; }
+        .day-type-chip select { appearance: none; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; outline: none; }
+        .day-type-chip option { color: var(--ink); }
+        .day-type-chip .ms:last-child { font-size: 16px; opacity: .7; margin-left: -4px; }
         .chip.is-hot .ms { color: #FFB45C; font-variation-settings: 'FILL' 1, 'wght' 600, 'opsz' 24; }
 
         .lanes { position: relative; display: flex; flex-direction: column; }
@@ -597,7 +616,7 @@
         .pick {
             position: relative;
             display: grid;
-            grid-template-columns: minmax(0, 1fr) auto 48px;
+            grid-template-columns: minmax(0, 1fr) auto 64px;
             align-items: center;
             gap: 8px;
             padding: 8px 12px;
@@ -610,7 +629,8 @@
         .pick:hover { background: #F6F7FA; }
         .pick-name { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .pick-unit { font-size: 12px; color: var(--muted); }
-        .pick-kcal { text-align: right; font-size: 15px; color: var(--muted); }
+        .pick-kcal { display: inline-flex; align-items: center; justify-content: flex-end; gap: 2px; font-size: 15px; color: var(--muted); }
+        .pick-kcal .mi { color: inherit; }
         .pick::before {
             content: "";
             position: absolute;
@@ -933,7 +953,13 @@
         .dirty-note .ms { font-size: 16px; }
 
         /* ── Weight log ── */
-        .weight-panel { margin-top: 14px; }
+        .cycle-panel, .weight-panel { margin-top: 14px; }
+        .cycle-rows { display: flex; flex-direction: column; gap: 14px; padding: 16px; }
+        .cycle-row { display: grid; grid-template-columns: 72px repeat(3, minmax(0, 1fr)) 104px; gap: 12px; align-items: end; }
+        .cycle-name, .cycle-kcal { height: 40px; display: flex; align-items: center; }
+        .cycle-name { font-weight: 700; }
+        .cycle-kcal { justify-content: flex-end; gap: 4px; font-size: 12px; color: var(--muted); }
+        .cycle-kcal b { font-size: 18px; color: var(--ink); }
         .weight-body { display: grid; grid-template-columns: 360px minmax(0, 1fr); }
         .weight-side { display: flex; flex-direction: column; gap: 14px; padding: 16px; border-right: 1px solid var(--line-soft); min-width: 0; }
         .weight-form { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr) auto; gap: 8px; align-items: end; }
@@ -1411,6 +1437,10 @@
             .cal-day.is-today .cal-date::after { content: none; }
             .settings-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
             .settings-form .span-3 { grid-column: 1 / -1; }
+            .cycle-row { grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 6px; }
+            .cycle-name, .cycle-kcal { grid-row: 1; height: auto; }
+            .cycle-name { grid-column: 1 / 3; }
+            .cycle-kcal { grid-column: 3; }
             .temp-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         }
 
@@ -1473,6 +1503,16 @@
                         <div class="board-meta">
                             <span id="chip-streak" class="chip"><span class="ms" aria-hidden="true">local_fire_department</span><span>连续记录 <b class="num" id="streak-days">0</b> 天</span></span>
                             <span id="chip-protein" class="chip"></span>
+                            <label class="chip day-type-chip">
+                                <span class="ms" aria-hidden="true">rice_bowl</span>
+                                <select id="day-type" aria-label="当天目标" onchange="setDayType(this.value)">
+                                    <option value="">自动目标</option>
+                                    <option value="high">高碳日</option>
+                                    <option value="medium">中碳日</option>
+                                    <option value="low">低碳日</option>
+                                </select>
+                                <span class="ms" aria-hidden="true">unfold_more</span>
+                            </label>
                         </div>
                     </div>
                     <div class="lanes">
@@ -1751,7 +1791,7 @@
                 </div>
 
                 <div class="panel">
-                    <div class="panel-head"><h2>每日目标</h2><span class="hint">减脂期</span></div>
+                    <div class="panel-head"><h2>每日目标</h2><span class="hint">减脂期，未选碳循环类型的日子使用</span></div>
                     <div class="plan">
                         <div class="plan-chain">
                             <div class="plan-step"><span>基础代谢 BMR</span><b class="num" id="plan-bmr">0</b></div>
@@ -1772,6 +1812,16 @@
                     </div>
                 </div>
             </div>
+
+            <section class="panel cycle-panel" aria-labelledby="cycle-title">
+                <div class="panel-head"><h2 id="cycle-title">碳循环</h2><span class="hint">在日记页为某天选类型后，当天改用这组目标</span></div>
+                <form id="cycle-form" oninput="renderCycleKcal()" onsubmit="event.preventDefault(); saveDayTypes();">
+                    <div id="cycle-rows" class="cycle-rows"></div>
+                </form>
+                <div class="settings-foot">
+                    <button type="submit" form="cycle-form" class="btn" id="save-cycle">保存碳循环目标</button>
+                </div>
+            </section>
 
             <section class="panel weight-panel" aria-labelledby="weight-title">
                 <div class="panel-head"><h2 id="weight-title">体重记录</h2></div>
@@ -2034,7 +2084,13 @@
             const carbs = Math.round((kcal - protein * 4 - fat * 9) / 4);
             return { bmr, tdee, kcal, protein, carbs, fat };
         }
-        const calculateTargets = () => computePlan(state.user);
+        // A carb-cycling type picked for a date replaces the auto plan on that date; its kcal follows the macros
+        const DAY_TYPES = { high: '高碳日', medium: '中碳日', low: '低碳日' };
+        const typeTargets = m => ({ ...m, kcal: Math.round(m.protein * 4 + m.carbs * 4 + m.fat * 9) });
+        function targetsFor(date) {
+            const macros = state.dayTypes[state.dayPlan[date]];
+            return macros ? typeTargets(macros) : computePlan(state.user);
+        }
 
         function sumEntries(entries) {
             const t = { kcal: 0, protein: 0, carbs: 0, fat: 0 };
@@ -2115,11 +2171,10 @@
         // Replays history day by day. Target-based checks only count finished days (today can
         // still go over), and an unfinished today never breaks a streak. Streak values are the
         // current run, so progress toward the next tier reads "current / next".
-        function evaluateAchievements(diary, weights, user, foodList, today = localDate()) {
+        function evaluateAchievements(diary, weights, user, foodList, dayTargets, today = localDate()) {
             const progress = Object.fromEntries(ACHIEVEMENTS.map(a => [a.id, { value: a.lower ? null : 0, reached: [] }]));
             if (!user.targetWeight) progress.goal_weight.unavailable = '先在「身体数据」设定目标体重';
             if (!weights.some(w => w.date <= today)) progress.bmi.unavailable = '记录第一次称重后开始计算';
-            const targets = computePlan(user);
             const weightByDate = Object.fromEntries(weights.map(w => [w.date, w.weight]));
             const first = [...Object.keys(diary).filter(ds => diary[ds].length), ...Object.keys(weightByDate)]
                 .filter(ds => ds <= today).sort()[0];
@@ -2141,6 +2196,7 @@
 
             for (const d = parseLocalDate(first); localDate(d) <= today; d.setDate(d.getDate() + 1)) {
                 const ds = localDate(d);
+                const targets = dayTargets(ds);
                 const list = diary[ds] || [];
                 const t = sumEntries(list);
                 const finished = ds < today;
@@ -2225,7 +2281,7 @@
 
         // Fire-and-forget after any data change; marks tiers locally first so overlapping calls don't double-announce
         async function syncAchievements() {
-            const progress = evaluateAchievements(state.diary, state.weights, state.user, state.foods);
+            const progress = evaluateAchievements(state.diary, state.weights, state.user, state.foods, targetsFor);
             const unlocks = ACHIEVEMENTS.flatMap(a => progress[a.id].reached.map((date, i) =>
                 ({ id: `${a.id}:${a.tiers[i]}`, date, label: tierName(a, a.tiers[i]) })))
                 .filter(u => !state.achievements[u.id]);
@@ -2250,7 +2306,7 @@
         const BURST_ANGLES = [0, 45, 90, 135, 180, 225, 270, 315];
 
         function renderAchievements() {
-            const progress = evaluateAchievements(state.diary, state.weights, state.user, state.foods);
+            const progress = evaluateAchievements(state.diary, state.weights, state.user, state.foods, targetsFor);
             let unlockedCount = 0, tierCount = 0;
 
             // Unlocked series first; sort is stable, so each half keeps the definition order
@@ -2337,7 +2393,7 @@
             if (pageId === 'warehouse') renderWarehouse();
             if (pageId === 'summary')   renderSummary(true);
             if (pageId === 'achievements') renderAchievements();
-            if (pageId === 'settings')  { fillSettingsForm(); renderWeights(); }
+            if (pageId === 'settings')  { fillSettingsForm(); fillCycleForm(); renderWeights(); }
             document.querySelector('main').scrollTop = 0;
         }
 
@@ -2430,7 +2486,7 @@
                             <input type="radio" name="food" value="${esc(f.id)}">
                             <span class="pick-name">${esc(f.name)}</span>
                             <span class="pick-unit">${esc(f.unit)}</span>
-                            <span class="pick-kcal num">${fmt(f.kcal)}</span>
+                            <span class="pick-kcal num">${macroIcon('kcal')}${fmt(f.kcal)}</span>
                         </label>`;
                 }
             }
@@ -2501,7 +2557,7 @@
                 return;
             }
             const m = scaleFood(food, amount);
-            const left = calculateTargets().kcal - sumEntries(state.diary[diaryDate()] || []).kcal - m.kcal;
+            const left = targetsFor(diaryDate()).kcal - sumEntries(state.diary[diaryDate()] || []).kcal - m.kcal;
             el.innerHTML = `
                 <span class="pv-kcal num">+${fmt(m.kcal)}</span><span>kcal</span>
                 <span class="pv-left ${left < 0 ? 'is-over' : ''}">记完${left < 0 ? '超出' : '还剩'} <b class="num">${fmt(Math.abs(left))}</b></span>
@@ -2583,7 +2639,8 @@
         // Finish line sits at 80% of the track so up to 125% of target stays visible
         const FINISH_SCALE = 1.25;
         function renderScoreboard(totals, celebrate) {
-            const t = calculateTargets();
+            const t = targetsFor(diaryDate());
+            $('day-type').value = state.dayPlan[diaryDate()] || '';
             const remaining = t.kcal - totals.kcal;
             $('board').classList.toggle('is-over', remaining < 0);
             $('hero-label').textContent = remaining < 0 ? '已超出' : '还能吃';
@@ -3006,23 +3063,27 @@
             window.scrollTo(0, 0);
         }
 
-        // Aggregates every recorded day (kcal > 0, same rule as the calendar) in [from, to]
-        function periodStats(from, to, targets) {
+        // Aggregates every recorded day (kcal > 0, same rule as the calendar) in [from, to].
+        // Each day is judged against its own target; `target` is their average for period-level displays.
+        function periodStats(from, to) {
             const stats = {
                 recorded: 0, compliant: 0,
                 sum: { kcal: 0, protein: 0, carbs: 0, fat: 0 },
                 mealKcal: Object.fromEntries(MEAL_ORDER.map(m => [m, 0])),
                 byMonth: Array.from({ length: 12 }, () => ({ recorded: 0, compliant: 0, kcal: 0 })),
-                byWeekday: Array.from({ length: 7 }, () => ({ recorded: 0, kcal: 0 })),
+                byWeekday: Array.from({ length: 7 }, () => ({ recorded: 0, kcal: 0, dev: 0 })),
                 daily: {}, proteinDays: 0,
                 foods: [], weightChange: null
             };
             const foods = new Map();
+            const targetSum = { kcal: 0, protein: 0, carbs: 0, fat: 0 };
             for (const ds of Object.keys(state.diary)) {
                 if (ds < from || ds > to) continue;
                 const entries = state.diary[ds];
                 const t = sumEntries(entries);
                 if (t.kcal <= 0) continue;
+                const targets = targetsFor(ds);
+                MACRO_KEYS.forEach(k => { targetSum[k] += targets[k]; });
                 const ok = kcalStatus(t.kcal, targets.kcal) === 'ok';
                 const month = stats.byMonth[Number(ds.slice(5, 7)) - 1];
                 stats.recorded++;
@@ -3033,6 +3094,7 @@
                 const weekday = stats.byWeekday[parseLocalDate(ds).getDay()];
                 weekday.recorded++;
                 weekday.kcal += t.kcal;
+                weekday.dev += t.kcal - targets.kcal;
                 stats.daily[ds] = t.kcal;
                 stats.proteinDays += t.protein >= targets.protein;
                 MACRO_KEYS.forEach(k => { stats.sum[k] += t[k]; });
@@ -3048,6 +3110,9 @@
                 }
             }
             stats.avg = Object.fromEntries(MACRO_KEYS.map(k => [k, stats.recorded ? stats.sum[k] / stats.recorded : 0]));
+            stats.target = stats.recorded
+                ? Object.fromEntries(MACRO_KEYS.map(k => [k, targetSum[k] / stats.recorded]))
+                : computePlan(state.user);
             stats.foods = [...foods.values()].sort((a, b) => b.count - a.count || b.kcal - a.kcal).slice(0, 8);
             const weighIns = state.weights.filter(w => w.date >= from && w.date <= to);
             if (weighIns.length >= 2) stats.weightChange = Math.round((weighIns.at(-1).weight - weighIns[0].weight) * 100) / 100;
@@ -3058,7 +3123,6 @@
             const year  = summaryCurrentDate.getFullYear();
             const month = summaryCurrentDate.getMonth();
             const isYear = summaryPeriod === 'year';
-            const targets = calculateTargets();
             const monthDays = new Date(year, month + 1, 0).getDate();
             const yearDays = new Date(year, 1, 29).getMonth() === 1 ? 366 : 365;
 
@@ -3072,7 +3136,8 @@
 
             const from = isYear ? ymd(year, 0, 1) : ymd(year, month, 1);
             const to = isYear ? ymd(year, 11, 31) : ymd(year, month, monthDays);
-            const stats = periodStats(from, to, targets);
+            const stats = periodStats(from, to);
+            const targets = stats.target;
             const totalDays = isYear ? yearDays : monthDays;
             const today = localDate();
             const elapsed = from > today ? 0 : to <= today ? totalDays
@@ -3111,7 +3176,7 @@
             for (let day = 1; day <= totalDays; day++) {
                 const dateStr = ymd(year, month, day);
                 const isFuture = dateStr > todayStr;
-                const { status, kcal, diff } = dayStatus(dateStr, targets.kcal);
+                const { status, kcal, diff } = dayStatus(dateStr, targetsFor(dateStr).kcal);
                 const i = firstDayIndex + day;
                 const cls = ['cal-day', isFuture && 'is-future', dateStr === todayStr && 'is-today', status !== 'none' && `st-${status}`].filter(Boolean).join(' ');
 
@@ -3145,7 +3210,7 @@
                     if (day > days) return '<span class="hm-cell is-void" aria-hidden="true"></span>';
                     const ds = ymd(year, m, day);
                     if (ds > todayStr) return '<span class="hm-cell is-future" aria-hidden="true"></span>';
-                    const { status, kcal, diff } = dayStatus(ds, targets.kcal);
+                    const { status, kcal, diff } = dayStatus(ds, targetsFor(ds).kcal);
                     const label = status === 'none' ? '无记录'
                         : status === 'ok' ? '达标' : `${statusText[status]} ${diff > 0 ? '+' : ''}${fmt(diff)}`;
                     const tip = `${m + 1}月${day}日 ${WEEKDAYS[new Date(year, m, day).getDay()]}${kcal > 0 ? `<b class="num">${fmt(kcal)} kcal</b>` : '<br>'}${label}`;
@@ -3191,7 +3256,7 @@
             }
             renderRings(stats, elapsed);
             renderDonut(stats, targets);
-            renderWeekdays(stats, targets);
+            renderWeekdays(stats);
             const bar = (ratio, goal = false) => `<div class="ins-track${goal ? ' has-goal' : ''}"><i style="width:${Math.min(Math.max(ratio, 0), 1) * 100}%"></i></div>`;
 
             // Same rules as the diary scoreboard: protein past target is the goal, anything else past it is overshoot
@@ -3285,11 +3350,11 @@
                 </div>`;
         }
 
-        function renderWeekdays(stats, targets) {
+        function renderWeekdays(stats) {
             const order = [1, 2, 3, 4, 5, 6, 0];
             const devs = order.map(d => {
                 const w = stats.byWeekday[d];
-                return w.recorded ? { d, avg: w.kcal / w.recorded, dev: w.kcal / w.recorded - targets.kcal, n: w.recorded } : { d, n: 0 };
+                return w.recorded ? { d, avg: w.kcal / w.recorded, dev: w.dev / w.recorded, n: w.recorded } : { d, n: 0 };
             });
             // Symmetric scale around the target, rounded to 100 kcal with a 300 kcal floor
             const max = Math.max(300, Math.ceil(Math.max(...devs.filter(x => x.n).map(x => Math.abs(x.dev))) / 100) * 100);
@@ -3301,7 +3366,7 @@
                 const tip = `${WEEKDAYS[d]}<b class="num">日均 ${fmt(avg)} kcal</b>记录 ${n} 天`;
                 return `<div class="wd-row${weekend}" data-tip="${esc(tip)}">
                         <span class="wd-name">${WEEKDAYS[d]}</span>
-                        <div class="wd-track"><i class="wd-stem" style="left:${left}%;width:${width}%;transform-origin:${dev < 0 ? 'right' : 'left'}"></i><b class="wd-dot st-${kcalStatus(avg, targets.kcal)}" style="left:${pos(dev)}%"></b></div>
+                        <div class="wd-track"><i class="wd-stem" style="left:${left}%;width:${width}%;transform-origin:${dev < 0 ? 'right' : 'left'}"></i><b class="wd-dot st-${kcalStatus(dev, 0)}" style="left:${pos(dev)}%"></b></div>
                         <span class="wd-val num">${dev > 0 ? '+' : ''}${fmt(dev)}</span>
                     </div>`;
             }).join('') + `<div class="wd-axis"><span></span><div><span>-${fmt(max)}</span><span>目标</span><span>+${fmt(max)}</span></div><span></span></div>`;
@@ -3375,7 +3440,7 @@
                 if (v !== null) { dot.setAttribute('cx', x(i)); dot.setAttribute('cy', y(v)); dot.setAttribute('visibility', 'visible'); }
                 else dot.setAttribute('visibility', 'hidden');
                 const d = days[i].d;
-                const status = v === null ? '' : { ok: '达标', over: '超标', under: '缺口过大' }[kcalStatus(v, target)];
+                const status = v === null ? '' : { ok: '达标', over: '超标', under: '缺口过大' }[kcalStatus(v, targetsFor(days[i].ds).kcal)];
                 const html = `${d.getMonth() + 1}月${d.getDate()}日 ${WEEKDAYS[d.getDay()]}<b class="num">${v === null ? '无记录' : `${fmt(v)} kcal`}</b>${status}${ma[i] !== null ? `${status ? ' · ' : ''}7 日均 ${fmt(ma[i])}` : ''}`;
                 const rect = svg.getBoundingClientRect();
                 showFloatTipAt(html, rect.left + x(i), rect.top + (v === null ? m.top + plotH / 2 : y(v)));
@@ -3467,6 +3532,54 @@
                     <b class="num">${fmt(x.g)}<small> g</small></b>
                     <small>${Math.round(Math.max(x.kcal, 0) / total * 100)}% 热量</small>
                 </div>`).join('');
+        }
+
+        // ── Carb cycling ──
+        async function setDayType(type) {
+            const date = diaryDate();
+            try {
+                if (type) await api(`/api/day-plan/${date}`, 'PUT', { type });
+                else await api(`/api/day-plan/${date}`, 'DELETE');
+            } catch {
+                $('day-type').value = state.dayPlan[date] || '';
+                return;
+            }
+            if (type) state.dayPlan[date] = type;
+            else delete state.dayPlan[date];
+            renderDiary();
+            syncAchievements();
+        }
+
+        function fillCycleForm() {
+            $('cycle-rows').innerHTML = Object.entries(DAY_TYPES).map(([id, label]) => `
+                <div class="cycle-row" data-type="${id}">
+                    <span class="cycle-name">${label}</span>
+                    ${['protein', 'carbs', 'fat'].map(k => `<label class="field"><span>${MACRO_META[k][0]} g</span><input type="number" class="input" name="${k}" value="${state.dayTypes[id][k]}" min="0" max="1000" step="any" required></label>`).join('')}
+                    <span class="cycle-kcal"><b class="num"></b>kcal</span>
+                </div>`).join('');
+            renderCycleKcal();
+        }
+
+        function readCycleForm() {
+            return Object.fromEntries([...document.querySelectorAll('.cycle-row')].map(row =>
+                [row.dataset.type, Object.fromEntries([...row.querySelectorAll('input')].map(i => [i.name, Number(i.value)]))]));
+        }
+
+        function renderCycleKcal() {
+            const types = readCycleForm();
+            document.querySelectorAll('.cycle-row').forEach(row => {
+                row.querySelector('.cycle-kcal b').textContent = fmt(typeTargets(types[row.dataset.type]).kcal);
+            });
+        }
+
+        async function saveDayTypes() {
+            await withBusy($('save-cycle'), async () => {
+                const types = readCycleForm();
+                await api('/api/day-types', 'PUT', types);
+                state.dayTypes = types;
+                showToast('已保存碳循环目标');
+                syncAchievements();
+            });
         }
 
         async function saveSettings() {

@@ -20,15 +20,18 @@ function userToJson(u) {
 const json = (data, status = 200) => Response.json(data, { status });
 const noContent = () => new Response(null, { status: 204 });
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const DAY_TYPE_IDS = ['high', 'medium', 'low'];
 
 // ── Full state bootstrap ──
 async function getState({ db }) {
-    const [foods, entries, achievements, weights, user] = await db.batch([
+    const [foods, entries, achievements, weights, user, dayTypes, dayPlan] = await db.batch([
         db.prepare('SELECT * FROM foods'),
         db.prepare('SELECT * FROM diary_entries ORDER BY id'),
         db.prepare('SELECT id, unlocked_at FROM achievements'),
         db.prepare('SELECT date, weight FROM weight_log ORDER BY date'),
-        db.prepare('SELECT * FROM user_settings WHERE id = 1')
+        db.prepare('SELECT * FROM user_settings WHERE id = 1'),
+        db.prepare('SELECT id, protein, carbs, fat FROM day_types'),
+        db.prepare('SELECT date, type FROM day_plan')
     ]);
 
     const diary = {};
@@ -42,7 +45,9 @@ async function getState({ db }) {
         foods: foods.results.map(foodToJson),
         diary,
         achievements: Object.fromEntries(achievements.results.map(r => [r.id, r.unlocked_at])),
-        weights: weights.results
+        weights: weights.results,
+        dayTypes: Object.fromEntries(dayTypes.results.map(({ id, ...macros }) => [id, macros])),
+        dayPlan: Object.fromEntries(dayPlan.results.map(r => [r.date, r.type]))
     });
 }
 
@@ -180,6 +185,38 @@ async function deleteWeight({ db, params: [date] }) {
     return json({ user: await syncSettingsWeight(db) });
 }
 
+// ── Carb cycling ──
+async function putDayTypes({ db, body }) {
+    const valid = DAY_TYPE_IDS.every(id => ['protein', 'carbs', 'fat'].every(k => {
+        const v = body[id]?.[k];
+        return typeof v === 'number' && v >= 0 && v <= 1000;
+    }));
+    if (!valid) return json({ error: 'expected { high, medium, low } each with protein, carbs, fat between 0 and 1000' }, 400);
+
+    const upsert = db.prepare(`
+        INSERT INTO day_types (id, protein, carbs, fat) VALUES (?, ?, ?, ?)
+        ON CONFLICT(id) DO UPDATE SET protein = excluded.protein, carbs = excluded.carbs, fat = excluded.fat
+    `);
+    await db.batch(DAY_TYPE_IDS.map(id => upsert.bind(id, body[id].protein, body[id].carbs, body[id].fat)));
+    return noContent();
+}
+
+async function putDayPlan({ db, body, params: [date] }) {
+    if (!DATE_RE.test(date) || !DAY_TYPE_IDS.includes(body.type)) {
+        return json({ error: 'expected date YYYY-MM-DD and type high, medium or low' }, 400);
+    }
+    await db.prepare(`
+        INSERT INTO day_plan (date, type) VALUES (?, ?)
+        ON CONFLICT(date) DO UPDATE SET type = excluded.type
+    `).bind(date, body.type).run();
+    return noContent();
+}
+
+async function deleteDayPlan({ db, params: [date] }) {
+    await db.prepare('DELETE FROM day_plan WHERE date = ?').bind(date).run();
+    return noContent();
+}
+
 // ── Achievements ──
 // Idempotent: a tier that is already unlocked keeps its original date
 async function postAchievements({ db, body }) {
@@ -278,6 +315,9 @@ const ROUTES = [
     ['DELETE', /^\/api\/diary\/([^/]+)$/,        deleteDiary],
     ['PUT',    /^\/api\/weights\/([^/]+)$/,      putWeight],
     ['DELETE', /^\/api\/weights\/([^/]+)$/,      deleteWeight],
+    ['PUT',    /^\/api\/day-types$/,            putDayTypes],
+    ['PUT',    /^\/api\/day-plan\/([^/]+)$/,     putDayPlan],
+    ['DELETE', /^\/api\/day-plan\/([^/]+)$/,     deleteDayPlan],
     ['POST',   /^\/api\/achievements$/,         postAchievements],
     ['GET',    /^\/api\/quote$/,                getQuote]
 ];
