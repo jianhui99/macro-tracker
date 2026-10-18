@@ -1202,23 +1202,25 @@
         .badge-dialog, .badge-dialog::backdrop { transition: none; }
         .badge-dialog::backdrop { backdrop-filter: blur(4px); }
         .bd-stage.badge { display: flex; flex-direction: column; align-items: center; padding: 0; background: none; }
+        /* --m is the detail medal's diameter in px; everything sized around the medal derives from it */
+        .bd-stage { --m: 176; }
         #badge-dialog .medal {
-            /* Shadow and spark sizes scale with the medal (128 / 48), so it matches the grid medal once shrunk */
-            --k: 2.6667;
-            width: 128px;
-            height: 128px;
-            margin-bottom: -64px;
+            /* Shadow and spark sizes scale with the medal (--m / 48), so it matches the grid medal once shrunk */
+            --k: calc(var(--m) / 48);
+            width: calc(var(--m) * 1px);
+            height: calc(var(--m) * 1px);
+            margin-bottom: calc(var(--m) * -.5px);
             z-index: 1;
             transform: perspective(700px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
             transition: transform .3s var(--ease-out);
         }
-        /* 8px ring scales to exactly the grid's 3px ring, so the landing lines up */
-        #badge-dialog .medal img { width: 112px; height: 112px; }
-        #badge-dialog .spark { zoom: 2.6667; }
+        /* The ring keeps the grid's 3 / 48 proportion, so the landing lines up */
+        #badge-dialog .medal img { width: calc(var(--m) * 42 / 48 * 1px); height: calc(var(--m) * 42 / 48 * 1px); }
+        #badge-dialog .spark { zoom: var(--k); }
         .bd-card {
             position: relative;
             width: 100%;
-            padding: 76px 20px 20px;
+            padding: calc(var(--m) * .5px + 12px) 20px 20px;
             border-radius: 20px;
             background: linear-gradient(180deg, var(--tint), var(--surface) 55%);
             box-shadow: 0 24px 60px rgba(13, 21, 48, .28);
@@ -1248,11 +1250,11 @@
         .bd-stage.m-silver  { --ray: #DCE5F5; }
         .bd-stage.m-gold    { --ray: #FFD45C; }
         .bd-stage.m-diamond { --ray: #8EA4FF; }
-        .bd-rays, .bd-fx { position: absolute; left: 50%; top: 64px; pointer-events: none; }
+        .bd-rays, .bd-fx { position: absolute; left: 50%; top: calc(var(--m) * .5px); pointer-events: none; }
         .bd-rays {
-            width: 440px;
-            height: 440px;
-            margin: -220px 0 0 -220px;
+            width: calc(var(--m) * 3.4px);
+            height: calc(var(--m) * 3.4px);
+            margin: calc(var(--m) * -1.7px) 0 0 calc(var(--m) * -1.7px);
             border-radius: 50%;
             background: repeating-conic-gradient(var(--ray) 0 8deg, transparent 8deg 24deg), radial-gradient(closest-side, var(--ray), transparent 70%);
             -webkit-mask-image: radial-gradient(closest-side, #000 25%, transparent);
@@ -1262,8 +1264,8 @@
         }
         .bd-fx { z-index: 2; }
         .bd-fx i { position: absolute; left: 0; top: 0; }
-        .bd-flash { width: 128px; height: 128px; margin: -64px; border-radius: 50%; background: radial-gradient(closest-side, #fff, rgba(255, 255, 255, 0)); opacity: 0; animation: flash .45s ease-out var(--impact); }
-        .bd-ring { width: 128px; height: 128px; margin: -64px; border-radius: 50%; border: 3px solid var(--ray); opacity: 0; animation: shock .7s var(--ease-out) var(--impact); }
+        .bd-flash { width: calc(var(--m) * 1px); height: calc(var(--m) * 1px); margin: calc(var(--m) * -.5px); border-radius: 50%; background: radial-gradient(closest-side, #fff, rgba(255, 255, 255, 0)); opacity: 0; animation: flash .45s ease-out var(--impact); }
+        .bd-ring { width: calc(var(--m) * 1px); height: calc(var(--m) * 1px); margin: calc(var(--m) * -.5px); border-radius: 50%; border: 3px solid var(--ray); opacity: 0; animation: shock .7s var(--ease-out) var(--impact); }
         .bd-ring + .bd-ring { animation-delay: calc(var(--impact) + 140ms); }
         .bd-bit { width: 8px; height: 8px; margin: -4px; border-radius: 2px; background: var(--ray); opacity: 0; animation: bit .9s cubic-bezier(.12, .8, .3, 1) calc(var(--impact) + var(--t)) forwards; }
         .bd-bit:nth-child(3n) { width: 12px; height: 12px; margin: -6px; background: #fff; clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%); }
@@ -1291,9 +1293,9 @@
         @keyframes flash { 15% { opacity: .95; scale: 1.15; } 100% { opacity: 0; scale: 1.5; } }
         @keyframes shock { 0% { opacity: 1; scale: .9; } 100% { opacity: 0; scale: 2.6; border-width: 1px; } }
         @keyframes bit {
-            0%   { opacity: 1; transform: rotate(var(--a)) translateY(-56px) scale(var(--s)); }
+            0%   { opacity: 1; transform: rotate(var(--a)) translateY(calc(var(--m) * -.44px)) scale(var(--s)); }
             75%  { opacity: 1; }
-            100% { opacity: 0; transform: rotate(var(--a)) translateY(calc(-56px - var(--d))) scale(0); }
+            100% { opacity: 0; transform: rotate(var(--a)) translateY(calc(var(--m) * -.44px - var(--d))) scale(0); }
         }
         @keyframes impact { 30% { scale: 1.12; filter: brightness(1.35); } }
         @keyframes lockShake { 20%, 60% { translate: -5px 0; } 40%, 80% { translate: 5px 0; } }
