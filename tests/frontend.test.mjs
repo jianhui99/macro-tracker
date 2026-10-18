@@ -271,3 +271,26 @@ test('XP sums stars, water, weigh-ins and unlocked medal tiers', async () => {
     });
     assert.deepEqual(plain(xpTotals(day)), { total: 30 + 10 + 5 + 50 + 400, today: 30 + 10 + 50 });
 });
+
+test('level badge unlocks from replayed XP and its own tiers give no XP', async () => {
+    const app = await loadApp();
+    const store = await app.get('state.js');
+    await store.loadState();
+    const nutrition = await app.get('nutrition.js');
+    const helpers = await app.get('helpers.js');
+    const { evaluateAchievements } = await app.get('achievements.js');
+    const { xpTotals, levelFor } = await app.get('level.js');
+    const diary = {};
+    const d = helpers.parseLocalDate('2030-01-01');
+    for (let i = 0; i < 60; i++, d.setDate(d.getDate() + 1)) {
+        const t = nutrition.targetsFor(helpers.localDate(d));
+        diary[helpers.localDate(d)] = [{ kcal: t.kcal, protein: t.protein, carbs: 0, fat: 0, meal: 'lunch' }];
+    }
+    const { level_rank } = evaluateAchievements(diary, [], {}, store.state.user, [], nutrition.targetsFor, helpers.localDate(d));
+    assert.ok(level_rank.value >= 10);
+    assert.ok(level_rank.reached.length >= 1 && level_rank.reached[0] > '2030-01-01');
+
+    Object.assign(store.state, { diary: {}, water: {}, weights: [], achievements: { 'level_rank:10': '2030-01-01', 'level_rank:30': '2030-01-01' } });
+    assert.equal(xpTotals('2030-01-01').total, 0);
+    assert.equal(levelFor(0).level, 1);
+});

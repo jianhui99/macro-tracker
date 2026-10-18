@@ -4,7 +4,7 @@ import { sumEntries, kcalStatus, targetsFor } from './nutrition.js';
 import { state } from './state.js';
 import { api } from './api.js';
 import { showToast, replay } from './ui.js';
-import { renderLevel } from './level.js';
+import { renderLevel, levelFor, xpTotals, XP } from './level.js';
 
 // ── Achievements ──
 // Each series is one badge; a tier unlocks the first day its metric reaches the threshold.
@@ -41,8 +41,13 @@ const ACHIEVEMENTS = [
     { id: 'water_days',     group: 'water',     name: '饮水达人',   desc: '累计喝够饮水目标的天数',                   unit: '天',   tiers: [10, 50, 100, 365] },
     { id: 'water_total',    group: 'water',     name: '人形水库',   desc: '累计喝掉的水',                             unit: 'L',    tiers: [100, 500, 1000, 3000] },
     { id: 'first_entry',    group: 'milestone', name: '第一步',     desc: '记下第一笔',                               unit: '条',   tiers: [1] },
-    { id: 'comebacks',      group: 'milestone', name: '重新出发',   desc: '中断 3 天以上后重新开始记录',              unit: '次',   tiers: [1] }
+    { id: 'comebacks',      group: 'milestone', name: '重新出发',   desc: '中断 3 天以上后重新开始记录',              unit: '次',   tiers: [1] },
+    // Tiers sit on the rank thresholds, so their metals match the rank names; `xp: false` keeps
+    // these tiers out of the XP that drives the level, which would otherwise feed on itself
+    { id: 'level_rank',     group: 'milestone', name: '冒险者等级', desc: '等级达到青铜、白银、黄金、钻石段位',       unit: '级',   tiers: [10, 15, 20, 30], xp: false }
 ];
+
+const LEVEL_SERIES = ACHIEVEMENTS.find(a => a.id === 'level_rank');
 
 const ACHIEVEMENT_GROUPS = { all: '全部', streak: '连续', total: '累计', period: '周期', food: '食物', weight: '体重', water: '饮水', milestone: '里程碑' };
 
@@ -93,6 +98,7 @@ function evaluateAchievements(diary, weights, water, user, foodList, dayTargets,
         if (factor) foodKinds.set(f.id, { id: kind.id, factor });
     }
     const eaten = Object.fromEntries(FOOD_KINDS.map(k => [k.id, 0]));
+    let xp = 0;
 
     for (const d = parseLocalDate(first); localDate(d) <= today; d.setDate(d.getDate() + 1)) {
         const ds = localDate(d);
@@ -179,12 +185,23 @@ function evaluateAchievements(diary, weights, water, user, foodList, dayTargets,
             water_streak: run.water, water_days: total.waterDays, water_total: Math.floor(total.waterMl / 1000)
         };
         for (const a of ACHIEVEMENTS) {
+            if (a === LEVEL_SERIES) continue;
             const p = progress[a.id];
             p.value = values[a.id];
             if (a.lower && p.base === undefined && p.value !== null) p.base = p.value;
             const hit = tier => a.lower ? p.value !== null && p.value < tier : p.value >= tier;
-            while (p.reached.length < a.tiers.length && hit(a.tiers[p.reached.length])) p.reached.push(ds);
+            while (p.reached.length < a.tiers.length && hit(a.tiers[p.reached.length])) {
+                p.reached.push(ds);
+                if (a.xp !== false) xp += XP.medal[tierMetal(p.reached.length - 1, a.tiers.length)];
+            }
         }
+
+        // The level XP from level.js, replayed: medals count on the day this replay reaches them and,
+        // like the other target checks, the kcal and protein stars wait for the day to finish
+        xp += stars * XP.star + hydrated * XP.water + (weight !== undefined) * XP.weigh;
+        const level = progress.level_rank;
+        level.value = levelFor(xp).level;
+        while (level.reached.length < LEVEL_SERIES.tiers.length && level.value >= LEVEL_SERIES.tiers[level.reached.length]) level.reached.push(ds);
     }
     return progress;
 }
@@ -221,6 +238,8 @@ const badgeViews = new Map();
 
 function renderAchievements() {
     const progress = evaluateAchievements(state.diary, state.weights, state.water, state.user, state.foods, targetsFor);
+    // Show the live level the chip shows (today's stars count at once); unlocks still follow the replay
+    progress.level_rank.value = levelFor(xpTotals().total).level;
     let unlockedCount = 0, tierCount = 0;
 
     // Unlocked series first; sort is stable, so each half keeps the definition order

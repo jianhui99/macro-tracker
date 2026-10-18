@@ -41,7 +41,7 @@ function dayXp(date, weighed) {
 function medalXp(id) {
     const [series, threshold] = id.split(':');
     const a = ACHIEVEMENTS.find(x => x.id === series);
-    const i = a ? a.tiers.indexOf(Number(threshold)) : -1;
+    const i = a && a.xp !== false ? a.tiers.indexOf(Number(threshold)) : -1;
     return i < 0 ? 0 : XP.medal[tierMetal(i, a.tiers.length)];
 }
 
@@ -163,4 +163,4 @@ function renderLevel() {
     if (seen !== lv.level) try { localStorage.setItem(SEEN_KEY, String(lv.level)); } catch { /* storage unavailable */ }
 }
 
-export { renderLevel, initLevel, levelFor, xpTotals, levelStart };
+export { renderLevel, initLevel, levelFor, xpTotals, levelStart, XP };

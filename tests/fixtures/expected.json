@@ -103,6 +103,7 @@
     "water_days": {"value": 1, "reached": []},
     "water_total": {"value": 4, "reached": []},
     "first_entry": {"value": 6, "reached": ["2026-09-30"]},
-    "comebacks": {"value": 1, "reached": ["2026-10-17"]}
+    "comebacks": {"value": 1, "reached": ["2026-10-17"]},
+    "level_rank": {"value": 6, "reached": []}
   }
 }
