@@ -954,11 +954,12 @@
 
         /* ── Weight log ── */
         .cycle-panel, .weight-panel { margin-top: 14px; }
-        .cycle-rows { display: flex; flex-direction: column; gap: 14px; padding: 16px; }
-        .cycle-row { display: grid; grid-template-columns: 72px repeat(2, minmax(0, 180px)) minmax(0, 1fr); gap: 12px; align-items: end; }
-        .cycle-name { height: 40px; display: flex; align-items: center; font-weight: 700; }
-        .cycle-result { display: flex; flex-direction: column; align-items: flex-start; padding-left: 8px; justify-content: center; min-height: 40px; font-size: 12px; color: var(--muted); }
-        .cycle-result b { font-size: 18px; color: var(--ink); }
+        .cycle-rows { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; padding: 16px 16px 14px; }
+        .cycle-row { display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: 10px; background: var(--paper); min-width: 0; }
+        .cycle-name { font-size: 13px; font-weight: 700; }
+        .cycle-result { display: flex; flex-direction: column; gap: 2px; font-size: 12px; color: var(--muted); }
+        .cycle-result b { font-size: 26px; line-height: 1.1; color: var(--ink); }
+        .cycle-inputs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
         .weight-body { display: grid; grid-template-columns: 360px minmax(0, 1fr); }
         .weight-side { display: flex; flex-direction: column; gap: 14px; padding: 16px; border-right: 1px solid var(--line-soft); min-width: 0; }
         .weight-form { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr) auto; gap: 8px; align-items: end; }
@@ -1436,12 +1437,7 @@
             .cal-day.is-today .cal-date::after { content: none; }
             .settings-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
             .settings-form .span-3 { grid-column: 1 / -1; }
-            .cycle-row { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 6px; }
-            /* Name and kcal share the first line, the macro breakdown gets its own full-width line */
-            .cycle-result { display: contents; }
-            .cycle-name, .cycle-kcal { grid-row: 1; height: auto; }
-            .cycle-kcal { justify-self: end; }
-            .cycle-macros { grid-row: 2; grid-column: 1 / -1; margin-top: -6px; }
+            .cycle-rows { grid-template-columns: minmax(0, 1fr); }
             .temp-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         }
 
@@ -3561,8 +3557,10 @@
             $('cycle-rows').innerHTML = Object.entries(DAY_TYPES).map(([id, label]) => `
                 <div class="cycle-row" data-type="${id}">
                     <span class="cycle-name">${label}</span>
-                    ${['carbs', 'fat'].map(k => `<label class="field"><span>${MACRO_META[k][0]}增减 g</span><input type="number" class="input" name="${k}" value="${state.dayTypes[id][k]}" min="-500" max="500" step="any" required></label>`).join('')}
-                    <span class="cycle-result"></span>
+                    <div class="cycle-result"></div>
+                    <div class="cycle-inputs">
+                        ${['carbs', 'fat'].map(k => `<label class="field"><span>${MACRO_META[k][0]}增减 g</span><input type="number" class="input" name="${k}" value="${state.dayTypes[id][k]}" min="-500" max="500" step="any" required></label>`).join('')}
+                    </div>
                 </div>`).join('');
             renderCyclePreview();
         }
@@ -3577,7 +3575,7 @@
             const types = readCycleForm();
             document.querySelectorAll('.cycle-row').forEach(row => {
                 const t = applyOffset(plan, types[row.dataset.type]);
-                row.querySelector('.cycle-result').innerHTML = `<span class="cycle-kcal"><b class="num">${fmt(t.kcal)}</b> kcal</span><span class="cycle-macros">蛋白 ${fmt(t.protein)} · 碳水 ${fmt(t.carbs)} · 脂肪 ${fmt(t.fat)} g</span>`;
+                row.querySelector('.cycle-result').innerHTML = `<span><b class="num">${fmt(t.kcal)}</b> kcal</span><span>蛋白 ${fmt(t.protein)} · 碳水 ${fmt(t.carbs)} · 脂肪 ${fmt(t.fat)} g</span>`;
             });
         }
 
