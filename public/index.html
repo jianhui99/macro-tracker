@@ -1077,6 +1077,7 @@
         .badge { position: relative; }
         .badge-grid .badge { transition: transform .2s var(--ease-out), box-shadow .2s; }
         .badge-grid .badge:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(13, 21, 48, .1); }
+        .badge-grid .badge:has(.badge-open:active) { transform: scale(.97); transition-duration: .08s; }
         .badge-open { position: absolute; inset: 0; z-index: 1; border-radius: inherit; cursor: pointer; }
         .badge-open:focus-visible { outline: 2px solid var(--cobalt); outline-offset: 2px; }
         .badge.m-bronze  { --medal: var(--bronze);  --tint: var(--bronze-bg);  --medal-ink: #fff; --glow: rgba(166, 94, 38, .45); }
@@ -1239,6 +1240,65 @@
         .bd-tiers .tier { min-width: 44px; }
         .bd-card .badge-prog { justify-content: center; }
         .bd-tiers .bd-date { margin-left: auto; font-size: 12px; color: var(--muted); }
+
+        /* Game-style landing: when the medal touches down (--impact, timed to the flight's overshoot)
+           a flash, shockwave and burst fire, light rays fan out behind it, then the card stamps in */
+        .bd-stage { position: relative; --impact: 380ms; }
+        .bd-stage.m-bronze  { --ray: #F0A867; }
+        .bd-stage.m-silver  { --ray: #DCE5F5; }
+        .bd-stage.m-gold    { --ray: #FFD45C; }
+        .bd-stage.m-diamond { --ray: #8EA4FF; }
+        .bd-rays, .bd-fx { position: absolute; left: 50%; top: 64px; pointer-events: none; }
+        .bd-rays {
+            width: 440px;
+            height: 440px;
+            margin: -220px 0 0 -220px;
+            border-radius: 50%;
+            background: repeating-conic-gradient(var(--ray) 0 8deg, transparent 8deg 24deg), radial-gradient(closest-side, var(--ray), transparent 70%);
+            -webkit-mask-image: radial-gradient(closest-side, #000 25%, transparent);
+            mask-image: radial-gradient(closest-side, #000 25%, transparent);
+            opacity: 0;
+            animation: raysIn .6s var(--ease-out) var(--impact) forwards, raysSpin 24s linear infinite;
+        }
+        .bd-fx { z-index: 2; }
+        .bd-fx i { position: absolute; left: 0; top: 0; }
+        .bd-flash { width: 128px; height: 128px; margin: -64px; border-radius: 50%; background: radial-gradient(closest-side, #fff, rgba(255, 255, 255, 0)); opacity: 0; animation: flash .45s ease-out var(--impact); }
+        .bd-ring { width: 128px; height: 128px; margin: -64px; border-radius: 50%; border: 3px solid var(--ray); opacity: 0; animation: shock .7s var(--ease-out) var(--impact); }
+        .bd-ring + .bd-ring { animation-delay: calc(var(--impact) + 140ms); }
+        .bd-bit { width: 8px; height: 8px; margin: -4px; border-radius: 2px; background: var(--ray); opacity: 0; animation: bit .9s cubic-bezier(.12, .8, .3, 1) calc(var(--impact) + var(--t)) forwards; }
+        .bd-bit:nth-child(3n) { width: 12px; height: 12px; margin: -6px; background: #fff; clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%); }
+        /* `scale` and `translate` compose with the flight's `transform`, so these never fight the FLIP */
+        .bd-stage:not(.m-locked) .medal { --medal-in: impact .5s var(--ease-out) var(--impact); }
+        .bd-stage.m-locked .medal { --medal-in: lockShake .5s ease-in-out calc(var(--impact) + 60ms); }
+        .bd-stage:not(.m-locked) .bd-card {
+            box-shadow: 0 24px 60px rgba(13, 21, 48, .28), 0 0 0 1.5px color-mix(in srgb, var(--ray) 70%, transparent), 0 0 48px color-mix(in srgb, var(--ray) 35%, transparent);
+        }
+        .bd-stage:not(.m-locked) .bd-level {
+            align-self: center;
+            padding: 2px 12px;
+            border-radius: 999px;
+            background: var(--medal);
+            color: var(--medal-ink);
+            animation: stamp .45s var(--ease-spring) calc(var(--impact) + 120ms) backwards;
+        }
+        .bd-card h2 { animation: wordIn .45s var(--ease-out) calc(var(--impact) + 60ms) backwards; }
+        .bd-desc { animation: wordIn .45s var(--ease-out) calc(var(--impact) + 120ms) backwards; }
+        .bd-tiers li { animation: badgeIn .35s var(--ease-out) backwards; animation-delay: calc(var(--impact) + 200ms + var(--j) * 60ms); }
+        .bd-tiers li.is-on .tier { animation: tierPop .4s var(--ease-spring) backwards; animation-delay: calc(var(--impact) + 280ms + var(--j) * 60ms); }
+        .bd-card .badge-bar i { transform-origin: left; animation: growX .7s var(--ease-out) calc(var(--impact) + 300ms) backwards; }
+        @keyframes raysIn { from { opacity: 0; scale: .3; } to { opacity: .55; scale: 1; } }
+        @keyframes raysSpin { to { rotate: 360deg; } }
+        @keyframes flash { 15% { opacity: .95; scale: 1.15; } 100% { opacity: 0; scale: 1.5; } }
+        @keyframes shock { 0% { opacity: 1; scale: .9; } 100% { opacity: 0; scale: 2.6; border-width: 1px; } }
+        @keyframes bit {
+            0%   { opacity: 1; transform: rotate(var(--a)) translateY(-56px) scale(var(--s)); }
+            75%  { opacity: 1; }
+            100% { opacity: 0; transform: rotate(var(--a)) translateY(calc(-56px - var(--d))) scale(0); }
+        }
+        @keyframes impact { 30% { scale: 1.12; filter: brightness(1.35); } }
+        @keyframes lockShake { 20%, 60% { translate: -5px 0; } 40%, 80% { translate: 5px 0; } }
+        @keyframes stamp { from { opacity: 0; transform: scale(2.4) rotate(-10deg); } }
+        @keyframes tierPop { from { transform: scale(0); } 60% { transform: scale(1.25); } }
 
         /* ── Year view ── */
         .year-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 14px; align-items: start; }
@@ -2467,6 +2527,16 @@
 
         // ── Badge detail ──
         const METAL_NAMES = { bronze: '铜牌', silver: '银牌', gold: '金牌', diamond: '钻石' };
+        // Higher tiers land harder: more particles, and gold and up get a second shockwave
+        const BURST_COUNT = { bronze: 10, silver: 14, gold: 18, diamond: 24 };
+        function landingFxHtml(metal) {
+            if (metal === 'locked') return '';
+            const n = BURST_COUNT[metal];
+            const bits = Array.from({ length: n }, (_, i) =>
+                `<i class="bd-bit" style="--a:${Math.round(360 / n * i + Math.random() * 20)}deg;--d:${Math.round(70 + Math.random() * 80)}px;--s:${(.5 + Math.random() * .8).toFixed(2)};--t:${Math.round(Math.random() * 90)}ms"></i>`).join('');
+            const rings = metal === 'gold' || metal === 'diamond' ? '<i class="bd-ring"></i><i class="bd-ring"></i>' : '<i class="bd-ring"></i>';
+            return `<span class="bd-rays" aria-hidden="true"></span><span class="bd-fx" aria-hidden="true"><i class="bd-flash"></i>${rings}${bits}</span>`;
+        }
         let badgeSource = null;
 
         function badgeDetailHtml({ a, dates, metal, level, prog }) {
@@ -2474,11 +2544,12 @@
                 : a.tiers.length > 1 ? `${METAL_NAMES[metal]} · ${level} / ${a.tiers.length} 级` : METAL_NAMES[metal];
             const sparks = metal === 'diamond' ? '<i class="spark"></i><i class="spark"></i><i class="spark"></i>' : '';
             const tiers = a.tiers.map((tier, i) => `
-                <li class="${dates[i] ? 'is-on' : ''}">
+                <li class="${dates[i] ? 'is-on' : ''}" style="--j:${i}">
                     <span class="tier num${dates[i] ? ' is-on' : ''}">${tier}</span><span>${a.unit}</span>
                     <span class="bd-date">${dates[i] ? `${fmtMonthDay(dates[i])}解锁` : '未达成'}</span>
                 </li>`).join('');
             return `<div class="bd-stage badge m-${metal}">
+                    ${landingFxHtml(metal)}
                     <span class="medal"><img src="badges/${a.id}.webp" alt="">${sparks}</span>
                     <div class="bd-card" tabindex="-1" autofocus>
                         <button type="button" class="icon-btn bd-close" aria-label="关闭"><span class="ms" aria-hidden="true">close</span></button>
@@ -2549,6 +2620,7 @@
             const spin = view?.metal === 'locked' ? '0deg' : '-360deg';
             const flight = { duration: 560, delay: 90, easing: 'cubic-bezier(.55, 0, .25, 1)', fill: 'both' };
 
+            dlg.querySelector('.bd-rays')?.animate({ opacity: [.55, 0] }, { duration: 200, fill: 'forwards' });
             dlg.querySelector('.bd-card').animate(
                 [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(-36px) scale(.86)' }],
                 { duration: 260, easing: 'cubic-bezier(.4, 0, 1, 1)', fill: 'forwards' });
