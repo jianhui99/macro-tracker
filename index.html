@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,400..900;1,62..125,400..900&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..24,400..600,0..1,0&icon_names=add,arrow_downward,arrow_upward,bolt,calendar_month,check,check_circle,chevron_left,chevron_right,delete,dinner_dining,download,edit,egg_alt,error,free_breakfast,info,inventory_2,local_fire_department,lunch_dining,nutrition,person,remove,restaurant,rice_bowl,search,sports_score,sprint,unfold_less,unfold_more,water_drop&display=block" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..24,400..600,0..1,0&icon_names=accessibility_new,add,arrow_downward,arrow_upward,blender,bolt,calendar_month,check,check_circle,chevron_left,chevron_right,delete,diamond,dinner_dining,download,edit,edit_note,egg,egg_alt,emoji_events,error,event_available,fitness_center,flag,free_breakfast,grain,info,inventory_2,kebab_dining,local_fire_department,lunch_dining,military_tech,monitor_weight,nutrition,person,ramen_dining,remove,restart_alt,restaurant,rice_bowl,search,sports_score,sprint,star,target,trending_down,unfold_less,unfold_more,verified,vertical_align_bottom,water_drop&display=block" rel="stylesheet">
 
     <style>
         :root {
@@ -36,6 +36,21 @@
             --ok: #0E8A6C;     --ok-bg: #E2F5EE;
             --over: #D12E25;   --over-bg: #FDE7E5;
             --under: #A86A00;  --under-bg: #FDF1DA;
+
+            /* Badge tiers: white text on each medal color clears 4.5:1 */
+            --bronze: #A65E26;  --bronze-bg: #F7E9DD;
+            --silver: #66738A;  --silver-bg: #EAEEF4;
+            --gold: #8A6400;    --gold-bg: #FBF0CF;
+            --diamond: var(--cobalt); --diamond-bg: var(--cobalt-soft);
+            --medal-on-ink: #F5C451;
+            /* Macro hues stepped down for white surfaces (validated: CVD, lightness band, 3:1 contrast) */
+            --c-protein: #E5476A;
+            --c-carbs: #C27F00;
+            --c-fat: #159E80;
+
+            --locked-bg: #E8EBF0;
+            --locked-medal: #CDD2DB;
+            --locked-ink: #6F768A;
 
             --font: 'Archivo', 'Noto Sans SC', system-ui, -apple-system, sans-serif;
             --ease-out: cubic-bezier(.2, .8, .2, 1);
@@ -170,7 +185,7 @@
             padding: 12px 16px;
             border-bottom: 1px solid var(--line-soft);
         }
-        .panel-head h2 { font-size: 15px; font-weight: 700; margin-right: auto; }
+        .panel-head h2 { font-size: 15px; font-weight: 700; margin-right: auto; white-space: nowrap; }
         .panel-head .hint { font-size: 12px; color: var(--muted); }
 
         /* ── Buttons & inputs ── */
@@ -227,6 +242,10 @@
         .input:hover { border-color: #C5CBD8; }
         .input:focus { outline: none; border-color: var(--cobalt); box-shadow: 0 0 0 3px rgba(28, 47, 209, .14); }
         select.input { padding-right: 8px; }
+        .input[readonly] { background: var(--paper); color: var(--muted); }
+        .input[readonly]:hover { border-color: var(--line); }
+        .input[readonly]:focus { border-color: var(--line); box-shadow: none; }
+        .field > span small { font-size: 11px; font-weight: 400; color: var(--subtle); }
 
         /* Segmented control built on native radios */
         .seg {
@@ -282,8 +301,8 @@
         .diary-grid {
             display: grid;
             grid-template-columns: minmax(0, 1fr) 368px;
-            grid-template-areas: "board quick" "log quick";
-            grid-template-rows: auto 1fr;
+            grid-template-areas: "board quick" "quote quick" "log quick";
+            grid-template-rows: auto auto 1fr;
             gap: 14px;
             align-items: start;
         }
@@ -431,6 +450,76 @@
             0%, 100% { transform: scaleY(1); opacity: .9; }
             40%      { transform: scaleY(1.9); opacity: 1; }
         }
+
+        /* ── Quote of the day ── */
+        .quote-card {
+            grid-area: quote;
+            position: relative;
+            overflow: hidden;
+            padding: 14px 20px 14px 24px;
+            border-radius: 14px;
+            background: var(--surface);
+            border: 1px solid var(--line);
+        }
+        /* Accent rail with a slow light flow, plus faint speed stripes that echo the scoreboard */
+        .quote-card::before {
+            content: "";
+            position: absolute;
+            inset: 0 auto 0 0;
+            width: 4px;
+            background: linear-gradient(180deg, var(--cobalt), #7B87FF, var(--cobalt)) 0 0 / 100% 200%;
+            animation: railFlow 3.5s linear infinite;
+        }
+        .quote-card::after {
+            content: "";
+            position: absolute;
+            inset: -30% -6% -30% auto;
+            width: 42%;
+            background: repeating-linear-gradient(115deg, rgba(28, 47, 209, .055) 0 12px, transparent 12px 30px);
+            transform: skewX(-12deg);
+            -webkit-mask-image: linear-gradient(90deg, transparent, #000 45%);
+            mask-image: linear-gradient(90deg, transparent, #000 45%);
+            animation: stripesDrift 9s linear infinite;
+            pointer-events: none;
+        }
+        .quote-mark {
+            position: absolute;
+            right: 26px;
+            bottom: -78px;
+            font: italic 900 168px/1 'Archivo', serif;
+            color: var(--cobalt-soft);
+            pointer-events: none;
+            user-select: none;
+        }
+        .quote-head { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+        .quote-chip { display: inline-flex; align-items: center; gap: 3px; padding: 2px 9px 2px 6px; border-radius: 999px; background: var(--cobalt); color: #fff; font-size: 12px; font-weight: 700; }
+        .quote-chip .ms { font-size: 15px; color: var(--medal-on-ink); font-variation-settings: 'FILL' 1, 'wght' 600, 'opsz' 20; animation: boltPulse 2.4s ease-in-out infinite; }
+        .quote-credit { font-size: 11px; color: var(--subtle); text-decoration: none; }
+        .quote-credit:hover { color: var(--cobalt); text-decoration: underline; }
+        .quote-text { position: relative; font-size: 17px; font-weight: 700; line-height: 1.55; color: var(--ink); max-width: 64ch; }
+        .quote-mark-line {
+            background: linear-gradient(transparent 60%, rgba(28, 47, 209, .13) 60%) no-repeat 0 0 / 0% 100%;
+            -webkit-box-decoration-break: clone;
+            box-decoration-break: clone;
+            animation: markSwipe 1.1s var(--ease-out) forwards;
+            animation-delay: var(--mark-delay);
+        }
+        .qw { display: inline-block; animation: wordIn .5s var(--ease-out) backwards; animation-delay: calc(var(--i) * 45ms + 120ms); }
+        .quote-author { position: relative; display: flex; align-items: center; gap: 8px; margin-top: 6px; font-size: 13px; font-style: italic; color: var(--muted); }
+        .quote-author:not(.has-photo)::before { content: ""; width: 18px; height: 2px; border-radius: 1px; background: var(--cobalt); }
+        .quote-photo { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 2px var(--surface), 0 0 0 3.5px var(--cobalt); animation: wordIn .5s var(--ease-out) backwards; animation-delay: var(--photo-delay, 0ms); }
+        .quote-zh { position: relative; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--line); }
+        .quote-text.is-zh { font-size: 15px; letter-spacing: .03em; }
+        .quote-zh .quote-author { font-style: normal; }
+        .quote-skel { display: block; height: 14px; margin: 7px 0; border-radius: 6px; background: linear-gradient(90deg, var(--line-soft), #E1E5EE, var(--line-soft)) 0 0 / 200% 100%; animation: skel 1.2s linear infinite; }
+        .quote-skel.is-short { width: 55%; }
+        @keyframes railFlow { to { background-position: 0 200%; } }
+        /* One stripe period along x for a 115deg, 30px repeat: 30 / sin(115deg) */
+        @keyframes stripesDrift { to { background-position: 33.1px 0; } }
+        @keyframes boltPulse { 50% { transform: scale(1.18); filter: drop-shadow(0 0 4px rgba(245, 196, 81, .8)); } }
+        @keyframes wordIn { from { opacity: 0; transform: translateY(6px); filter: blur(3px); } }
+        @keyframes markSwipe { to { background-size: 100% 100%; } }
+        @keyframes skel { to { background-position: -200% 0; } }
 
         /* ── Quick log panel ── */
         .quick {
@@ -824,10 +913,57 @@
         /* ── Settings ── */
         .settings-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 14px; align-items: start; }
         .settings-form { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; padding: 16px; }
-        .settings-form .full { grid-column: 1 / -1; }
+        .settings-form .span-3 { grid-column: span 3; }
         .settings-foot { display: flex; align-items: center; justify-content: flex-end; gap: 12px; padding: 0 16px 16px; }
         .dirty-note { font-size: 12px; color: var(--under); margin-right: auto; display: flex; align-items: center; gap: 4px; }
         .dirty-note .ms { font-size: 16px; }
+
+        /* ── Weight log ── */
+        .weight-panel { margin-top: 14px; }
+        .weight-body { display: grid; grid-template-columns: 360px minmax(0, 1fr); }
+        .weight-side { display: flex; flex-direction: column; gap: 14px; padding: 16px; border-right: 1px solid var(--line-soft); min-width: 0; }
+        .weight-form { display: grid; grid-template-columns: minmax(0, 1fr) 84px auto; gap: 8px; align-items: end; }
+        .weight-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+        .weight-stats div { padding: 8px 10px; border-radius: 10px; background: var(--paper); min-width: 0; }
+        .weight-stats span { display: block; font-size: 12px; color: var(--muted); }
+        .weight-stats b { font-size: 22px; line-height: 1.15; }
+        .weight-stats small { font-size: 12px; font-weight: 600; color: var(--muted); margin-left: 2px; }
+        .weight-list { list-style: none; max-height: 292px; overflow-y: auto; margin: 0 -8px; }
+        .weight-list li { display: grid; grid-template-columns: minmax(0, 1fr) auto 56px auto; align-items: center; gap: 8px; min-height: 44px; padding: 0 8px; border-radius: 8px; }
+        .weight-list li + li { box-shadow: 0 -1px 0 var(--line-soft); }
+        .weight-list li:hover { background: var(--line-soft); }
+        .w-date { font-size: 13px; }
+        .w-date small { color: var(--subtle); margin-left: 4px; }
+        .w-kg { font-size: 16px; text-align: right; }
+        .w-delta { display: inline-flex; align-items: center; justify-content: flex-end; gap: 1px; font-size: 12px; font-weight: 700; color: var(--subtle); }
+        .w-delta .ms { font-size: 14px; }
+        .w-delta.is-down { color: var(--ok); }
+        .w-delta.is-up { color: var(--over); }
+        .w-actions { display: flex; }
+        .weight-chart { position: relative; min-height: 300px; padding: 12px 0 0; }
+        .weight-chart svg { position: absolute; top: 12px; left: 0; touch-action: pan-y; }
+        .weight-chart .grid line { stroke: var(--line-soft); }
+        .weight-chart .axis text { font-size: 11px; fill: var(--subtle); }
+        .weight-chart .series { fill: none; stroke: var(--cobalt); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+        .weight-chart .dot { fill: var(--cobalt); stroke: var(--surface); stroke-width: 2; }
+        .weight-chart .end-label { font-size: 13px; font-weight: 800; fill: var(--ink); }
+        .weight-chart .crosshair { stroke: var(--subtle); stroke-width: 1; }
+        .weight-chart .goal line { stroke: var(--ok); stroke-width: 1.5; stroke-dasharray: 4 4; }
+        .weight-chart .goal text { font-size: 11px; font-weight: 600; fill: var(--muted); }
+        .chart-tip {
+            position: absolute;
+            top: 12px;
+            pointer-events: none;
+            padding: 6px 10px;
+            border-radius: 8px;
+            background: var(--ink);
+            color: #fff;
+            font-size: 12px;
+            white-space: nowrap;
+            box-shadow: 0 6px 18px rgba(13, 21, 48, .2);
+        }
+        .chart-tip b { display: block; font-size: 16px; }
+        .weight-empty { display: grid; place-items: center; min-height: 300px; color: var(--muted); }
 
         .plan { padding: 16px; display: flex; flex-direction: column; gap: 16px; }
         .plan-chain { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
@@ -847,6 +983,258 @@
         .formula code { font-family: inherit; color: var(--ink); background: var(--paper); padding: 1px 5px; border-radius: 4px; }
         .data-panel { display: flex; align-items: center; gap: 12px; padding: 14px 16px; margin-top: 14px; }
         .data-panel p { font-size: 13px; color: var(--muted); margin-right: auto; }
+
+        /* ── Achievements ── */
+        .seg.seg-inline { display: inline-grid; grid-template-columns: none; grid-auto-flow: column; background: rgba(13, 21, 48, .06); }
+        .seg-inline .seg-opt { padding: 0 16px; }
+        .badge-grid { list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); gap: 10px; padding: 12px; }
+        .badge {
+            --medal: var(--locked-medal);
+            --medal-ink: var(--locked-ink);
+            --tint: var(--locked-bg);
+            display: grid;
+            grid-template-columns: 48px minmax(0, 1fr);
+            gap: 12px;
+            padding: 12px;
+            border-radius: 12px;
+            background: var(--tint);
+        }
+        .badge.m-bronze  { --medal: var(--bronze);  --tint: var(--bronze-bg);  --medal-ink: #fff; --glow: rgba(166, 94, 38, .45); }
+        .badge.m-silver  { --medal: var(--silver);  --tint: var(--silver-bg);  --medal-ink: #fff; --glow: rgba(102, 115, 138, .45); }
+        .badge.m-gold    { --medal: var(--gold);    --tint: var(--gold-bg);    --medal-ink: #fff; --glow: rgba(245, 180, 40, .7); }
+        .badge.m-diamond { --medal: var(--diamond); --tint: var(--diamond-bg); --medal-ink: #fff; --glow: rgba(70, 110, 255, .65); }
+        .badge.m-locked .badge-body p, .badge.m-locked .tier { color: var(--muted); }
+        .badge.m-locked .tier { box-shadow: inset 0 0 0 1px var(--locked-medal); }
+        .medal {
+            position: relative;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: var(--medal);
+            color: var(--medal-ink);
+            display: grid;
+            place-items: center;
+            transition: transform .35s var(--ease-spring);
+            /* Two layers so an entrance and a tier effect can run at once without overriding each other */
+            animation: var(--medal-in, none), var(--medal-fx, none);
+        }
+        .medal .ms { font-size: 26px; font-variation-settings: 'FILL' 1, 'wght' 500, 'opsz' 24; }
+        .badge.m-locked .medal .ms { font-variation-settings: 'FILL' 0, 'wght' 400, 'opsz' 24; }
+
+        /* Tier effects stack up: bronze metal + hover, silver adds a sheen, gold a glow, diamond sparkles */
+        .badge:not(.m-locked) .medal {
+            background: radial-gradient(circle at 30% 25%, color-mix(in srgb, var(--medal) 55%, #fff), var(--medal) 55%, color-mix(in srgb, var(--medal) 78%, #000));
+            box-shadow: inset 0 -2px 0 rgba(0, 0, 0, .18), 0 2px 6px var(--glow);
+        }
+        .badge:not(.m-locked):hover .medal { transform: rotate(-10deg) scale(1.08); }
+        .badge.m-silver .medal::after, .badge.m-gold .medal::after, .badge.m-diamond .medal::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            background: linear-gradient(115deg, transparent 38%, rgba(255, 255, 255, .6) 50%, transparent 62%) no-repeat;
+            background-size: 250% 100%;
+            background-position: 150% 0;
+            pointer-events: none;
+            animation: sheen 5s ease-in-out infinite;
+        }
+        .badge.m-gold .medal::after    { animation-duration: 4s; }
+        .badge.m-diamond .medal::after { animation-duration: 3.2s; }
+        .badge.m-gold .medal    { --medal-fx: glow 2.6s ease-in-out infinite; }
+        .badge.m-diamond .medal { --medal-fx: glow 2.2s ease-in-out infinite; }
+        .spark {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: var(--cobalt);
+            clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
+            opacity: 0;
+            animation: twinkle 2.4s ease-in-out infinite;
+            pointer-events: none;
+        }
+        .spark:nth-child(2) { top: -7px; right: -6px; }
+        .spark:nth-child(3) { bottom: -4px; left: -8px; width: 9px; height: 9px; animation-delay: .8s; }
+        .spark:nth-child(4) { top: 1px; left: -10px; width: 7px; height: 7px; animation-delay: 1.6s; }
+        @keyframes sheen { 0%, 65% { background-position: 150% 0; } 100% { background-position: -50% 0; } }
+        @keyframes glow { 50% { box-shadow: inset 0 -2px 0 rgba(0, 0, 0, .18), 0 0 18px 5px var(--glow); } }
+        @keyframes twinkle {
+            0%, 100% { opacity: 0; transform: scale(.2) rotate(0deg); }
+            50%      { opacity: 1; transform: scale(1) rotate(90deg); }
+        }
+
+        /* Entrance on page open, plus a one-time burst for tiers unlocked since the last visit */
+        .badge-grid.is-entering .badge { animation: badgeIn .4s var(--ease-out) backwards; animation-delay: calc(var(--i) * 25ms); }
+        .badge-grid.is-entering .badge:not(.m-locked) .medal { --medal-in: medalIn .7s var(--ease-spring) calc(var(--i) * 25ms + 120ms) backwards; }
+        .badge-grid.is-entering .badge.is-new .medal { --medal-in: medalNew 1.1s var(--ease-spring) calc(var(--i) * 25ms + 200ms) backwards; }
+        .burst i {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 6px;
+            height: 6px;
+            margin: -3px;
+            border-radius: 50%;
+            background: var(--medal);
+            opacity: 0;
+            pointer-events: none;
+            animation: burst .9s var(--ease-out) calc(var(--i) * 25ms + 600ms) forwards;
+        }
+        .burst i:nth-child(even) { width: 4px; height: 4px; margin: -2px; background: var(--glow); }
+        .new-chip { margin-left: 6px; padding: 1px 6px; border-radius: 999px; background: var(--cobalt); color: #fff; font-size: 10px; font-weight: 800; letter-spacing: .04em; vertical-align: 2px; }
+        @keyframes badgeIn { from { opacity: 0; transform: translateY(8px); } }
+        @keyframes medalIn { from { opacity: 0; transform: scale(.4) rotate(-25deg); } }
+        @keyframes medalNew {
+            0%  { opacity: 0; transform: scale(.2) rotate(-180deg); }
+            60% { opacity: 1; transform: scale(1.25) rotate(10deg); }
+        }
+        @keyframes burst {
+            0%   { opacity: 1; transform: rotate(var(--a)) translateY(0) scale(1); }
+            100% { opacity: 0; transform: rotate(var(--a)) translateY(-38px) scale(.4); }
+        }
+        .badge-body { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+        .badge-head { display: flex; align-items: baseline; gap: 8px; }
+        .badge-head h3 { font-size: 14px; font-weight: 700; margin-right: auto; }
+        .badge-head span { font-size: 12px; color: var(--muted); white-space: nowrap; }
+        .badge-body p { font-size: 12px; color: var(--muted); line-height: 1.4; }
+        .tier-row { display: flex; flex-wrap: wrap; gap: 4px; }
+        .tier {
+            min-width: 28px;
+            padding: 1px 6px;
+            border-radius: 999px;
+            font-size: 12px;
+            text-align: center;
+            color: var(--subtle);
+            box-shadow: inset 0 0 0 1px var(--line);
+        }
+        .tier.is-on { background: var(--medal); color: var(--medal-ink); box-shadow: none; }
+        .badge-prog { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+        .badge-prog b { font-size: 14px; color: var(--ink); }
+        .badge-bar { flex: 1; height: 4px; border-radius: 999px; background: rgba(13,21,48,.08); overflow: hidden; }
+        .badge-bar i { display: block; height: 100%; border-radius: inherit; background: var(--cobalt); }
+
+        /* ── Year view ── */
+        .year-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+        .hm-legend { display: flex; flex-wrap: wrap; gap: 14px; padding: 10px 16px 0; font-size: 12px; color: var(--muted); }
+        .hm-legend span { display: inline-flex; align-items: center; gap: 6px; }
+        .hm-legend .hm-cell { width: 12px; height: 12px; }
+        .heatmap { display: grid; gap: 3px; padding: 12px 16px 16px; }
+        .hm-row { display: grid; grid-template-columns: 32px repeat(31, minmax(0, 1fr)); gap: 3px; align-items: center; }
+        .hm-month { font-size: 12px; color: var(--muted); text-align: left; border-radius: 4px; }
+        .hm-month:hover { color: var(--cobalt); }
+        .hm-cell { display: block; aspect-ratio: 1; border-radius: 3px; background: var(--line-soft); }
+        button.hm-cell { transition: transform .12s var(--ease-out); }
+        button.hm-cell:hover, button.hm-cell:focus-visible { transform: scale(1.35); position: relative; z-index: 1; }
+        /* Each status gets a distinct texture too, so the grid never relies on hue alone */
+        .hm-cell.st-ok    { background: var(--ok); }
+        .hm-cell.st-over  { background: repeating-linear-gradient(135deg, var(--over) 0 2px, #F08A84 2px 4px); }
+        .hm-cell.st-under { background: var(--under-bg); box-shadow: inset 0 0 0 1.5px var(--under); }
+        .hm-cell.is-future { background: transparent; box-shadow: inset 0 0 0 1px var(--line-soft); }
+        .hm-cell.is-void { visibility: hidden; }
+        .hm-cell.is-today { outline: 2px solid var(--cobalt); outline-offset: 1px; }
+        .heatmap.is-entering .hm-row { animation: calIn .4s var(--ease-out) backwards; animation-delay: calc(var(--i) * 30ms); }
+
+        .mbar-chart { position: relative; height: 260px; margin: 18px 16px 38px 52px; }
+        .mbar-tick, .mbar-target { position: absolute; left: 0; right: 0; height: 0; border-top: 1px solid var(--line-soft); }
+        .mbar-tick span { position: absolute; right: calc(100% + 8px); top: -7px; font-size: 11px; color: var(--subtle); white-space: nowrap; }
+        .mbar-target { border-top: 1.5px dashed var(--ink); z-index: 1; pointer-events: none; }
+        .mbar-target span { position: absolute; right: 0; bottom: 3px; font-size: 11px; font-weight: 600; color: var(--muted); background: var(--surface); padding: 0 4px; border-radius: 4px; }
+        .mbar-cols { position: absolute; inset: 0 0 -22px; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 2px; }
+        .mbar-col { position: relative; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding-bottom: 22px; border-radius: 6px; }
+        .mbar-col:hover { background: var(--line-soft); }
+        .mbar-col i { display: block; width: min(70%, 28px); border-radius: 4px 4px 0 0; background: var(--cobalt); transform-origin: bottom; }
+        .mbar-col.is-current i { background: var(--cobalt-deep); }
+        .mbar-col span { position: absolute; bottom: 2px; font-size: 11px; color: var(--muted); white-space: nowrap; }
+        .mbar-col.is-empty span { color: var(--subtle); }
+        .year-grid.is-entering .mbar-col i { animation: growY .6s var(--ease-out) backwards; animation-delay: calc(var(--i) * 30ms); }
+        @keyframes growY { from { transform: scaleY(0); } }
+
+        /* ── Insights ── */
+        .insight-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 14px; }
+        .ins-body { display: flex; flex-direction: column; gap: 12px; padding: 14px 16px 16px; }
+        .ins-row { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+        .ins-head { display: flex; align-items: baseline; gap: 6px; font-size: 13px; min-width: 0; }
+        .ins-head .ms { font-size: 16px; color: var(--muted); align-self: center; }
+        .ins-name { font-weight: 600; margin-right: auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+        .ins-head b { font-size: 16px; }
+        .ins-head small { font-size: 12px; color: var(--muted); white-space: nowrap; }
+        .ins-flag { font-size: 12px; font-weight: 700; white-space: nowrap; display: inline-flex; align-items: center; gap: 2px; }
+        .ins-flag .ms { font-size: 14px; color: inherit; }
+        .ins-flag.is-done { color: var(--ok); }
+        .ins-flag.is-over { color: var(--over); }
+        .ins-track { position: relative; height: 6px; border-radius: 999px; background: var(--line-soft); }
+        .ins-track i { position: absolute; inset: 0 auto 0 0; border-radius: 999px; background: var(--cobalt); transform-origin: left; }
+        .ins-track.has-goal::after { content: ""; position: absolute; left: 80%; top: -3px; bottom: -3px; width: 2px; border-radius: 1px; background: var(--ink); }
+        .insight-grid.is-entering .ins-track i { animation: growX .6s var(--ease-out) backwards; }
+        @keyframes growX { from { transform: scaleX(0); } }
+        .chart-tip.is-floating { position: fixed; z-index: 9000; }
+
+        /* Trend */
+        .trend-panel { margin-top: 14px; }
+        .trend-legend { display: flex; flex-wrap: wrap; gap: 16px; padding: 10px 16px 0; font-size: 12px; color: var(--muted); }
+        .trend-legend span { display: inline-flex; align-items: center; gap: 6px; }
+        .lg-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--cobalt); opacity: .45; }
+        .lg-line { width: 16px; height: 2px; border-radius: 1px; background: var(--cobalt); }
+        .lg-band { width: 14px; height: 10px; border-radius: 2px; background: var(--ok-bg); box-shadow: inset 0 0 0 1px rgba(14, 138, 108, .35); }
+        .trend-chart { position: relative; height: 252px; margin: 4px 0 8px; }
+        .trend-chart svg { position: absolute; inset: 0; touch-action: pan-y; }
+        .trend-chart .grid line { stroke: var(--line-soft); }
+        .trend-chart .axis text { font-size: 11px; fill: var(--subtle); }
+        .trend-chart .band { fill: var(--ok-bg); }
+        .trend-chart .band-label { font-size: 11px; font-weight: 600; fill: var(--ok); }
+        .trend-chart .day-dot { fill: var(--cobalt); opacity: .45; }
+        .trend-chart .ma { fill: none; stroke: var(--cobalt); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+        .trend-chart .crosshair { stroke: var(--subtle); stroke-width: 1; }
+        .trend-chart .hover-dot { fill: var(--cobalt); stroke: var(--surface); stroke-width: 2; }
+        .trend-chart .weight-empty { min-height: 0; height: 100%; }
+
+        /* Rings */
+        .rings { flex-direction: row; justify-content: space-around; gap: 8px; padding-top: 18px; }
+        .ring { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; text-align: center; }
+        .ring svg { width: 88px; height: 88px; transform: rotate(-90deg); }
+        .ring-track { fill: none; stroke: var(--line-soft); stroke-width: 9; }
+        .ring-fill { fill: none; stroke: var(--cobalt); stroke-width: 9; stroke-linecap: round; }
+        .ring-wrap { position: relative; }
+        .ring-wrap b { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 22px; }
+        .ring-wrap b small { font-size: 12px; }
+        .ring span { font-size: 13px; font-weight: 600; }
+        .ring em { font-style: normal; font-size: 12px; color: var(--muted); }
+        .insight-grid.is-entering .ring-fill { animation: ringIn .9s var(--ease-out) backwards; }
+        @keyframes ringIn { from { stroke-dasharray: 0 999; } }
+
+        /* Donut */
+        .donut { display: flex; align-items: center; gap: 18px; }
+        .donut-chart { position: relative; flex: none; width: 132px; height: 132px; }
+        .donut-chart svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+        .donut-chart circle { fill: none; stroke-width: 18; transition: stroke-width .15s; }
+        .donut-chart circle:hover { stroke-width: 22; }
+        .donut-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; }
+        .donut-center span { font-size: 11px; color: var(--muted); }
+        .donut-center b { font-size: 22px; line-height: 1.1; }
+        .donut-center small { font-size: 11px; color: var(--muted); }
+        .donut-legend { display: flex; flex-direction: column; gap: 10px; flex: 1; min-width: 0; }
+        .dl-row { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto; column-gap: 8px; align-items: baseline; font-size: 13px; }
+        .dl-row i { width: 10px; height: 10px; border-radius: 3px; align-self: center; }
+        .dl-row b { font-size: 18px; }
+        .dl-row small { grid-column: 2 / -1; font-size: 12px; color: var(--muted); }
+        .insight-grid.is-entering .donut-chart svg { animation: donutIn .8s var(--ease-out) backwards; }
+        @keyframes donutIn { from { transform: rotate(-200deg) scale(.7); opacity: 0; } }
+
+        /* Weekday deviation (diverging lollipops around the target) */
+        .wd-row { display: grid; grid-template-columns: 30px minmax(0, 1fr) 52px; align-items: center; gap: 8px; height: 26px; border-radius: 6px; font-size: 12px; }
+        .wd-row:hover { background: var(--line-soft); }
+        .wd-name { color: var(--muted); padding-left: 2px; }
+        .wd-row.is-weekend .wd-name { color: var(--ink); font-weight: 700; }
+        .wd-track { position: relative; height: 100%; }
+        .wd-track::before { content: ""; position: absolute; left: 50%; top: 2px; bottom: 2px; width: 1.5px; background: var(--ink); opacity: .5; }
+        .wd-stem { position: absolute; top: 50%; height: 2px; margin-top: -1px; background: var(--subtle); }
+        .wd-dot { position: absolute; top: 50%; width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%; border: 2px solid var(--surface); box-sizing: content-box; }
+        .wd-dot.st-ok { background: var(--ok); }
+        .wd-dot.st-over { background: var(--over); }
+        .wd-dot.st-under { background: var(--under); }
+        .wd-val { text-align: right; font-size: 13px; }
+        .wd-axis { display: grid; grid-template-columns: 30px minmax(0, 1fr) 52px; gap: 8px; font-size: 11px; color: var(--subtle); }
+        .wd-axis div { display: flex; justify-content: space-between; }
+        .insight-grid.is-entering .wd-stem { animation: growX .6s var(--ease-out) backwards; }
 
         /* ── Dialogs ── */
         dialog {
@@ -904,17 +1292,22 @@
         .toast.t-error .ms   { color: #FF8A7A; }
         .toast.t-warning .ms { color: var(--caution); }
         .toast.t-info .ms    { color: #9AA6FF; }
+        .toast.t-award .ms   { color: var(--medal-on-ink); }
         @keyframes toastIn  { from { opacity: 0; transform: translateY(14px) scale(.96); } }
         @keyframes toastOut { to   { opacity: 0; transform: translateY(8px); } }
 
         /* ── Responsive ── */
         @media (max-width: 1100px) {
-            .diary-grid { grid-template-columns: minmax(0, 1fr); grid-template-areas: "board" "quick" "log"; }
+            .diary-grid { grid-template-columns: minmax(0, 1fr); grid-template-areas: "board" "quote" "quick" "log"; }
             .quick { position: static; max-height: none; }
             .food-list { max-height: 240px; }
             .new-food-form { grid-template-columns: repeat(4, minmax(0, 1fr)); }
             .new-food-form .wide { grid-column: span 2; }
             .settings-grid { grid-template-columns: minmax(0, 1fr); }
+            .year-grid, .insight-grid { grid-template-columns: minmax(0, 1fr); }
+            .weight-body { grid-template-columns: minmax(0, 1fr); }
+            .weight-side { border-right: 0; border-bottom: 1px solid var(--line-soft); }
+            .weight-chart { order: -1; }
         }
         @media (max-width: 720px) {
             body { display: block; height: auto; min-height: 100vh; overflow: auto; }
@@ -951,6 +1344,13 @@
             .new-food-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
             .new-food-form .wide, .new-food-form .btn { grid-column: 1 / -1; }
             .stat-row { margin-left: 0; gap: 20px; }
+            .seg.badge-tabs { display: grid; grid-auto-columns: minmax(0, 1fr); flex-basis: 100%; }
+            .heatmap { padding: 10px 10px 12px; gap: 2px; }
+            .hm-row { grid-template-columns: 28px repeat(31, minmax(0, 1fr)); gap: 2px; }
+            .hm-cell { border-radius: 2px; }
+            .mbar-chart { margin-left: 42px; margin-right: 10px; }
+            .mbar-col span { font-size: 10px; letter-spacing: -.02em; }
+            .badge-tabs .seg-opt { padding: 0; }
             .cal-week, .cal-grid { gap: 3px; }
             .cal-grid { padding: 0 6px 8px; }
             .cal-week { padding: 8px 6px 4px; }
@@ -960,6 +1360,7 @@
             .cal-kcal { font-size: 12px; line-height: 1.1; }
             .cal-day.is-today .cal-date::after { content: none; }
             .settings-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .settings-form .span-3 { grid-column: 1 / -1; }
             .temp-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         }
 
@@ -975,6 +1376,7 @@
 <body>
 
     <div id="toast-container" role="status" aria-live="polite"></div>
+    <div id="float-tip" class="chart-tip is-floating" hidden></div>
 
     <nav class="rail" aria-label="主导航">
         <div class="brand-mark num" aria-label="MacroTracker">MT</div>
@@ -986,6 +1388,9 @@
         </button>
         <button class="rail-item" data-page="summary" onclick="switchPage('summary')">
             <span class="ms" aria-hidden="true">calendar_month</span>汇总
+        </button>
+        <button class="rail-item" data-page="achievements" onclick="switchPage('achievements')">
+            <span class="ms" aria-hidden="true">military_tech</span>成就
         </button>
         <button class="rail-item" data-page="settings" onclick="switchPage('settings')">
             <span class="ms" aria-hidden="true">person</span>身体
@@ -1086,6 +1491,20 @@
                     </div>
                 </aside>
 
+                <section class="quote-card" id="quote-card" aria-label="今日一句" aria-busy="true">
+                    <span class="quote-mark" aria-hidden="true">&rdquo;</span>
+                    <div class="quote-head">
+                        <!-- <span class="quote-chip"><span class="ms" aria-hidden="true">bolt</span>今日一句</span> -->
+                        <a class="quote-credit" id="quote-credit" href="https://zenquotes.io/" target="_blank" rel="noopener noreferrer" hidden></a>
+                    </div>
+                    <blockquote class="quote-text" id="quote-text"><span class="quote-skel"></span><span class="quote-skel is-short"></span></blockquote>
+                    <p class="quote-author" id="quote-author" hidden><img class="quote-photo" id="quote-photo" alt="" hidden><span id="quote-author-name"></span></p>
+                    <div class="quote-zh" id="quote-zh" hidden>
+                        <blockquote class="quote-text is-zh" id="quote-zh-text" lang="zh-CN"></blockquote>
+                        <p class="quote-author" id="quote-zh-author"></p>
+                    </div>
+                </section>
+
                 <section class="log panel" aria-label="今日明细">
                     <div class="panel-head"><h2>今日明细</h2><span class="hint" id="log-count"></span></div>
                     <div class="log-cols" aria-hidden="true">
@@ -1152,15 +1571,19 @@
         <!-- ── Summary ── -->
         <div id="page-summary" class="page">
             <div class="topbar">
-                <h1 class="page-title">月度汇总</h1>
+                <h1 class="page-title">汇总</h1>
+                <fieldset class="seg seg-inline" aria-label="汇总周期" onchange="setSummaryPeriod(event.target.value)">
+                    <label><input type="radio" name="summary-period" value="month" checked><span class="seg-opt">月</span></label>
+                    <label><input type="radio" name="summary-period" value="year"><span class="seg-opt">年</span></label>
+                </fieldset>
                 <div class="month-nav">
-                    <button class="icon-btn" onclick="changeSummaryMonth(-1)" aria-label="上个月"><span class="ms" aria-hidden="true">chevron_left</span></button>
+                    <button class="icon-btn" id="summary-prev" onclick="changeSummaryPeriod(-1)" aria-label="上个月"><span class="ms" aria-hidden="true">chevron_left</span></button>
                     <span id="summary-month-label" class="month-label">-</span>
-                    <button class="icon-btn" onclick="changeSummaryMonth(1)" aria-label="下个月"><span class="ms" aria-hidden="true">chevron_right</span></button>
+                    <button class="icon-btn" id="summary-next" onclick="changeSummaryPeriod(1)" aria-label="下个月"><span class="ms" aria-hidden="true">chevron_right</span></button>
                 </div>
             </div>
 
-            <section class="board summary-board" aria-label="本月数据">
+            <section class="board summary-board" id="summary-board" aria-label="本月数据">
                 <div class="hero">
                     <span class="hero-label">连续记录</span>
                     <span id="sum-streak" class="hero-num num">0</span>
@@ -1169,7 +1592,7 @@
                 <div class="stat-row" id="monthly-stats"></div>
             </section>
 
-            <div class="panel">
+            <div class="panel" id="summary-month">
                 <div class="cal-legend">
                     <span class="lg-ok"><span class="ms" aria-hidden="true">check</span>达标（目标 -300 至 +50 kcal）</span>
                     <span class="lg-over"><span class="ms" aria-hidden="true">arrow_upward</span>超标（高于 +50）</span>
@@ -1179,6 +1602,69 @@
                 <div class="cal-week" aria-hidden="true"><div>日</div><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div></div>
                 <div id="calendar-grid" class="cal-grid"></div>
             </div>
+
+            <div class="year-grid" id="summary-year" hidden>
+                <section class="panel" aria-labelledby="heatmap-title">
+                    <div class="panel-head"><h2 id="heatmap-title">全年日历</h2><span class="hint">点日期看明细，点月份看当月</span></div>
+                    <div class="hm-legend">
+                        <span><i class="hm-cell st-ok"></i>达标</span>
+                        <span><i class="hm-cell st-over"></i>超标</span>
+                        <span><i class="hm-cell st-under"></i>缺口过大</span>
+                        <span><i class="hm-cell st-none"></i>无记录</span>
+                    </div>
+                    <div class="heatmap" id="heatmap"></div>
+                </section>
+                <section class="panel" aria-labelledby="month-bars-title">
+                    <div class="panel-head"><h2 id="month-bars-title">每月日均热量</h2><span class="hint">虚线为目标，点柱子看当月</span></div>
+                    <div class="mbar-chart" id="month-bars"></div>
+                </section>
+            </div>
+
+            <section class="panel trend-panel" aria-labelledby="trend-title">
+                <div class="panel-head"><h2 id="trend-title">每日热量趋势</h2><span class="hint">悬停查看每天数值</span></div>
+                <div class="trend-legend" aria-hidden="true">
+                    <span><i class="lg-dot"></i>每日热量</span>
+                    <span><i class="lg-line"></i>7 日均线</span>
+                    <span><i class="lg-band"></i>达标区间（目标 -300 至 +50）</span>
+                </div>
+                <div class="trend-chart" id="trend-chart" data-tip-host></div>
+            </section>
+
+            <div class="insight-grid" id="insight-grid">
+                <section class="panel" aria-labelledby="ins-rings-title">
+                    <div class="panel-head"><h2 id="ins-rings-title">完成度</h2><span class="hint" id="ins-rings-hint"></span></div>
+                    <div class="ins-body rings" id="ins-rings"></div>
+                </section>
+                <section class="panel" aria-labelledby="ins-donut-title">
+                    <div class="panel-head"><h2 id="ins-donut-title">热量来源</h2><span class="hint">三大营养素供能占比</span></div>
+                    <div class="ins-body" id="ins-donut"></div>
+                </section>
+                <section class="panel" aria-labelledby="ins-weekday-title">
+                    <div class="panel-head"><h2 id="ins-weekday-title">星期规律</h2><span class="hint">日均热量与目标的差值</span></div>
+                    <div class="ins-body" id="ins-weekday"></div>
+                </section>
+                <section class="panel" aria-labelledby="ins-macros-title">
+                    <div class="panel-head"><h2 id="ins-macros-title">营养均衡</h2><span class="hint">日均摄入 / 目标</span></div>
+                    <div class="ins-body" id="ins-macros"></div>
+                </section>
+                <section class="panel" aria-labelledby="ins-meals-title">
+                    <div class="panel-head"><h2 id="ins-meals-title">餐次分布</h2><span class="hint">占总热量</span></div>
+                    <div class="ins-body" id="ins-meals"></div>
+                </section>
+                <section class="panel" aria-labelledby="ins-foods-title">
+                    <div class="panel-head"><h2 id="ins-foods-title">常吃食物</h2><span class="hint">按记录次数</span></div>
+                    <div class="ins-body" id="ins-foods"></div>
+                </section>
+            </div>
+        </div>
+
+        <!-- ── Achievements ── -->
+        <div id="page-achievements" class="page">
+            <div class="topbar">
+                <h1 class="page-title">成就勋章<small id="achievements-count"></small></h1>
+                <fieldset class="seg seg-inline badge-tabs" id="badge-tabs" aria-label="勋章系列" onchange="filterBadges()"></fieldset>
+            </div>
+            <ul class="panel badge-grid" id="badge-grid"></ul>
         </div>
 
         <!-- ── Settings ── -->
@@ -1189,7 +1675,7 @@
                     <div class="panel-head"><h2>基础信息</h2></div>
                     <form id="settings-form" class="settings-form" oninput="onSettingsInput()" onsubmit="event.preventDefault(); saveSettings();">
                         <label class="field"><span>身高 cm</span><input type="number" id="user-height" class="input" step="any" min="100" max="250"></label>
-                        <label class="field"><span>体重 kg</span><input type="number" id="user-weight" class="input" step="any" min="30" max="300"></label>
+                        <label class="field"><span>体重 kg <small>按最新称重</small></span><input type="number" id="user-weight" class="input" readonly></label>
                         <label class="field"><span>年龄</span><input type="number" id="user-age" class="input" min="10" max="100"></label>
                         <label class="field"><span>性别</span>
                             <select id="user-gender" class="input" onchange="onSettingsInput()">
@@ -1197,7 +1683,7 @@
                                 <option value="female">女</option>
                             </select>
                         </label>
-                        <label class="field full"><span>日常活动量</span>
+                        <label class="field span-3"><span>日常活动量</span>
                             <select id="user-activity" class="input" onchange="onSettingsInput()">
                                 <option value="1.2">久坐不动（基本不运动）</option>
                                 <option value="1.375">轻度活动（每周运动 1-3 天）</option>
@@ -1205,6 +1691,7 @@
                                 <option value="1.725">重度活动（每周运动 6-7 天）</option>
                             </select>
                         </label>
+                        <label class="field"><span>目标体重 kg</span><input type="number" id="user-target-weight" class="input" step="any" min="20" max="400" placeholder="未设定"></label>
                     </form>
                     <div class="settings-foot">
                         <span id="dirty-note" class="dirty-note" hidden><span class="ms" aria-hidden="true">info</span>右侧为预览，保存后生效</span>
@@ -1226,14 +1713,30 @@
                             </div>
                             <div class="split-legend" id="split-legend"></div>
                         </div>
-                        <p class="formula">
+                        <!-- <p class="formula">
                             BMR 用 Mifflin-St Jeor 公式：男 <code>10×体重 + 6.25×身高 - 5×年龄 + 5</code>，女末项为 <code>-161</code>。
                             TDEE = BMR × 活动量系数，目标摄入 = TDEE - 550 kcal。
                             蛋白按 2.1 g/kg 体重，脂肪占 25% 热量，其余给碳水。
-                        </p>
+                        </p> -->
                     </div>
                 </div>
             </div>
+
+            <section class="panel weight-panel" aria-labelledby="weight-title">
+                <div class="panel-head"><h2 id="weight-title">体重记录</h2><span class="hint">最新称重会自动更新每日目标</span></div>
+                <div class="weight-body">
+                    <div class="weight-side">
+                        <form class="weight-form" onsubmit="event.preventDefault(); logWeight();">
+                            <label class="field"><span>日期</span><input type="date" id="weight-date" class="input" required></label>
+                            <label class="field"><span>体重 kg</span><input type="number" id="weight-value" class="input" step="any" min="20" max="400" inputmode="decimal" required></label>
+                            <button type="submit" class="btn" id="weight-save">记录</button>
+                        </form>
+                        <div class="weight-stats" id="weight-stats"></div>
+                        <ul class="weight-list" id="weight-list" aria-label="称重记录"></ul>
+                    </div>
+                    <div class="weight-chart" id="weight-chart"></div>
+                </div>
+            </section>
 
             <div class="panel data-panel">
                 <p>导出全部食品库与日记数据，用于备份或迁移。</p>
@@ -1303,12 +1806,17 @@
         const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
         const fmt  = n => Math.round(n).toLocaleString('en-US');
         const fmt1 = n => String(Math.round(n * 10) / 10);
+        const fmtKg = n => String(Math.round(n * 100) / 100);
         const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
 
         // toISOString() is UTC, which reports yesterday before 08:00 in UTC+8; always use local dates
         const localDate = (d = new Date()) =>
             `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
         const parseLocalDate = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+        const fmtMonthDay = ds => {
+            const d = parseLocalDate(ds);
+            return `${d.getFullYear() === new Date().getFullYear() ? '' : `${d.getFullYear()}年`}${d.getMonth() + 1}月${d.getDate()}日`;
+        };
 
         const MEALS = {
             breakfast: { label: '早餐', icon: 'free_breakfast' },
@@ -1324,7 +1832,7 @@
         const macroIcon = key => `<span class="ms mi" aria-hidden="true">${MACRO_ICONS[key]}</span>`;
         const WEEKDAYS = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
-        let state = { user: { height: 183, weight: 91, activity: 1.55, age: 27, gender: 'male' }, foods: [], diary: {} };
+        let state = { user: { height: 183, weight: 91, activity: 1.55, age: 27, gender: 'male' }, foods: [], diary: {}, achievements: {}, weights: [] };
         let currentEditIndex = null;
         let currentWarehouseEditId = null;
         let summaryCurrentDate = new Date();
@@ -1358,7 +1866,7 @@
 
         // ── Toasts ──
         function showToast(message, type = 'success') {
-            const icons = { success: 'check_circle', error: 'error', warning: 'error', info: 'info' };
+            const icons = { success: 'check_circle', error: 'error', warning: 'error', info: 'info', award: 'military_tech' };
             const toast = document.createElement('div');
             toast.className = `toast t-${type}`;
             toast.innerHTML = `<span class="ms" aria-hidden="true">${icons[type] || icons.info}</span><span></span>`;
@@ -1437,11 +1945,14 @@
         }
 
         // A recorded day is compliant within [-300, +50] kcal of target
+        function kcalStatus(kcal, targetKcal) {
+            const diff = kcal - targetKcal;
+            return diff > 50 ? 'over' : diff < -300 ? 'under' : 'ok';
+        }
         function dayStatus(dateStr, targetKcal) {
             const kcal = sumEntries(state.diary[dateStr] || []).kcal;
             if (kcal <= 0) return { status: 'none', kcal };
-            const diff = kcal - targetKcal;
-            return { status: diff > 50 ? 'over' : diff < -300 ? 'under' : 'ok', kcal, diff };
+            return { status: kcalStatus(kcal, targetKcal), kcal, diff: kcal - targetKcal };
         }
 
         // Consecutive recorded days ending today; an unrecorded today doesn't break the streak yet
@@ -1451,6 +1962,257 @@
             let n = 0;
             while ((state.diary[localDate(d)] || []).length) { n++; d.setDate(d.getDate() - 1); }
             return n;
+        }
+
+        // ── Achievements ──
+        // Each series is one badge; a tier unlocks the first day its metric reaches the threshold.
+        // Unlocked tiers persist as "series:threshold" so later stat drops never revoke them.
+        const ACHIEVEMENTS = [
+            { id: 'record_streak',  group: 'streak',    icon: 'local_fire_department', name: '坚持记录',   desc: '连续每天都有记录',                         unit: '天',   tiers: [3, 7, 14, 30, 60, 100, 365] },
+            { id: 'ok_streak',      group: 'streak',    icon: 'verified',              name: '稳定达标',   desc: '连续热量达标',                             unit: '天',   tiers: [3, 7, 14, 30, 60, 100] },
+            { id: 'protein_streak', group: 'streak',    icon: 'egg_alt',               name: '蛋白质战士', desc: '连续蛋白质吃够目标',                       unit: '天',   tiers: [3, 7, 14, 30] },
+            { id: 'perfect_streak', group: 'streak',    icon: 'star',                  name: '完美一天',   desc: '热量达标、蛋白质吃够，碳水和脂肪不超目标 5%', unit: '天',   tiers: [1, 3, 7] },
+            { id: 'meals_streak',   group: 'streak',    icon: 'restaurant',            name: '三餐齐全',   desc: '连续记录早餐、午餐和晚餐',                 unit: '天',   tiers: [1, 7, 30] },
+            { id: 'record_days',    group: 'total',     icon: 'calendar_month',        name: '记录老手',   desc: '累计有记录的天数',                         unit: '天',   tiers: [10, 50, 100, 365] },
+            { id: 'ok_days',        group: 'total',     icon: 'check_circle',          name: '达标达人',   desc: '累计热量达标的天数',                       unit: '天',   tiers: [10, 50, 100, 200] },
+            { id: 'entries',        group: 'total',     icon: 'edit_note',             name: '数据狂人',   desc: '累计记录条目',                             unit: '条',   tiers: [100, 500, 1000, 5000] },
+            { id: 'workouts',       group: 'total',     icon: 'fitness_center',        name: '训练打卡',   desc: '累计记录了练后餐的天数',                   unit: '天',   tiers: [10, 50, 100] },
+            { id: 'foods',          group: 'food',      icon: 'ramen_dining',          name: '美食家',     desc: '累计吃过的不同仓库食品',                   unit: '种',   tiers: [10, 25, 50] },
+            { id: 'eggs',           group: 'food',      icon: 'egg',                   name: '鸡蛋终结者', desc: '累计吃掉的鸡蛋',                           unit: '颗',   tiers: [50, 100, 200, 500, 1000] },
+            { id: 'chicken',        group: 'food',      icon: 'kebab_dining',          name: '鸡胸肉狂魔', desc: '累计吃掉的鸡胸肉',                         unit: 'kg',   tiers: [5, 10, 25, 50, 100], format: fmt1 },
+            { id: 'rice',           group: 'food',      icon: 'rice_bowl',             name: '干饭人',     desc: '累计吃掉的米饭',                           unit: 'kg',   tiers: [5, 10, 25, 50], format: fmt1 },
+            { id: 'oats',           group: 'food',      icon: 'grain',                 name: '燕麦信徒',   desc: '累计吃掉的燕麦',                           unit: 'kg',   tiers: [1, 3, 5, 10], format: fmt1 },
+            { id: 'protein_powder', group: 'food',      icon: 'blender',               name: '摇摇杯大师', desc: '累计喝掉的蛋白粉',                         unit: '勺',   tiers: [30, 100, 300, 500] },
+            { id: 'nuts',           group: 'food',      icon: 'nutrition',             name: '坚果松鼠',   desc: '累计吃掉的坚果',                           unit: 'kg',   tiers: [1, 3, 5, 10], format: fmt1 },
+            { id: 'full_months',    group: 'period',    icon: 'event_available',       name: '全勤月',     desc: '一个自然月每天都有记录',                   unit: '个月', tiers: [1, 3, 6, 12] },
+            { id: 'great_months',   group: 'period',    icon: 'emoji_events',          name: '优秀月',     desc: '一个月记录至少 20 天，且达标率不低于 80%', unit: '个月', tiers: [1, 3, 6, 12] },
+            { id: 'perfect_weeks',  group: 'period',    icon: 'diamond',               name: '完美周',     desc: '周一到周日每天热量达标',                   unit: '周',   tiers: [1, 4, 12] },
+            { id: 'weight_loss',    group: 'weight',    icon: 'trending_down',         name: '减重里程碑', desc: '相比第一次称重累计减掉的体重',             unit: 'kg',   tiers: [1, 3, 5, 10, 15, 20], format: fmtKg },
+            { id: 'weigh_weeks',    group: 'weight',    icon: 'monitor_weight',        name: '坚持称重',   desc: '连续每周至少称重一次',                     unit: '周',   tiers: [4, 12, 26, 52] },
+            { id: 'new_lows',       group: 'weight',    icon: 'vertical_align_bottom', name: '刷新最低',   desc: '体重创下新低的次数',                       unit: '次',   tiers: [1, 5, 10, 20] },
+            { id: 'goal_weight',    group: 'weight',    icon: 'target',                name: '目标体重',   desc: '从第一次称重到目标体重的完成度',           unit: '%',    tiers: [25, 50, 75, 100] },
+            { id: 'bmi',            group: 'weight',    icon: 'accessibility_new',     name: 'BMI 达标',   desc: 'BMI 降到 28 以下告别肥胖，降到 24 以下告别超重', unit: '以下', tiers: [28, 24], lower: true, format: fmt1 },
+            { id: 'first_entry',    group: 'milestone', icon: 'flag',                  name: '第一步',     desc: '记下第一笔',                               unit: '条',   tiers: [1] },
+            { id: 'comebacks',      group: 'milestone', icon: 'restart_alt',           name: '重新出发',   desc: '中断 3 天以上后重新开始记录',              unit: '次',   tiers: [1] }
+        ];
+        const ACHIEVEMENT_GROUPS = { all: '全部', streak: '连续', total: '累计', period: '周期', food: '食物', weight: '体重', milestone: '里程碑' };
+
+        // Food counters match warehouse foods by category or name. Amounts are logged in the food's own
+        // unit, so `factor` converts them: eggs count 粒 directly, weighed foods turn grams into kg, and
+        // protein powder becomes servings (its units mix "1 scoop" and "31g")
+        const perKg = f => unitText(f.unit).trim().toLowerCase() === 'g' ? 1 / 1000 : 0;
+        const FOOD_KINDS = [
+            { id: 'eggs',           match: f => /鸡蛋/.test(f.category) || (/蛋/.test(f.name) && !/蛋白/.test(f.name)), factor: f => f.unit.includes('粒') ? 1 : 0 },
+            { id: 'protein_powder', match: f => /蛋白粉/.test(f.category) || /whey|蛋白粉/i.test(f.name),           factor: f => 1 / unitBase(f.unit) },
+            { id: 'chicken',        match: f => /鸡胸/.test(f.name),                                                 factor: perKg },
+            { id: 'rice',           match: f => /米饭/.test(f.category) || /米饭/.test(f.name),                      factor: perKg },
+            { id: 'oats',           match: f => /燕麦/.test(f.category + f.name),                                    factor: perKg },
+            { id: 'nuts',           match: f => /坚果/.test(f.category),                                             factor: perKg }
+        ];
+        const MEDALS = ['bronze', 'silver', 'gold', 'diamond'];
+        const tierMetal = (i, count) => count === 1 ? 'gold' : MEDALS[Math.round(i * 3 / (count - 1))];
+        const tierName = (a, tier) => a.tiers.length > 1 ? `${a.name} · ${tier} ${a.unit}` : a.name;
+
+        // `lower` series improve downward: a tier unlocks once the value drops strictly below it.
+        // Replays history day by day. Target-based checks only count finished days (today can
+        // still go over), and an unfinished today never breaks a streak. Streak values are the
+        // current run, so progress toward the next tier reads "current / next".
+        function evaluateAchievements(diary, weights, user, foodList, today = localDate()) {
+            const progress = Object.fromEntries(ACHIEVEMENTS.map(a => [a.id, { value: a.lower ? null : 0, reached: [] }]));
+            if (!user.targetWeight) progress.goal_weight.unavailable = '先在「身体数据」设定目标体重';
+            if (!weights.some(w => w.date <= today)) progress.bmi.unavailable = '记录第一次称重后开始计算';
+            const targets = computePlan(user);
+            const weightByDate = Object.fromEntries(weights.map(w => [w.date, w.weight]));
+            const first = [...Object.keys(diary).filter(ds => diary[ds].length), ...Object.keys(weightByDate)]
+                .filter(ds => ds <= today).sort()[0];
+            if (!first) return progress;
+
+            const run = { record: 0, ok: 0, protein: 0, perfect: 0, meals: 0, weigh: 0 };
+            const total = { recordDays: 0, okDays: 0, entries: 0, workouts: 0, fullMonths: 0, greatMonths: 0, perfectWeeks: 0, comebacks: 0, newLows: 0 };
+            const foods = new Set();
+            const month = { recorded: 0, tracked: 0, ok: 0 };
+            let weekOk = 0, gap = 0, weekWeighed = false;
+            let startWeight = null, minWeight = Infinity, lossKg = 0, goalPct = 0, bmi = null;
+            const foodKinds = new Map();
+            for (const f of foodList) {
+                const kind = FOOD_KINDS.find(k => k.match(f));
+                const factor = kind && kind.factor(f);
+                if (factor) foodKinds.set(f.id, { id: kind.id, factor });
+            }
+            const eaten = Object.fromEntries(FOOD_KINDS.map(k => [k.id, 0]));
+
+            for (const d = parseLocalDate(first); localDate(d) <= today; d.setDate(d.getDate() + 1)) {
+                const ds = localDate(d);
+                const list = diary[ds] || [];
+                const t = sumEntries(list);
+                const finished = ds < today;
+                const recorded = list.length > 0;
+                const ok = finished && t.kcal > 0 && kcalStatus(t.kcal, targets.kcal) === 'ok';
+                const protein = finished && t.protein >= targets.protein;
+                const perfect = ok && protein && t.carbs <= targets.carbs * 1.05 && t.fat <= targets.fat * 1.05;
+                const meals = ['breakfast', 'lunch', 'dinner'].every(m => list.some(e => e.meal === m));
+
+                const bump = (key, hit) => { if (hit) run[key]++; else if (finished) run[key] = 0; };
+                bump('record', recorded); bump('ok', ok); bump('protein', protein); bump('perfect', perfect); bump('meals', meals);
+
+                if (recorded && gap >= 3 && total.recordDays > 0) total.comebacks++;
+                gap = recorded ? 0 : finished ? gap + 1 : gap;
+                total.recordDays += recorded;
+                total.okDays += ok;
+                total.entries += list.length;
+                total.workouts += list.some(e => e.meal === 'post_workout');
+                list.forEach(e => {
+                    if (e.isTemporary || !e.foodId) return;
+                    foods.add(e.foodId);
+                    const kind = foodKinds.get(e.foodId);
+                    if (kind) eaten[kind.id] += e.rawAmount * kind.factor;
+                });
+
+                if (d.getDate() === 1) Object.assign(month, { recorded: 0, tracked: 0, ok: 0 });
+                month.recorded += recorded;
+                month.tracked += t.kcal > 0;
+                month.ok += ok;
+                const daysInMonth = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+                if (d.getDate() === daysInMonth) {
+                    total.fullMonths += month.recorded === daysInMonth;
+                    total.greatMonths += finished && month.tracked >= 20 && month.ok / month.tracked >= 0.8;
+                }
+
+                // Weeks run Monday to Sunday; a week without a weigh-in only breaks the run once it is over
+                if (d.getDay() === 1) {
+                    weekOk = 0;
+                    if (!weekWeighed) run.weigh = 0;
+                    weekWeighed = false;
+                }
+                weekOk += ok;
+                if (d.getDay() === 0 && weekOk === 7) total.perfectWeeks++;
+
+                const weight = weightByDate[ds];
+                if (weight !== undefined) {
+                    if (!weekWeighed) { run.weigh++; weekWeighed = true; }
+                    if (startWeight === null) startWeight = weight;
+                    else if (weight < minWeight) total.newLows++;
+                    minWeight = Math.min(minWeight, weight);
+                    lossKg = Math.max(0, Math.round((startWeight - weight) * 100) / 100);
+                    // Floored (with an epsilon for float noise) so the shown value never rounds up past a threshold
+                    if (user.targetWeight && user.targetWeight !== startWeight) {
+                        goalPct = Math.min(100, Math.max(0, Math.floor((startWeight - weight) / (startWeight - user.targetWeight) * 100 + 1e-9)));
+                    }
+                    bmi = Math.floor(weight / (user.height / 100) ** 2 * 10 + 1e-9) / 10;
+                }
+
+                const values = {
+                    record_streak: run.record, ok_streak: run.ok, protein_streak: run.protein,
+                    perfect_streak: run.perfect, meals_streak: run.meals,
+                    record_days: total.recordDays, ok_days: total.okDays, entries: total.entries,
+                    workouts: total.workouts, foods: foods.size, full_months: total.fullMonths,
+                    great_months: total.greatMonths, perfect_weeks: total.perfectWeeks,
+                    weight_loss: lossKg, weigh_weeks: run.weigh, new_lows: total.newLows, goal_weight: goalPct, bmi,
+                    // Floored so the shown value never rounds up past a threshold it hasn't reached
+                    eggs: Math.floor(eaten.eggs + 1e-9), protein_powder: Math.floor(eaten.protein_powder + 1e-9),
+                    chicken: Math.floor(eaten.chicken * 10 + 1e-9) / 10, rice: Math.floor(eaten.rice * 10 + 1e-9) / 10,
+                    oats: Math.floor(eaten.oats * 10 + 1e-9) / 10, nuts: Math.floor(eaten.nuts * 10 + 1e-9) / 10,
+                    first_entry: total.entries, comebacks: total.comebacks
+                };
+                for (const a of ACHIEVEMENTS) {
+                    const p = progress[a.id];
+                    p.value = values[a.id];
+                    if (a.lower && p.base === undefined && p.value !== null) p.base = p.value;
+                    const hit = tier => a.lower ? p.value !== null && p.value < tier : p.value >= tier;
+                    while (p.reached.length < a.tiers.length && hit(a.tiers[p.reached.length])) p.reached.push(ds);
+                }
+            }
+            return progress;
+        }
+
+        // Fire-and-forget after any data change; marks tiers locally first so overlapping calls don't double-announce
+        async function syncAchievements() {
+            const progress = evaluateAchievements(state.diary, state.weights, state.user, state.foods);
+            const unlocks = ACHIEVEMENTS.flatMap(a => progress[a.id].reached.map((date, i) =>
+                ({ id: `${a.id}:${a.tiers[i]}`, date, label: tierName(a, a.tiers[i]) })))
+                .filter(u => !state.achievements[u.id]);
+            if (!unlocks.length) return;
+
+            unlocks.forEach(u => { state.achievements[u.id] = u.date; });
+            try {
+                await api('/api/achievements', 'POST', { unlocks: unlocks.map(({ id, date }) => ({ id, date })) });
+            } catch {
+                unlocks.forEach(u => { delete state.achievements[u.id]; });
+                return;
+            }
+            showToast(unlocks.length === 1 ? `解锁勋章「${unlocks[0].label}」` : `解锁了 ${unlocks.length} 枚勋章，去成就页看看`, 'award');
+        }
+
+        // Tiers this viewer has already been shown; only decides the one-time burst, so losing it is harmless
+        let seenBadges = new Set();
+        try {
+            seenBadges = new Set(JSON.parse(localStorage.getItem('macro_tracker_seen_badges') || '[]'));
+        } catch { seenBadges = new Set(); }
+
+        const BURST_ANGLES = [0, 45, 90, 135, 180, 225, 270, 315];
+
+        function renderAchievements() {
+            const progress = evaluateAchievements(state.diary, state.weights, state.user, state.foods);
+            let unlockedCount = 0, tierCount = 0;
+
+            // Unlocked series first; sort is stable, so each half keeps the definition order
+            const rows = ACHIEVEMENTS
+                .map(a => ({ a, ids: a.tiers.map(tier => `${a.id}:${tier}`) }))
+                .map(r => ({ ...r, dates: r.ids.map(id => state.achievements[id]) }))
+                .sort((x, y) => !x.dates.some(Boolean) - !y.dates.some(Boolean));
+
+            $('badge-grid').innerHTML = rows.map(({ a, ids, dates }, i) => {
+                const level = dates.filter(Boolean).length;
+                unlockedCount += level;
+                tierCount += a.tiers.length;
+
+                const next = a.tiers[level];
+                const p = progress[a.id];
+                const value = p.value;
+                const f = a.format || fmt;
+                const metal = level ? tierMetal(level - 1, a.tiers.length) : 'locked';
+                const latest = dates.filter(Boolean).sort().at(-1);
+                const isNew = ids.some((id, t) => dates[t] && !seenBadges.has(id));
+                const tiers = a.tiers.length > 1
+                    ? `<div class="tier-row">${a.tiers.map((tier, i) => `<span class="tier num${dates[i] ? ' is-on' : ''}"${dates[i] ? ` title="${fmtMonthDay(dates[i])}解锁"` : ''}>${tier}</span>`).join('')}</div>`
+                    : '';
+                let prog;
+                if (next === undefined) prog = `<div class="badge-prog">${a.tiers.length > 1 ? '已满级' : '已获得'}</div>`;
+                else if (p.unavailable) prog = `<div class="badge-prog">${p.unavailable}</div>`;
+                else {
+                    // A `lower` bar fills from the first recorded value down to the next threshold
+                    const ratio = a.lower ? (p.base > next ? (p.base - value) / (p.base - next) : 0) : value / next;
+                    const text = a.lower
+                        ? `<b class="num">${f(value)}</b> → ${f(next)} ${a.unit}`
+                        : `<b class="num">${f(Math.min(value, next))}</b> / ${f(next)} ${a.unit}`;
+                    prog = `<div class="badge-prog"><span class="badge-bar" aria-hidden="true"><i style="width:${Math.min(Math.max(ratio, 0), 1) * 100}%"></i></span><span>${text}</span></div>`;
+                }
+
+                const sparks = metal === 'diamond' ? '<i class="spark"></i><i class="spark"></i><i class="spark"></i>' : '';
+                const burst = isNew ? `<span class="burst" aria-hidden="true">${BURST_ANGLES.map(deg => `<i style="--a:${deg}deg"></i>`).join('')}</span>` : '';
+                return `<li class="badge m-${metal}${isNew ? ' is-new' : ''}" data-group="${a.group}" style="--i:${i}">
+                        <span class="medal"><span class="ms" aria-hidden="true">${a.icon}</span>${sparks}${burst}</span>
+                        <div class="badge-body">
+                            <div class="badge-head"><h3>${a.name}${isNew ? '<span class="new-chip">NEW</span>' : ''}</h3><span>${latest ? `${fmtMonthDay(latest)}解锁` : '未解锁'}</span></div>
+                            <p>${a.desc}</p>
+                            ${tiers}
+                            ${prog}
+                        </div>
+                    </li>`;
+            }).join('');
+            $('achievements-count').textContent = `已解锁 ${unlockedCount} / ${tierCount}`;
+            filterBadges();
+            replay($('badge-grid'), 'is-entering');
+
+            Object.keys(state.achievements).forEach(id => seenBadges.add(id));
+            try { localStorage.setItem('macro_tracker_seen_badges', JSON.stringify([...seenBadges])); } catch { /* storage unavailable */ }
+        }
+
+        function filterBadges() {
+            const group = document.querySelector('input[name="badge-group"]:checked').value;
+            document.querySelectorAll('#badge-grid .badge').forEach(li => {
+                li.hidden = group !== 'all' && li.dataset.group !== group;
+            });
         }
 
         // ── Unit helpers (same parsing rules the server uses for cascades) ──
@@ -1469,10 +2231,12 @@
                 else n.removeAttribute('aria-current');
             });
             lanePct = {};
+            hideFloatTip();
             if (pageId === 'diary')     { renderFoodPicker(); renderDiary(); }
             if (pageId === 'warehouse') renderWarehouse();
             if (pageId === 'summary')   renderSummary(true);
-            if (pageId === 'settings')  { fillSettingsForm(); }
+            if (pageId === 'achievements') renderAchievements();
+            if (pageId === 'settings')  { fillSettingsForm(); renderWeights(); }
             document.querySelector('main').scrollTop = 0;
         }
 
@@ -1788,6 +2552,7 @@
                 lastAddedId = created.id;
                 renderDiary({ celebrate: true });
                 showToast(`已记录「${food.name}」到${MEALS[meal].label}`);
+                syncAchievements();
                 $('food-amount').focus();
             });
         }
@@ -1812,6 +2577,7 @@
                 renderDiary({ celebrate: true });
                 ['temp-food-name', 'temp-food-kcal', 'temp-food-protein', 'temp-food-carbs', 'temp-food-fat'].forEach(id => { $(id).value = ''; });
                 showToast(`已记录「${name}」到${MEALS[meal].label}`);
+                syncAchievements();
             });
         }
 
@@ -1877,6 +2643,7 @@
             closeModal();
             renderDiary({ celebrate: true });
             showToast('记录已更新');
+            syncAchievements();
         }
 
         // Each click adds/removes one original portion; the " x N" name suffix is the current multiplier
@@ -1903,6 +2670,7 @@
             changedEntryId = updated.id;
             renderDiary({ celebrate: true });
             showToast(next > 1 ? `「${base}」x ${next}` : `「${base}」已恢复一份`);
+            syncAchievements();
         }
 
         async function deleteDiaryEntry(index) {
@@ -1918,6 +2686,7 @@
             state.diary[date].splice(index, 1);
             renderDiary();
             showToast('记录已删除', 'info');
+            syncAchievements();
         }
 
         // ── Warehouse ──
@@ -2079,6 +2848,7 @@
             renderWarehouse();
             renderFoodPicker();
             showToast(updatedEntries.length ? `已保存，同步重算 ${updatedEntries.length} 条历史记录` : '已保存');
+            syncAchievements();
         }
 
         async function deleteWarehouseItem(foodId) {
@@ -2108,28 +2878,137 @@
         }
 
         // ── Summary ──
-        function changeSummaryMonth(offset) {
-            summaryCurrentDate = new Date(summaryCurrentDate.getFullYear(), summaryCurrentDate.getMonth() + offset, 1);
+        let summaryPeriod = 'month';
+        const ymd = (y, m, d) => `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        const STATUS_ICONS = { ok: 'check', over: 'arrow_upward', under: 'arrow_downward' };
+        const MACRO_META = { kcal: ['热量', 'kcal'], protein: ['蛋白', 'g'], carbs: ['碳水', 'g'], fat: ['脂肪', 'g'] };
+
+        function changeSummaryPeriod(offset) {
+            const d = summaryCurrentDate;
+            summaryCurrentDate = summaryPeriod === 'year'
+                ? new Date(d.getFullYear() + offset, d.getMonth(), 1)
+                : new Date(d.getFullYear(), d.getMonth() + offset, 1);
             renderSummary(true);
+        }
+
+        function setSummaryPeriod(period) {
+            summaryPeriod = period;
+            renderSummary(true);
+        }
+
+        function openSummaryMonth(year, month) {
+            summaryPeriod = 'month';
+            document.querySelector('input[name="summary-period"][value="month"]').checked = true;
+            summaryCurrentDate = new Date(year, month, 1);
+            renderSummary(true);
+            document.querySelector('main').scrollTop = 0;
+            window.scrollTo(0, 0);
+        }
+
+        // Aggregates every recorded day (kcal > 0, same rule as the calendar) in [from, to]
+        function periodStats(from, to, targets) {
+            const stats = {
+                recorded: 0, compliant: 0,
+                sum: { kcal: 0, protein: 0, carbs: 0, fat: 0 },
+                mealKcal: Object.fromEntries(MEAL_ORDER.map(m => [m, 0])),
+                byMonth: Array.from({ length: 12 }, () => ({ recorded: 0, compliant: 0, kcal: 0 })),
+                byWeekday: Array.from({ length: 7 }, () => ({ recorded: 0, kcal: 0 })),
+                daily: {}, proteinDays: 0,
+                foods: [], weightChange: null
+            };
+            const foods = new Map();
+            for (const ds of Object.keys(state.diary)) {
+                if (ds < from || ds > to) continue;
+                const entries = state.diary[ds];
+                const t = sumEntries(entries);
+                if (t.kcal <= 0) continue;
+                const ok = kcalStatus(t.kcal, targets.kcal) === 'ok';
+                const month = stats.byMonth[Number(ds.slice(5, 7)) - 1];
+                stats.recorded++;
+                stats.compliant += ok;
+                month.recorded++;
+                month.compliant += ok;
+                month.kcal += t.kcal;
+                const weekday = stats.byWeekday[parseLocalDate(ds).getDay()];
+                weekday.recorded++;
+                weekday.kcal += t.kcal;
+                stats.daily[ds] = t.kcal;
+                stats.proteinDays += t.protein >= targets.protein;
+                MACRO_KEYS.forEach(k => { stats.sum[k] += t[k]; });
+                for (const e of entries) {
+                    stats.mealKcal[MEALS[e.meal] ? e.meal : 'snack'] += e.kcal;
+                    // Portion edits rename entries "X x 2", so group by food id and show the warehouse name
+                    const key = e.isTemporary ? `temp:${e.name}` : e.foodId;
+                    const name = (!e.isTemporary && state.foods.find(f => f.id === e.foodId)?.name) || e.name.replace(/ x \d+$/, '');
+                    const food = foods.get(key) || { name, count: 0, kcal: 0 };
+                    food.count++;
+                    food.kcal += e.kcal;
+                    foods.set(key, food);
+                }
+            }
+            stats.avg = Object.fromEntries(MACRO_KEYS.map(k => [k, stats.recorded ? stats.sum[k] / stats.recorded : 0]));
+            stats.foods = [...foods.values()].sort((a, b) => b.count - a.count || b.kcal - a.kcal).slice(0, 8);
+            const weighIns = state.weights.filter(w => w.date >= from && w.date <= to);
+            if (weighIns.length >= 2) stats.weightChange = Math.round((weighIns.at(-1).weight - weighIns[0].weight) * 100) / 100;
+            return stats;
         }
 
         function renderSummary(animate = false) {
             const year  = summaryCurrentDate.getFullYear();
             const month = summaryCurrentDate.getMonth();
-            $('summary-month-label').textContent = `${year}年${month + 1}月`;
+            const isYear = summaryPeriod === 'year';
+            const targets = calculateTargets();
+            const monthDays = new Date(year, month + 1, 0).getDate();
+            const yearDays = new Date(year, 1, 29).getMonth() === 1 ? 366 : 365;
 
+            $('summary-month-label').textContent = isYear ? `${year}年` : `${year}年${month + 1}月`;
+            $('summary-prev').setAttribute('aria-label', isYear ? '上一年' : '上个月');
+            $('summary-next').setAttribute('aria-label', isYear ? '下一年' : '下个月');
+            $('summary-board').setAttribute('aria-label', isYear ? '全年数据' : '本月数据');
+            $('summary-month').hidden = isYear;
+            $('summary-year').hidden = !isYear;
+            hideFloatTip();
+
+            const from = isYear ? ymd(year, 0, 1) : ymd(year, month, 1);
+            const to = isYear ? ymd(year, 11, 31) : ymd(year, month, monthDays);
+            const stats = periodStats(from, to, targets);
+            const totalDays = isYear ? yearDays : monthDays;
+            const today = localDate();
+            const elapsed = from > today ? 0 : to <= today ? totalDays
+                : Math.round((parseLocalDate(today) - parseLocalDate(from)) / 86400000) + 1;
+
+            if (isYear) renderYearView(year, stats, targets, animate);
+            else renderCalendar(year, month, targets, animate);
+            renderSummaryBoard(stats, targets, totalDays, isYear);
+            summaryTrend = { from, totalDays, daily: stats.daily, target: targets.kcal, isYear };
+            renderTrendChart();
+            renderInsights(stats, targets, elapsed, animate);
+        }
+
+        function renderSummaryBoard(stats, targets, totalDays, isYear) {
+            tweenNumber($('sum-streak'), recordingStreak());
+            const { recorded, compliant, weightChange } = stats;
+            const avgKcal = Math.round(stats.avg.kcal);
+            const compliance = recorded ? Math.round(compliant / recorded * 100) : 0;
+            const weightText = weightChange === null ? '-' : `${weightChange > 0 ? '+' : weightChange < 0 ? '-' : ''}${fmtKg(Math.abs(weightChange))}`;
+            $('monthly-stats').innerHTML = `
+                <div class="stat"><span>${isYear ? '全年记录' : '本月记录'}</span><b class="num">${recorded}<small>/ ${totalDays} 天</small></b></div>
+                <div class="stat"><span>达标天数</span><b class="num">${compliant}<small>天</small></b></div>
+                <div class="stat"><span>达标率</span><b class="num">${recorded ? compliance : '-'}<small>${recorded ? '%' : ''}</small></b></div>
+                <div class="stat"><span>日均热量</span><b class="num">${avgKcal ? fmt(avgKcal) : '-'}<small>${avgKcal ? `/ ${fmt(targets.kcal)}` : ''}</small></b></div>
+                <div class="stat"><span>体重变化</span><b class="num">${weightText}<small>${weightChange === null ? '' : 'kg'}</small></b></div>`;
+        }
+
+        function renderCalendar(year, month, targets, animate) {
             const firstDayIndex = new Date(year, month, 1).getDay();
             const totalDays     = new Date(year, month + 1, 0).getDate();
-            const targets       = calculateTargets();
             const todayStr      = localDate();
-            const icons         = { ok: 'check', over: 'arrow_upward', under: 'arrow_downward' };
 
-            let daysRecorded = 0, daysCompliant = 0, totalKcalSum = 0;
             let html = '';
             for (let i = 0; i < firstDayIndex; i++) html += '<div class="cal-day is-blank" aria-hidden="true"></div>';
 
             for (let day = 1; day <= totalDays; day++) {
-                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const dateStr = ymd(year, month, day);
                 const isFuture = dateStr > todayStr;
                 const { status, kcal, diff } = dayStatus(dateStr, targets.kcal);
                 const i = firstDayIndex + day;
@@ -2137,12 +3016,9 @@
 
                 let inner = `<div class="cal-top"><span class="cal-date">${day}</span>${kcal > 0 ? `<span class="cal-kcal num">${fmt(kcal)}</span>` : ''}</div>`;
                 if (status !== 'none') {
-                    daysRecorded++;
-                    totalKcalSum += kcal;
-                    if (status === 'ok') daysCompliant++;
                     const label = status === 'ok' ? '达标' : status === 'over' ? `+${fmt(diff)}` : `${fmt(diff)}`;
                     const width = Math.min(kcal / targets.kcal, FINISH_SCALE) / FINISH_SCALE * 100;
-                    inner += `<div class="cal-status"><span class="ms" aria-hidden="true">${icons[status]}</span><span>${label}</span></div>
+                    inner += `<div class="cal-status"><span class="ms" aria-hidden="true">${STATUS_ICONS[status]}</span><span>${label}</span></div>
                               <div class="cal-bar"><i style="width:${width}%"></i></div>`;
                 }
 
@@ -2155,16 +3031,288 @@
             grid.innerHTML = html;
             grid.classList.remove('is-entering');
             if (animate && !reduceMotion.matches) replay(grid, 'is-entering');
-
-            tweenNumber($('sum-streak'), recordingStreak());
-            const avgKcal = daysRecorded ? Math.round(totalKcalSum / daysRecorded) : 0;
-            const compliance = daysRecorded ? Math.round((daysCompliant / daysRecorded) * 100) : 0;
-            $('monthly-stats').innerHTML = `
-                <div class="stat"><span>本月记录</span><b class="num">${daysRecorded}<small>/ ${totalDays} 天</small></b></div>
-                <div class="stat"><span>达标天数</span><b class="num">${daysCompliant}<small>天</small></b></div>
-                <div class="stat"><span>达标率</span><b class="num">${daysRecorded ? compliance : '-'}<small>${daysRecorded ? '%' : ''}</small></b></div>
-                <div class="stat"><span>日均热量</span><b class="num">${avgKcal ? fmt(avgKcal) : '-'}<small>${avgKcal ? `/ ${fmt(targets.kcal)}` : ''}</small></b></div>`;
         }
+
+        function renderYearView(year, stats, targets, animate) {
+            const todayStr = localDate();
+            const statusText = { ok: '达标', over: '超标', under: '缺口过大' };
+
+            $('heatmap').innerHTML = Array.from({ length: 12 }, (_, m) => {
+                const days = new Date(year, m + 1, 0).getDate();
+                const cells = Array.from({ length: 31 }, (_, i) => {
+                    const day = i + 1;
+                    if (day > days) return '<span class="hm-cell is-void" aria-hidden="true"></span>';
+                    const ds = ymd(year, m, day);
+                    if (ds > todayStr) return '<span class="hm-cell is-future" aria-hidden="true"></span>';
+                    const { status, kcal, diff } = dayStatus(ds, targets.kcal);
+                    const label = status === 'none' ? '无记录'
+                        : status === 'ok' ? '达标' : `${statusText[status]} ${diff > 0 ? '+' : ''}${fmt(diff)}`;
+                    const tip = `${m + 1}月${day}日 ${WEEKDAYS[new Date(year, m, day).getDay()]}${kcal > 0 ? `<b class="num">${fmt(kcal)} kcal</b>` : '<br>'}${label}`;
+                    const cls = `hm-cell st-${status}${ds === todayStr ? ' is-today' : ''}`;
+                    return `<button class="${cls}" data-tip="${esc(tip)}" onclick="navigateToDay('${ds}')" aria-label="${m + 1}月${day}日，${kcal > 0 ? `${fmt(kcal)} kcal，` : ''}${label}"></button>`;
+                }).join('');
+                return `<div class="hm-row" style="--i:${m}"><button class="hm-month" onclick="openSummaryMonth(${year}, ${m})" aria-label="查看${m + 1}月">${m + 1}月</button>${cells}</div>`;
+            }).join('');
+
+            // Bars share one y-scale with the target line, rounded up to a clean tick step
+            const avgs = stats.byMonth.map(m => m.recorded ? m.kcal / m.recorded : 0);
+            const step = Math.max(...avgs, targets.kcal) > 4000 ? 1000 : 500;
+            const top = Math.ceil(Math.max(...avgs, targets.kcal) * 1.08 / step) * step;
+            const pct = v => v / top * 100;
+            const now = new Date();
+            const ticks = Array.from({ length: top / step + 1 }, (_, i) => i * step)
+                .map(v => `<div class="mbar-tick" style="bottom:${pct(v)}%"><span>${fmt(v)}</span></div>`).join('');
+            const cols = stats.byMonth.map((m, i) => {
+                const avg = avgs[i];
+                const rate = m.recorded ? Math.round(m.compliant / m.recorded * 100) : 0;
+                const tip = m.recorded
+                    ? `${i + 1}月<b class="num">日均 ${fmt(avg)} kcal</b>记录 ${m.recorded} 天 · 达标率 ${rate}%`
+                    : `${i + 1}月<br>没有记录`;
+                const isCurrent = year === now.getFullYear() && i === now.getMonth();
+                return `<button class="mbar-col${m.recorded ? '' : ' is-empty'}${isCurrent ? ' is-current' : ''}" style="--i:${i}" data-tip="${esc(tip)}" onclick="openSummaryMonth(${year}, ${i})" aria-label="${i + 1}月，${m.recorded ? `日均 ${fmt(avg)} kcal，达标率 ${rate}%` : '没有记录'}">
+                        <i style="height:${pct(avg)}%"></i><span>${i + 1}月</span>
+                    </button>`;
+            }).join('');
+            $('month-bars').innerHTML = `${ticks}<div class="mbar-target" style="bottom:${pct(targets.kcal)}%"><span>目标 ${fmt(targets.kcal)}</span></div><div class="mbar-cols">${cols}</div>`;
+
+            const grid = $('summary-year');
+            grid.classList.remove('is-entering');
+            $('heatmap').classList.remove('is-entering');
+            if (animate && !reduceMotion.matches) { replay(grid, 'is-entering'); replay($('heatmap'), 'is-entering'); }
+        }
+
+        function renderInsights(stats, targets, elapsed, animate) {
+            const empty = '<div class="empty">这段时间还没有记录</div>';
+            $('ins-rings-hint').textContent = elapsed ? `已过 ${elapsed} 天` : '';
+            if (!stats.recorded) {
+                ['ins-rings', 'ins-donut', 'ins-weekday', 'ins-macros', 'ins-meals', 'ins-foods'].forEach(id => { $(id).innerHTML = empty; });
+                return;
+            }
+            renderRings(stats, elapsed);
+            renderDonut(stats, targets);
+            renderWeekdays(stats, targets);
+            const bar = (ratio, goal = false) => `<div class="ins-track${goal ? ' has-goal' : ''}"><i style="width:${Math.min(Math.max(ratio, 0), 1) * 100}%"></i></div>`;
+
+            // Same rules as the diary scoreboard: protein past target is the goal, anything else past it is overshoot
+            $('ins-macros').innerHTML = MACRO_KEYS.map(key => {
+                const [label, unit] = MACRO_META[key];
+                const avg = stats.avg[key], target = targets[key];
+                const ratio = target > 0 ? avg / target : 0;
+                const overPct = Math.round((ratio - 1) * 100);
+                const done = key === 'protein' && ratio >= 1;
+                const over = key !== 'protein' && overPct > 0;
+                const flag = done ? '<span class="ins-flag is-done"><span class="ms" aria-hidden="true">check</span>达标</span>'
+                    : over ? `<span class="ins-flag is-over">+${overPct}%</span>`
+                    : `<span class="ins-flag">${Math.round(ratio * 100)}%</span>`;
+                return `<div class="ins-row">
+                        <div class="ins-head">${macroIcon(key)}<span class="ins-name">${label}</span><b class="num">${fmt(avg)}</b><small>/ ${fmt(target)} ${unit}</small>${flag}</div>
+                        ${bar(Math.min(ratio, FINISH_SCALE) / FINISH_SCALE, true)}
+                    </div>`;
+            }).join('');
+
+            const totalKcal = stats.sum.kcal;
+            $('ins-meals').innerHTML = MEAL_ORDER
+                .filter(m => stats.mealKcal[m] > 0)
+                .sort((a, b) => stats.mealKcal[b] - stats.mealKcal[a])
+                .map(m => {
+                    const share = stats.mealKcal[m] / totalKcal;
+                    return `<div class="ins-row">
+                            <div class="ins-head"><span class="ms" aria-hidden="true">${MEALS[m].icon}</span><span class="ins-name">${MEALS[m].label}</span><b class="num">${Math.round(share * 100)}%</b><small>日均 ${fmt(stats.mealKcal[m] / stats.recorded)} kcal</small></div>
+                            ${bar(share)}
+                        </div>`;
+                }).join('');
+
+            const maxCount = stats.foods[0]?.count || 1;
+            $('ins-foods').innerHTML = stats.foods.map(f => `<div class="ins-row">
+                    <div class="ins-head"><span class="ins-name">${esc(f.name)}</span><b class="num">${f.count}</b><small>次 · ${fmt(f.kcal)} kcal</small></div>
+                    ${bar(f.count / maxCount)}
+                </div>`).join('');
+
+            const grid = $('insight-grid');
+            grid.classList.remove('is-entering');
+            if (animate && !reduceMotion.matches) replay(grid, 'is-entering');
+        }
+
+        function renderRings(stats, elapsed) {
+            const C = 2 * Math.PI * 38;
+            const rings = [
+                { label: '记录率', value: elapsed ? stats.recorded / elapsed : 0, sub: `${stats.recorded} / ${elapsed} 天` },
+                { label: '达标率', value: stats.compliant / stats.recorded, sub: `${stats.compliant} / ${stats.recorded} 天` },
+                { label: '蛋白达标', value: stats.proteinDays / stats.recorded, sub: `${stats.proteinDays} / ${stats.recorded} 天` }
+            ];
+            $('ins-rings').innerHTML = rings.map(r => {
+                const pct = Math.round(Math.min(r.value, 1) * 100);
+                return `<div class="ring">
+                        <div class="ring-wrap">
+                            <svg viewBox="0 0 88 88" aria-hidden="true"><circle class="ring-track" cx="44" cy="44" r="38"/>${pct ? `<circle class="ring-fill" cx="44" cy="44" r="38" stroke-dasharray="${C * pct / 100} ${C}"/>` : ''}</svg>
+                            <b class="num">${pct}<small>%</small></b>
+                        </div>
+                        <span>${r.label}</span><em>${r.sub}</em>
+                    </div>`;
+            }).join('');
+        }
+
+        function renderDonut(stats, targets) {
+            const parts = [
+                { key: 'protein', label: '蛋白', color: 'var(--c-protein)', kcal: stats.sum.protein * 4, goal: targets.protein * 4 },
+                { key: 'carbs',   label: '碳水', color: 'var(--c-carbs)',   kcal: stats.sum.carbs * 4,   goal: targets.carbs * 4 },
+                { key: 'fat',     label: '脂肪', color: 'var(--c-fat)',     kcal: stats.sum.fat * 9,     goal: targets.fat * 9 }
+            ];
+            const total = parts.reduce((t, p) => t + p.kcal, 0) || 1;
+            const goalTotal = parts.reduce((t, p) => t + p.goal, 0) || 1;
+            const C = 2 * Math.PI * 52;
+            const gap = 2;
+            let offset = 0;
+            // Segments are dashes on one circle; a 2px gap between them keeps adjacent hues apart
+            const arcs = parts.map(p => {
+                const len = p.kcal / total * C;
+                const arc = `<circle cx="66" cy="66" r="52" stroke="${p.color}" stroke-dasharray="${Math.max(len - gap, 0)} ${C}" stroke-dashoffset="${-offset}"
+                    data-tip="${esc(`${p.label}<b class="num">${Math.round(p.kcal / total * 100)}%</b>日均 ${fmt(p.kcal / stats.recorded)} kcal`)}"/>`;
+                offset += len;
+                return arc;
+            }).join('');
+            $('ins-donut').innerHTML = `<div class="donut">
+                    <div class="donut-chart"><svg viewBox="0 0 132 132" role="img" aria-label="${parts.map(p => `${p.label} ${Math.round(p.kcal / total * 100)}%`).join('，')}">${arcs}</svg>
+                        <div class="donut-center"><span>日均</span><b class="num">${fmt(stats.avg.kcal)}</b><small>kcal</small></div>
+                    </div>
+                    <div class="donut-legend">${parts.map(p => {
+                        const share = Math.round(p.kcal / total * 100), goal = Math.round(p.goal / goalTotal * 100);
+                        const diff = share - goal;
+                        return `<div class="dl-row"><i style="background:${p.color}"></i><span>${p.label}</span><b class="num">${share}%</b>
+                                <small>目标 ${goal}%${diff ? `，${diff > 0 ? '高' : '低'} ${Math.abs(diff)} 个百分点` : '，正好'}</small></div>`;
+                    }).join('')}</div>
+                </div>`;
+        }
+
+        function renderWeekdays(stats, targets) {
+            const order = [1, 2, 3, 4, 5, 6, 0];
+            const devs = order.map(d => {
+                const w = stats.byWeekday[d];
+                return w.recorded ? { d, avg: w.kcal / w.recorded, dev: w.kcal / w.recorded - targets.kcal, n: w.recorded } : { d, n: 0 };
+            });
+            // Symmetric scale around the target, rounded to 100 kcal with a 300 kcal floor
+            const max = Math.max(300, Math.ceil(Math.max(...devs.filter(x => x.n).map(x => Math.abs(x.dev))) / 100) * 100);
+            const pos = dev => 50 + dev / max * 50;
+            $('ins-weekday').innerHTML = devs.map(({ d, avg, dev, n }) => {
+                const weekend = d === 0 || d === 6 ? ' is-weekend' : '';
+                if (!n) return `<div class="wd-row${weekend}"><span class="wd-name">${WEEKDAYS[d]}</span><div class="wd-track"></div><span class="wd-val">-</span></div>`;
+                const left = Math.min(50, pos(dev)), width = Math.abs(pos(dev) - 50);
+                const tip = `${WEEKDAYS[d]}<b class="num">日均 ${fmt(avg)} kcal</b>记录 ${n} 天`;
+                return `<div class="wd-row${weekend}" data-tip="${esc(tip)}">
+                        <span class="wd-name">${WEEKDAYS[d]}</span>
+                        <div class="wd-track"><i class="wd-stem" style="left:${left}%;width:${width}%;transform-origin:${dev < 0 ? 'right' : 'left'}"></i><b class="wd-dot st-${kcalStatus(avg, targets.kcal)}" style="left:${pos(dev)}%"></b></div>
+                        <span class="wd-val num">${dev > 0 ? '+' : ''}${fmt(dev)}</span>
+                    </div>`;
+            }).join('') + `<div class="wd-axis"><span></span><div><span>-${fmt(max)}</span><span>目标</span><span>+${fmt(max)}</span></div><span></span></div>`;
+        }
+
+        // Day-level line chart for the current period: daily dots, a trailing 7-day average and the compliance band
+        let summaryTrend = null;
+        function renderTrendChart() {
+            const box = $('trend-chart');
+            const width = box.clientWidth;
+            if (!width || !summaryTrend) return;
+            box.dataset.w = width;
+            const { from, totalDays, daily, target, isYear } = summaryTrend;
+            const today = localDate();
+            const start = parseLocalDate(from);
+            const days = Array.from({ length: totalDays }, (_, i) => {
+                const d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
+                return { d, ds: localDate(d) };
+            });
+            const pastDays = days.filter(x => x.ds <= today);
+            const values = days.map(x => daily[x.ds] ?? null);
+            if (!values.some(v => v !== null)) { box.innerHTML = '<div class="weight-empty">这段时间还没有记录</div>'; return; }
+
+            const ma = values.map((_, i) => {
+                if (days[i].ds > today) return null;
+                const win = values.slice(Math.max(0, i - 6), i + 1).filter(v => v !== null);
+                return win.length ? win.reduce((a, b) => a + b, 0) / win.length : null;
+            });
+
+            const height = box.clientHeight, m = { top: 12, right: 16, bottom: 26, left: 48 };
+            const plotW = width - m.left - m.right, plotH = height - m.top - m.bottom;
+            const maxV = Math.max(...values.filter(v => v !== null), target + 50);
+            const step = maxV > 4000 ? 1000 : 500;
+            const top = Math.ceil(maxV * 1.05 / step) * step;
+            const x = i => m.left + (totalDays === 1 ? plotW / 2 : i / (totalDays - 1) * plotW);
+            const y = v => m.top + (1 - v / top) * plotH;
+
+            const yTicks = Array.from({ length: top / step + 1 }, (_, i) => i * step);
+            const xTicks = isYear
+                ? days.map((x, i) => ({ i, d: x.d })).filter(t => t.d.getDate() === 1).map(t => ({ i: t.i, label: `${t.d.getMonth() + 1}月` }))
+                : days.map((x, i) => ({ i, d: x.d })).filter(t => [1, 8, 15, 22, 29].includes(t.d.getDate())).map(t => ({ i: t.i, label: `${t.d.getDate()}日` }));
+            const every = Math.max(1, Math.ceil(xTicks.length * 40 / plotW));
+
+            let path = '';
+            ma.forEach((v, i) => { if (v !== null) path += `${path && ma[i - 1] !== null ? 'L' : 'M'}${x(i).toFixed(1)},${y(v).toFixed(1)}`; });
+            const r = isYear ? 2 : 3.5;
+
+            box.innerHTML = `
+                <svg width="${width}" height="${height}" role="img" aria-label="每日热量趋势，目标 ${fmt(target)} kcal">
+                    <rect class="band" x="${m.left}" width="${plotW}" y="${y(target + 50)}" height="${y(target - 300) - y(target + 50)}"/>
+                    <g class="grid axis">${yTicks.map(v => `<line x1="${m.left}" x2="${width - m.right}" y1="${y(v)}" y2="${y(v)}"/><text x="${m.left - 8}" y="${y(v) + 4}" text-anchor="end">${fmt(v)}</text>`).join('')}</g>
+                    <g class="axis">${xTicks.filter((_, i) => i % every === 0).map(t => `<text x="${x(t.i)}" y="${height - 8}" text-anchor="middle">${t.label}</text>`).join('')}</g>
+                    <text class="band-label" x="${width - m.right - 4}" y="${y(target + 50) - 5}" text-anchor="end">目标 ${fmt(target)}</text>
+                    <line class="crosshair" y1="${m.top}" y2="${height - m.bottom}" visibility="hidden"/>
+                    ${values.map((v, i) => v === null ? '' : `<circle class="day-dot" r="${r}" cx="${x(i).toFixed(1)}" cy="${y(v).toFixed(1)}"/>`).join('')}
+                    <path class="ma" d="${path}"/>
+                    <circle class="hover-dot" r="4.5" visibility="hidden"/>
+                    <rect x="${m.left - 6}" y="0" width="${plotW + 12}" height="${height}" fill="transparent"/>
+                </svg>`;
+
+            const svg = box.querySelector('svg');
+            const cross = svg.querySelector('.crosshair');
+            const dot = svg.querySelector('.hover-dot');
+            const lastIdx = pastDays.length - 1;
+            const show = e => {
+                if (lastIdx < 0) return;
+                const px = e.clientX - svg.getBoundingClientRect().left;
+                const i = Math.min(lastIdx, Math.max(0, Math.round((px - m.left) / plotW * (totalDays - 1))));
+                cross.setAttribute('x1', x(i)); cross.setAttribute('x2', x(i)); cross.setAttribute('visibility', 'visible');
+                const v = values[i];
+                if (v !== null) { dot.setAttribute('cx', x(i)); dot.setAttribute('cy', y(v)); dot.setAttribute('visibility', 'visible'); }
+                else dot.setAttribute('visibility', 'hidden');
+                const d = days[i].d;
+                const status = v === null ? '' : { ok: '达标', over: '超标', under: '缺口过大' }[kcalStatus(v, target)];
+                const html = `${d.getMonth() + 1}月${d.getDate()}日 ${WEEKDAYS[d.getDay()]}<b class="num">${v === null ? '无记录' : `${fmt(v)} kcal`}</b>${status}${ma[i] !== null ? `${status ? ' · ' : ''}7 日均 ${fmt(ma[i])}` : ''}`;
+                const rect = svg.getBoundingClientRect();
+                showFloatTipAt(html, rect.left + x(i), rect.top + (v === null ? m.top + plotH / 2 : y(v)));
+            };
+            const hide = () => { cross.setAttribute('visibility', 'hidden'); dot.setAttribute('visibility', 'hidden'); hideFloatTip(); };
+            svg.addEventListener('pointermove', show);
+            svg.addEventListener('pointerdown', show);
+            svg.addEventListener('pointerleave', hide);
+        }
+        new ResizeObserver(() => {
+            const box = $('trend-chart');
+            if (box.clientWidth && String(box.clientWidth) !== box.dataset.w) renderTrendChart();
+        }).observe($('trend-chart'));
+
+        // One floating tooltip for summary charts: any [data-tip] shows it on hover or keyboard focus
+        function showFloatTipAt(html, cx, top, bottom = top) {
+            const tip = $('float-tip');
+            tip.innerHTML = html;
+            tip.hidden = false;
+            const above = top - tip.offsetHeight - 10;
+            tip.style.top = `${above >= 8 ? above : bottom + 10}px`;
+            tip.style.left = `${Math.min(Math.max(cx - tip.offsetWidth / 2, 8), innerWidth - tip.offsetWidth - 8)}px`;
+        }
+        function showFloatTip(el) {
+            const r = el.getBoundingClientRect();
+            showFloatTipAt(el.dataset.tip, r.left + r.width / 2, r.top, r.bottom);
+        }
+        function hideFloatTip() { $('float-tip').hidden = true; }
+        $('page-summary').addEventListener('pointerover', e => {
+            if (e.target.closest('[data-tip-host]')) return;
+            const el = e.target.closest('[data-tip]');
+            if (el) showFloatTip(el); else hideFloatTip();
+        });
+        $('page-summary').addEventListener('pointerleave', hideFloatTip);
+        $('page-summary').addEventListener('focusin', e => { const el = e.target.closest('[data-tip]'); if (el) showFloatTip(el); });
+        $('page-summary').addEventListener('focusout', hideFloatTip);
+        document.querySelector('main').addEventListener('scroll', hideFloatTip, { passive: true });
+        window.addEventListener('scroll', hideFloatTip, { passive: true });
 
         // ── Settings ──
         function fillSettingsForm() {
@@ -2173,6 +3321,7 @@
             $('user-age').value      = state.user.age;
             $('user-gender').value   = state.user.gender;
             $('user-activity').value = String(state.user.activity);
+            $('user-target-weight').value = state.user.targetWeight ?? '';
             $('dirty-note').hidden = true;
             $('save-settings').disabled = true;
             renderPlan(state.user);
@@ -2181,17 +3330,19 @@
         function readSettingsForm() {
             return {
                 height:   parseFloat($('user-height').value) || 170,
-                weight:   parseFloat($('user-weight').value) || 70,
+                weight:   state.user.weight,
                 age:      parseInt($('user-age').value)      || 25,
                 gender:   $('user-gender').value,
-                activity: $('user-activity').value
+                activity: $('user-activity').value,
+                targetWeight: parseFloat($('user-target-weight').value) || null
             };
         }
 
         function onSettingsInput() {
             const draft = readSettingsForm();
-            const dirty = ['height', 'weight', 'age', 'gender'].some(k => String(draft[k]) !== String(state.user[k]))
-                || parseFloat(draft.activity) !== parseFloat(state.user.activity);
+            const dirty = ['height', 'age', 'gender'].some(k => String(draft[k]) !== String(state.user[k]))
+                || parseFloat(draft.activity) !== parseFloat(state.user.activity)
+                || draft.targetWeight !== (state.user.targetWeight ?? null);
             $('dirty-note').hidden = !dirty;
             $('save-settings').disabled = !dirty;
             renderPlan(draft);
@@ -2222,8 +3373,226 @@
             await withBusy(btn, async () => {
                 state.user = await api('/api/user', 'PUT', readSettingsForm());
                 showToast('已保存，每日目标已更新');
+                syncAchievements();
             });
             fillSettingsForm();
+            renderWeights();
+        }
+
+        // ── Weight log ──
+        function weightDeltaHtml(diff) {
+            const r = Math.round(diff * 100) / 100;
+            if (r === 0) return '<span class="w-delta">持平</span>';
+            return `<span class="w-delta ${r < 0 ? 'is-down' : 'is-up'}"><span class="ms" role="img" aria-label="${r < 0 ? '下降' : '上升'}">${r < 0 ? 'arrow_downward' : 'arrow_upward'}</span>${fmtKg(Math.abs(r))}</span>`;
+        }
+
+        // Shows distance to the target weight once one is set (a gain goal counts upward), else the lowest weigh-in
+        function goalStatHtml(first, latest, list) {
+            const target = state.user.targetWeight;
+            if (!target) return `<div><span>最低</span><b class="num">${fmtKg(Math.min(...list.map(w => w.weight)))}</b><small>kg</small></div>`;
+            const remaining = Math.round((target < first.weight ? latest.weight - target : target - latest.weight) * 100) / 100;
+            return `<div><span>距目标 ${fmtKg(target)}</span>${remaining > 0 ? `<b class="num">${fmtKg(remaining)}</b><small>kg</small>` : '<b>已达成</b>'}</div>`;
+        }
+
+        function renderWeights() {
+            const list = state.weights;
+            const today = localDate();
+            $('weight-date').max = today;
+            if (!$('weight-date').value) $('weight-date').value = today;
+
+            const first = list[0], latest = list.at(-1);
+            const change = latest ? Math.round((latest.weight - first.weight) * 100) / 100 : 0;
+            $('weight-stats').innerHTML = latest ? `
+                <div><span>当前</span><b class="num">${fmtKg(latest.weight)}</b><small>kg</small></div>
+                <div><span>自${fmtMonthDay(first.date)}</span><b class="num">${change > 0 ? '+' : change < 0 ? '-' : ''}${fmtKg(Math.abs(change))}</b><small>kg</small></div>
+                ${goalStatHtml(first, latest, list)}` : '';
+            $('weight-stats').hidden = !latest;
+
+            $('weight-list').innerHTML = list.map((w, i) => {
+                const day = fmtMonthDay(w.date);
+                return `<li>
+                        <span class="w-date">${day}<small>${WEEKDAYS[parseLocalDate(w.date).getDay()]}</small></span>
+                        <span class="w-kg num">${fmtKg(w.weight)}</span>
+                        ${i ? weightDeltaHtml(w.weight - list[i - 1].weight) : '<span class="w-delta"></span>'}
+                        <span class="w-actions">
+                            <button class="icon-btn" type="button" onclick="editWeight('${w.date}')" aria-label="修改${day}的体重"><span class="ms" aria-hidden="true">edit</span></button>
+                            <button class="icon-btn danger" type="button" onclick="deleteWeight('${w.date}')" aria-label="删除${day}的体重"><span class="ms" aria-hidden="true">delete</span></button>
+                        </span>
+                    </li>`;
+            }).reverse().join('');
+            renderWeightChart();
+        }
+
+        // Time-scaled x keeps irregular weigh-in gaps honest; y zooms to the data range since a
+        // zero baseline would flatten a few kilos of change into a straight line
+        function renderWeightChart() {
+            const box = $('weight-chart');
+            const width = box.clientWidth;
+            if (!width) return;
+            box.dataset.size = `${width}x${box.clientHeight}`;
+            const pts = state.weights;
+            if (!pts.length) { box.innerHTML = '<div class="weight-empty">记下第一次称重后，这里会显示体重趋势</div>'; return; }
+
+            // The svg is absolutely positioned, so it fills the row height set by the list column without feeding back into it
+            const height = box.clientHeight - 20, m = { top: 12, right: 52, bottom: 30, left: 44 };
+            const plotW = width - m.left - m.right, plotH = height - m.top - m.bottom;
+            const ts = pts.map(p => parseLocalDate(p.date).getTime());
+            const t0 = ts[0], t1 = ts.at(-1);
+            const x = t => m.left + (t1 === t0 ? 0.5 : (t - t0) / (t1 - t0)) * plotW;
+
+            const ws = pts.map(p => p.weight);
+            const target = state.user.targetWeight;
+            const lo0 = Math.min(...ws, target ?? Infinity), hi0 = Math.max(...ws, target ?? -Infinity);
+            const ticksFor = step => {
+                const lo = Math.floor(lo0 / step - 0.1) * step, hi = Math.ceil(hi0 / step + 0.1) * step;
+                return { step, lo, hi, n: Math.round((hi - lo) / step) };
+            };
+            const { step, lo, hi, n } = [0.5, 1, 2, 5, 10, 20, 50].map(ticksFor).find(t => t.n <= 7);
+            const y = v => m.top + (hi - v) / (hi - lo) * plotH;
+            const yTicks = Array.from({ length: n + 1 }, (_, i) => lo + i * step);
+
+            const months = [];
+            for (const d = new Date(new Date(t0).getFullYear(), new Date(t0).getMonth() + 1, 1); d.getTime() <= t1; d.setMonth(d.getMonth() + 1)) {
+                months.push({ t: d.getTime(), label: d.getMonth() === 0 ? `${d.getFullYear()}年1月` : `${d.getMonth() + 1}月` });
+            }
+            const every = Math.max(1, Math.ceil(months.length * 48 / plotW));
+            const xTicks = months.length
+                ? months.filter((_, i) => i % every === 0)
+                : [...new Set([t0, t1])].map(t => ({ t, label: fmtMonthDay(localDate(new Date(t))) }));
+
+            const xs = ts.map(x), ys = ws.map(y);
+            const last = pts.length - 1;
+            box.innerHTML = `
+                <svg width="${width}" height="${height}" role="img" aria-label="体重趋势：${fmtMonthDay(pts[0].date)} ${fmtKg(ws[0])} kg，${fmtMonthDay(pts[last].date)} ${fmtKg(ws[last])} kg">
+                    <g class="grid axis">${yTicks.map(v => `<line x1="${m.left}" x2="${width - m.right}" y1="${y(v)}" y2="${y(v)}"/><text x="${m.left - 8}" y="${y(v) + 4}" text-anchor="end">${fmtKg(v)}</text>`).join('')}</g>
+                    <g class="axis">${xTicks.map(tk => `<text x="${x(tk.t)}" y="${height - 10}" text-anchor="middle">${tk.label}</text>`).join('')}</g>
+                    ${target ? `<g class="goal"><line x1="${m.left}" x2="${width - m.right}" y1="${y(target)}" y2="${y(target)}"/><text x="${m.left + 6}" y="${y(target) - 6 < m.top + 4 ? y(target) + 15 : y(target) - 6}">目标 ${fmtKg(target)} kg</text></g>` : ''}
+                    <line class="crosshair" y1="${m.top}" y2="${height - m.bottom}" visibility="hidden"/>
+                    <path class="series" d="${xs.map((px, i) => `${i ? 'L' : 'M'}${px.toFixed(1)},${ys[i].toFixed(1)}`).join('')}"/>
+                    <circle class="dot" r="4" cx="${xs[last]}" cy="${ys[last]}"/>
+                    <text class="end-label num" x="${xs[last] + 9}" y="${ys[last] + 4}">${fmtKg(ws[last])}</text>
+                    <circle class="dot hover-dot" r="4" visibility="hidden"/>
+                    <rect x="${m.left - 8}" y="0" width="${plotW + 16}" height="${height}" fill="transparent"/>
+                </svg>
+                <div class="chart-tip" hidden></div>`;
+
+            const svg = box.querySelector('svg');
+            const tip = box.querySelector('.chart-tip');
+            const cross = svg.querySelector('.crosshair');
+            const hoverDot = svg.querySelector('.hover-dot');
+            const show = e => {
+                const px = e.clientX - svg.getBoundingClientRect().left;
+                const i = xs.reduce((best, v, j) => Math.abs(v - px) < Math.abs(xs[best] - px) ? j : best, 0);
+                cross.setAttribute('x1', xs[i]);
+                cross.setAttribute('x2', xs[i]);
+                hoverDot.setAttribute('cx', xs[i]);
+                hoverDot.setAttribute('cy', ys[i]);
+                cross.setAttribute('visibility', 'visible');
+                hoverDot.setAttribute('visibility', 'visible');
+
+                const diff = i ? Math.round((ws[i] - ws[i - 1]) * 100) / 100 : null;
+                const diffText = diff === null ? '' : diff === 0 ? '与上次持平' : `比上次 ${diff > 0 ? '+' : '-'}${fmtKg(Math.abs(diff))} kg`;
+                tip.innerHTML = `${fmtMonthDay(pts[i].date)} ${WEEKDAYS[parseLocalDate(pts[i].date).getDay()]}<b class="num">${fmtKg(ws[i])} kg</b>${diffText}`;
+                tip.hidden = false;
+                // Sit above the point, or below it when there's no room
+                const py = ys[i] + svg.getBoundingClientRect().top - box.getBoundingClientRect().top;
+                const above = py - tip.offsetHeight - 14;
+                tip.style.top = `${above >= 0 ? above : py + 14}px`;
+                tip.style.left = `${Math.min(Math.max(xs[i] - tip.offsetWidth / 2, 0), width - tip.offsetWidth)}px`;
+            };
+            const hide = () => {
+                tip.hidden = true;
+                cross.setAttribute('visibility', 'hidden');
+                hoverDot.setAttribute('visibility', 'hidden');
+            };
+            svg.addEventListener('pointermove', show);
+            svg.addEventListener('pointerdown', show);
+            svg.addEventListener('pointerleave', hide);
+        }
+        // Redraw on size changes: the settings page starts hidden, and the panel reflows with the window and list
+        new ResizeObserver(() => {
+            const box = $('weight-chart');
+            if (box.clientWidth && `${box.clientWidth}x${box.clientHeight}` !== box.dataset.size) renderWeightChart();
+        }).observe($('weight-chart'));
+
+        // Keeps any other unsaved edits in the settings form; only the weight field follows the log
+        function applySyncedWeight(user) {
+            state.user = user;
+            $('user-weight').value = user.weight;
+            onSettingsInput();
+        }
+
+        function logWeight() {
+            return withBusy($('weight-save'), async () => {
+                const date = $('weight-date').value;
+                const weight = parseFloat($('weight-value').value);
+                const existed = state.weights.some(w => w.date === date);
+                const { entry, user } = await api(`/api/weights/${date}`, 'PUT', { weight });
+                state.weights = [...state.weights.filter(w => w.date !== date), entry].sort((a, b) => a.date.localeCompare(b.date));
+                applySyncedWeight(user);
+                $('weight-value').value = '';
+                $('weight-date').value = localDate();
+                renderWeights();
+                showToast(existed ? `已更新${fmtMonthDay(date)}的体重` : `已记录 ${fmtKg(weight)} kg`);
+                syncAchievements();
+            });
+        }
+
+        function editWeight(date) {
+            $('weight-date').value = date;
+            $('weight-value').value = state.weights.find(w => w.date === date).weight;
+            $('weight-value').focus();
+        }
+
+        async function deleteWeight(date) {
+            if (!(await showConfirm(`删除${fmtMonthDay(date)}的称重记录？`))) return;
+            const { user } = await api(`/api/weights/${date}`, 'DELETE');
+            state.weights = state.weights.filter(w => w.date !== date);
+            applySyncedWeight(user);
+            renderWeights();
+            showToast('称重记录已删除', 'info');
+            syncAchievements();
+        }
+
+        // ── Quote of the day ──
+        // Pieces rise in one by one from `offset`, then a highlighter sweeps under the whole line
+        function quoteLineHtml(pieces, joiner, offset) {
+            const markDelay = (offset + pieces.length) * 45 + 450;
+            return `<span class="quote-mark-line" style="--mark-delay:${markDelay}ms">${pieces.map((p, i) => `<span class="qw" style="--i:${offset + i}">${esc(p)}</span>`).join(joiner)}</span>`;
+        }
+
+        async function loadQuote() {
+            const card = $('quote-card');
+            try {
+                const res = await fetch('/api/quote');
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const { text, author, image, source, zh } = await res.json();
+                const words = text.split(/\s+/).filter(Boolean);
+                $('quote-text').innerHTML = quoteLineHtml(words, ' ', 0);
+                $('quote-author-name').textContent = author;
+                $('quote-author').hidden = false;
+                const photo = $('quote-photo');
+                // if (image) {
+                //     photo.onerror = () => { photo.hidden = true; $('quote-author').classList.remove('has-photo'); };
+                //     photo.src = image;
+                //     photo.alt = author;
+                //     photo.style.setProperty('--photo-delay', `${words.length * 45 + 200}ms`);
+                //     photo.hidden = false;
+                //     $('quote-author').classList.add('has-photo');
+                // }
+                $('quote-credit').hidden = source !== 'zenquotes';
+                if (zh) {
+                    // Chinese reveals phrase by phrase (punctuation stays attached, so no line starts with "，")
+                    const phrases = zh.text.match(/[^，。；！？、]+[，。；！？、]?/g) || [zh.text];
+                    $('quote-zh-text').innerHTML = quoteLineHtml(phrases, '', words.length + 4);
+                    $('quote-zh-author').textContent = zh.author;
+                    $('quote-zh').hidden = false;
+                }
+                card.setAttribute('aria-busy', 'false');
+            } catch (err) {
+                console.error('[quote] failed to load quote of the day', err);
+                card.hidden = true;
+            }
         }
 
         // ── Data export ──
@@ -2243,6 +3612,8 @@
         // ── Init ──
         $('meal-seg').innerHTML = mealSegHtml('meal');
         $('modal-meal-seg').innerHTML = mealSegHtml('modal-meal');
+        $('badge-tabs').innerHTML = Object.entries(ACHIEVEMENT_GROUPS).map(([value, label], i) => `
+            <label><input type="radio" name="badge-group" value="${value}"${i ? '' : ' checked'}><span class="seg-opt">${label}</span></label>`).join('');
         $('meal-seg').addEventListener('change', updateGoLabels);
         $('diary-date').value = localDate();
 
@@ -2256,6 +3627,8 @@
             }
             renderFoodPicker();
             renderDiary();
+            syncAchievements();
+            loadQuote();
         })();
     </script>
 </body>

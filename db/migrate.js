@@ -7,6 +7,7 @@
 const fs = require('fs');
 const path = require('path');
 const { DatabaseSync } = require('node:sqlite');
+const { applySchema } = require('./schema');
 
 const jsonPath = process.argv[2];
 if (!jsonPath) {
@@ -17,18 +18,20 @@ if (!jsonPath) {
 const data = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
 const dbPath = path.join(__dirname, 'macro-tracker.db');
 const db = new DatabaseSync(dbPath);
-db.exec(fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8'));
+applySchema(db);
 
 db.exec('BEGIN');
 try {
+    db.exec('DELETE FROM achievements');
+    db.exec('DELETE FROM weight_log');
     db.exec('DELETE FROM diary_entries');
     db.exec('DELETE FROM foods');
     db.exec('DELETE FROM user_settings');
 
     const u = data.user || { height: 183, weight: 91, age: 27, gender: 'male', activity: 1.55 };
     db.prepare(`
-        INSERT INTO user_settings (id, height, weight, age, gender, activity) VALUES (1, ?, ?, ?, ?, ?)
-    `).run(u.height, u.weight, u.age, u.gender, parseFloat(u.activity));
+        INSERT INTO user_settings (id, height, weight, age, gender, activity, target_weight) VALUES (1, ?, ?, ?, ?, ?, ?)
+    `).run(u.height, u.weight, u.age, u.gender, parseFloat(u.activity), u.targetWeight ?? null);
 
     const insertFood = db.prepare(`
         INSERT INTO foods (id, category, name, unit, kcal, protein, carbs, fat, active, last_amount)
@@ -56,6 +59,12 @@ try {
             entryCount++;
         }
     }
+
+    const insertAchievement = db.prepare('INSERT INTO achievements (id, unlocked_at) VALUES (?, ?)');
+    for (const [id, unlockedAt] of Object.entries(data.achievements || {})) insertAchievement.run(id, unlockedAt);
+
+    const insertWeight = db.prepare('INSERT INTO weight_log (date, weight) VALUES (?, ?)');
+    for (const w of data.weights || []) insertWeight.run(w.date, w.weight);
 
     db.exec('COMMIT');
     console.log(`Migrated: 1 user profile, ${(data.foods || []).length} foods, ${entryCount} diary entries -> ${dbPath}`);

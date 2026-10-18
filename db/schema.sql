@@ -5,7 +5,8 @@ CREATE TABLE IF NOT EXISTS user_settings (
     weight   REAL    NOT NULL,
     age      INTEGER NOT NULL,
     gender   TEXT    NOT NULL,
-    activity REAL    NOT NULL
+    activity REAL    NOT NULL,
+    target_weight REAL
 );
 
 CREATE TABLE IF NOT EXISTS foods (
@@ -40,3 +41,17 @@ CREATE TABLE IF NOT EXISTS diary_entries (
 );
 CREATE INDEX IF NOT EXISTS idx_diary_date ON diary_entries(date);
 CREATE INDEX IF NOT EXISTS idx_diary_food ON diary_entries(food_id);
+
+-- One row per unlocked tier ("series:threshold"). Kept permanently: the stats that
+-- earned a badge can later drop (targets change, entries get deleted), and earned
+-- badges must never be revoked.
+CREATE TABLE IF NOT EXISTS achievements (
+    id          TEXT PRIMARY KEY,
+    unlocked_at TEXT NOT NULL
+);
+
+-- One weigh-in per day; logging the same date again overwrites it
+CREATE TABLE IF NOT EXISTS weight_log (
+    date   TEXT PRIMARY KEY,
+    weight REAL NOT NULL
+);
