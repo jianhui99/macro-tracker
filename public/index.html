@@ -534,7 +534,7 @@
             max-height: calc(100vh - 98px);
             min-height: 0;
         }
-        .quick-body { display: flex; flex-direction: column; gap: 12px; padding: 12px 14px 14px; min-height: 0; flex: 1; }
+        .quick-body { display: flex; flex-direction: column; gap: 12px; padding: 12px 14px 14px; min-height: 0; flex: 1; overflow-y: auto; }
         .mode-tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--line-soft); margin: 0 -14px; padding: 0 14px; }
         .mode-tab {
             position: relative;
@@ -559,7 +559,8 @@
         }
         .mode-tab[aria-selected="true"]::after { transform: scaleX(1); }
 
-        .add-form { display: flex; flex-direction: column; gap: 10px; min-height: 0; flex: 1; }
+        .add-form { display: flex; flex-direction: column; gap: 10px; flex: 1; }
+        .add-form > * { flex-shrink: 0; }
         .search { position: relative; }
         .search .ms { position: absolute; left: 10px; top: 10px; color: var(--subtle); pointer-events: none; }
         .search .input { padding-left: 36px; }
