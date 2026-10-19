@@ -104,6 +104,14 @@ button { cursor: pointer; background: none; border: 0; }
     letter-spacing: -0.01em;
 }
 
+/* Display numerals: classical Cinzel capitals for the brand mark and the hero-sized numbers */
+.brand-mark, .hero-num, .water-num, .wsum-hero b, .lv-emblem, .levelup-num {
+    font-family: 'Cinzel', serif;
+    font-style: normal;
+    font-weight: 800;
+    letter-spacing: 0;
+}
+
 /* ── Rail nav ── */
 .rail {
     background: linear-gradient(180deg, #1A1524, #13101B);
@@ -124,9 +132,8 @@ button { cursor: pointer; background: none; border: 0; }
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, .5), 0 0 0 1px var(--rim), 0 3px 0 #6E4A14, 0 0 18px rgba(232, 176, 75, .3);
     display: grid;
     place-items: center;
-    font-size: 19px;
+    font-size: 17px;
     margin-bottom: 14px;
-    font-stretch: 70%;
 }
 /* Level: every badge, chip and card takes its tint (--lv) from the title's metal */
 .lv-bronze  { --lv: #D08447; }
@@ -479,10 +486,8 @@ select.input { padding-right: 8px; }
 }
 /* Energy readout: molten-gold numerals; drop-shadow because text-shadow bleeds through clipped text */
 .hero-num {
-    font-size: clamp(60px, 6.4vw, 88px);
-    line-height: .86;
-    letter-spacing: -0.025em;
-    font-stretch: 66%;
+    font-size: clamp(48px, 5vw, 70px);
+    line-height: .9;
     padding-right: .06em;
     background: linear-gradient(180deg, #FFF8E6 15%, #F6D28A 55%, var(--accent));
     -webkit-background-clip: text;
@@ -1006,7 +1011,7 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
 
 .water-main { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .water-stat { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 8px; }
-.water-num { font-size: 40px; line-height: .9; font-stretch: 66%; }
+.water-num { font-size: 34px; line-height: .9; }
 .water-of { font-size: 13px; font-weight: 600; color: var(--muted); }
 .water-flag { display: none; align-items: center; gap: 2px; padding: 0 8px 0 4px; border-radius: 999px; background: var(--ok-bg); color: var(--ok); font-size: 12px; font-weight: 700; line-height: 20px; align-self: center; }
 .water-flag .ms { font-size: 15px; }
@@ -1952,7 +1957,7 @@ button.hm-cell:hover, button.hm-cell:focus-visible { transform: scale(1.35); pos
 .wsum-body > .empty { grid-column: 1 / -1; }
 .wsum-stats { display: flex; flex-direction: column; gap: 14px; padding: 16px; border-right: 1px solid var(--line-soft); align-self: stretch; }
 .wsum-hero span { display: block; font-size: 12px; color: var(--muted); }
-.wsum-hero b { font-size: 40px; line-height: 1; font-stretch: 66%; }
+.wsum-hero b { font-size: 34px; line-height: 1; }
 .wsum-hero small { margin-left: 4px; font-size: 13px; font-weight: 600; color: var(--muted); }
 .wsum-stats .ins-track i { background: var(--water); }
 .mbar-chart.wsum-chart { height: 180px; margin-top: 24px; }
