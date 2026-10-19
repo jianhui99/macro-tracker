@@ -225,6 +225,10 @@
         <div id="page-warehouse" class="page">
             <div class="topbar">
                 <h1 class="page-title">食物背包<small id="warehouse-count"></small></h1>
+                <fieldset class="seg seg-inline" id="inv-filter" aria-label="显示范围">
+                    <label><input type="radio" name="inv-filter" value="all"><span class="seg-opt">全部</span></label>
+                    <label><input type="radio" name="inv-filter" value="active" checked><span class="seg-opt">启用</span></label>
+                </fieldset>
                 <div class="search toolbar-search">
                     <span class="ms" aria-hidden="true">search</span>
                     <input type="search" id="warehouse-search" class="input" placeholder="搜索名称或分类">

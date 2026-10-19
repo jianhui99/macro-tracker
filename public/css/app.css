@@ -1186,7 +1186,7 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
 .water.is-empty .water-wave { opacity: 0; animation-play-state: paused; }
 .water.is-empty .bubble { animation: none; }
 .water-drop { position: absolute; left: 50%; top: 0; margin-left: -9px; font-size: 18px; color: var(--water); font-variation-settings: 'FILL' 1, 'wght' 500, 'opsz' 20; opacity: 0; pointer-events: none; z-index: 2; }
-.water-splash { position: absolute; left: 50%; top: calc(var(--surface, 104px) - 5px); width: 44px; height: 10px; margin-left: -22px; border-radius: 50%; border: 2px solid var(--water); opacity: 0; pointer-events: none; z-index: 2; }
+.water-splash { position: absolute; left: 50%; top: calc(var(--splash-y, 104px) - 5px); width: 44px; height: 10px; margin-left: -22px; border-radius: 50%; border: 2px solid var(--water); opacity: 0; pointer-events: none; z-index: 2; }
 .water-vis.is-pouring .water-drop { animation: dropFall .38s cubic-bezier(.55, 0, 1, .45); }
 .water-vis.is-pouring .water-splash { animation: splash .6s var(--ease-out) .34s; }
 .water-vis.is-pouring .water-surface { animation: slosh .9s var(--ease-out) .32s; }
@@ -1196,7 +1196,7 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
 @keyframes dropFall {
     0%   { opacity: 0; transform: translateY(-22px) scale(.5); }
     25%  { opacity: 1; transform: translateY(-12px) scale(1); }
-    100% { opacity: 1; transform: translateY(calc(var(--surface, 104px) - 16px)) scale(.9, 1.2); }
+    100% { opacity: 1; transform: translateY(calc(var(--splash-y, 104px) - 16px)) scale(.9, 1.2); }
 }
 @keyframes splash { 0% { opacity: 1; transform: scale(.2); } 100% { opacity: 0; transform: scale(1.6); } }
 @keyframes slosh { 25% { transform: scaleY(2.2); } 55% { transform: scaleY(.7); } 80% { transform: scaleY(1.3); } }
@@ -1597,6 +1597,9 @@ button.cal-day:hover { transform: translateY(-2px); border-color: var(--accent);
 .cal-day.st-ok .cal-date, .cal-day.st-over .cal-date, .cal-day.st-under .cal-date, .cal-day .cal-kcal { color: var(--ink); }
 .cal-day.is-today { box-shadow: 0 0 0 2px var(--accent); }
 .cal-day.is-today .cal-date::after { content: "今天"; margin-left: 4px; font-size: 10px; color: var(--accent); }
+/* Narrow cells can't fit the label beside the kcal; the gold ring still marks today */
+.cal-day.is-today { container-type: inline-size; }
+@container (max-width: 80px) { .cal-day.is-today .cal-date::after { content: none; } }
 .cal-grid.is-entering .cal-day { animation: calIn .4s var(--ease-out) backwards; animation-delay: calc(var(--i) * 12ms); }
 @keyframes calIn { from { opacity: 0; transform: scale(.94); } }
 /* Filled drop: the day's water goal was reached; hollow: some water logged, goal missed */
@@ -2607,10 +2610,11 @@ dialog[open]::backdrop { animation: fade .2s ease; }
     .cal-grid { padding: 0 6px 8px; }
     .cal-week { padding: 8px 6px 4px; }
     .cal-day { min-height: 58px; padding: 5px; border-radius: 8px; }
-    .cal-status span:last-child { display: none; }
+    /* The tint and bar already carry the status; dropping its row keeps recorded days as short as empty ones */
+    .cal-status { display: none; }
+    .cal-bar { margin-top: auto; }
     .cal-top { flex-direction: column; align-items: flex-start; }
     .cal-kcal { font-size: 12px; line-height: 1.1; }
-    .cal-day.is-today .cal-date::after { content: none; }
     .cal-water { top: 4px; right: 4px; font-size: 13px; }
     .cal-stars { gap: 0; }
     .cal-stars .ms { font-size: 10px; }
@@ -2624,6 +2628,10 @@ dialog[open]::backdrop { animation: fade .2s ease; }
     .water-left { flex-basis: 100%; margin-left: 0; }
     .water-form { flex-basis: 100%; min-width: 0; margin-left: 0; }
     .water-form .input { flex: 1; width: auto; min-width: 0; }
+    /* One swipeable row instead of wrapping, so a long log doesn't stretch the page; padding keeps focus rings unclipped */
+    .water-log { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x proximity; scrollbar-width: none; padding: 3px; margin: -3px; scroll-padding-inline: 3px; }
+    .water-log::-webkit-scrollbar { display: none; }
+    .water-entry { flex-shrink: 0; scroll-snap-align: end; }
 }
 
 @media (prefers-reduced-motion: reduce) {

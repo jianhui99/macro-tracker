@@ -14,6 +14,7 @@ let activeCat = ALL;
 let selectedId = null;
 let renderedId = null;
 let newFoodId = null;
+let activeOnly = true;
 
 // Below this width the item card is a bottom sheet opened by tapping a slot
 const sheetMq = matchMedia('(max-width: 1100px)');
@@ -60,6 +61,7 @@ function visibleFoods(cat) {
     const groups = groupFoodsByCategory();
     const keyword = $('warehouse-search').value.trim().toLowerCase();
     return (cat === ALL ? Object.values(groups).flat() : groups[cat] || [])
+        .filter(f => !activeOnly || f.active !== false)
         .filter(f => !keyword || f.name.toLowerCase().includes(keyword) || (f.category || '未分类').toLowerCase().includes(keyword));
 }
 
@@ -85,7 +87,8 @@ function renderGrid(entering = false) {
         grid.innerHTML = '<div class="empty">背包是空的。点上方「新建食物」，录入第一个常吃的食物。</div>';
         $('new-food').open = true;
     } else if (!foods.length) {
-        grid.innerHTML = `<div class="empty">没有匹配「${esc($('warehouse-search').value.trim())}」的食物</div>`;
+        const keyword = $('warehouse-search').value.trim();
+        grid.innerHTML = `<div class="empty">${keyword ? `没有匹配「${esc(keyword)}」的${activeOnly ? '启用' : ''}食物` : '没有启用的食物'}</div>`;
     } else {
         grid.innerHTML = foods.map((food, i) => slotHtml(food, counts[food.id] || 0, i)).join('');
     }
@@ -298,6 +301,10 @@ function initWarehouse() {
         if (e.key === 'Escape' && $('item-card').classList.contains('is-open') && !document.querySelector('dialog[open]')) closeSheet();
     });
     $('warehouse-search').addEventListener('input', () => renderWarehouse());
+    $('inv-filter').addEventListener('change', e => {
+        activeOnly = e.target.value === 'active';
+        renderWarehouse(true);
+    });
     document.querySelector('.new-food-form').addEventListener('submit', e => { e.preventDefault(); addCustomFood(); });
     $('warehouse-dialog').querySelector('form').addEventListener('submit', e => { e.preventDefault(); saveWarehouseEdit(); });
     document.querySelector('[data-close-warehouse]').addEventListener('click', closeWarehouseModal);

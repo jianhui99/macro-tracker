@@ -28,11 +28,14 @@ function renderWater(celebrate = false) {
     tweenNumber($('water-num'), total);
     $('water-goal').textContent = fmt(goal);
     $('water-left').textContent = full ? '' : `还差 ${fmt(goal - total)} ml，约 ${Math.ceil((goal - total) / GLASS_ML)} 杯`;
-    $('water-log').innerHTML = (state.water[date] || []).map(w => `
+    const log = $('water-log');
+    log.innerHTML = (state.water[date] || []).map(w => `
         <li class="water-entry${w.id === lastWaterId ? ' is-new' : ''}" data-id="${w.id}">
             <b class="num">${fmt(w.ml)}</b>ml${w.time ? `<small>${w.time}</small>` : ''}
             <button type="button" class="icon-btn" data-water-id="${w.id}" aria-label="删除 ${fmt(w.ml)} ml 饮水"><span class="ms" aria-hidden="true">close</span></button>
         </li>`).join('');
+    // Bring a just-added entry into view when the log scrolls sideways (mobile)
+    if (lastWaterId) log.scrollTo({ left: log.scrollWidth, behavior: reduceMotion.matches ? 'auto' : 'smooth' });
     lastWaterId = null;
 }
 
@@ -41,7 +44,7 @@ function addWater(ml, btn, customUnit = null) {
         const date = diaryDate();
         // The drop lands on the current surface; the level rises after it hits
         const before = Math.min(waterTotal(date) / targetsFor(date).water, 1);
-        $('water-card').style.setProperty('--surface', `${(1 - before) * $('water-vis').offsetHeight}px`);
+        $('water-card').style.setProperty('--splash-y', `${(1 - before) * $('water-vis').offsetHeight}px`);
         const time = date === localDate() ? new Date().toTimeString().slice(0, 5) : null;
         const created = await api('/api/water', 'POST', { date, ml, time, customUnit });
         (state.water[date] ||= []).push(created);
