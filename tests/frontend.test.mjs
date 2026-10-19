@@ -17,8 +17,10 @@ async function loadApp(overrides = {}) {
             addEventListener(type, fn) { (this.listeners[type] ||= []).push(fn); },
             setAttribute(name, value) { this[name] = value; },
             showModal() { this.open = true; this.openCount = (this.openCount || 0) + 1; },
-            close() { this.open = false; },
+            close() { this.open = false; (this.listeners.close || []).forEach(fn => fn()); },
             appendChild(child) { this.children.push(child); },
+            get firstElementChild() { return { remove: () => this.children.shift() }; },
+            click() { this.clicked = true; }, remove() {},
             classList: { add() {} }, lastChild: {},
             querySelector(selector) { return element(`${id} ${selector}`); }
         });
@@ -27,7 +29,7 @@ async function loadApp(overrides = {}) {
     const context = createContext({
         matchMedia: () => ({ matches: true }),
         localStorage: { getItem: () => null, setItem() {} },
-        document: { getElementById: element, createElement: () => element('toast') },
+        document: { getElementById: element, createElement: tag => element(tag === 'a' ? 'download' : 'toast'), body: { appendChild() {} } },
         console: { error() {} }, setTimeout() {},
         fetch: async () => ({ ok: true, status: 200, json: async () => structuredClone(fixture) }),
         ...overrides
@@ -48,6 +50,116 @@ async function loadApp(overrides = {}) {
     }
     return { get, element };
 }
+
+test('export fetches fresh complete data and prevents duplicate downloads', async () => {
+    let resolveFetch, blob, requests = 0;
+    const app = await loadApp({
+        Blob, URL: { createObjectURL(value) { blob = value; return 'blob:test'; }, revokeObjectURL() {} },
+        fetch: async url => {
+            assert.equal(url, '/api/state');
+            requests++;
+            await new Promise(resolve => { resolveFetch = resolve; });
+            return { ok: true, status: 200, json: async () => structuredClone(fixture) };
+        }
+    });
+    const { exportData } = await app.get('backup.js');
+    const pending = exportData();
+    assert.equal(app.element('export-data').disabled, true);
+    await exportData();
+    assert.equal(requests, 1);
+    assert.equal(blob, undefined);
+    resolveFetch();
+    await pending;
+    const { schemaVersion, exportedAt, ...data } = JSON.parse(await blob.text());
+    assert.equal(schemaVersion, 1);
+    assert.ok(Number.isFinite(Date.parse(exportedAt)));
+    assert.deepEqual(data, fixture);
+    assert.equal(app.element('download').clicked, true);
+    assert.equal(app.element('export-data').disabled, false);
+});
+
+test('export failure never downloads defaults and releases the button', async () => {
+    for (const failure of ['http', 'network']) {
+        const app = await loadApp({ fetch: async () => {
+            if (failure === 'network') throw new Error('offline');
+            return { ok: false, status: 500, text: async () => 'failed' };
+        } });
+        await (await app.get('backup.js')).exportData();
+        assert.equal(app.element('download').clicked, undefined);
+        assert.equal(app.element('export-data').disabled, false);
+        assert.match(app.element('toast').className, /t-error/);
+    }
+});
+
+test('import validates and previews before confirmation, blocks duplicates and reloads on success', async () => {
+    let resolveFetch, reloads = 0;
+    const calls = [];
+    const app = await loadApp({
+        location: { reload() { reloads++; } },
+        fetch: async (url, options) => {
+            calls.push({ url, ...options });
+            await new Promise(resolve => { resolveFetch = resolve; });
+            return { ok: true, status: 204 };
+        }
+    });
+    const backup = await app.get('backup.js');
+    backup.initBackup();
+    app.element('import-file').files = [{ text: async () => JSON.stringify(fixture) }];
+    await backup.previewImport();
+    assert.equal(calls.length, 0);
+    assert.equal(app.element('import-dialog').open, true);
+    assert.match(app.element('import-summary').textContent, /饮食 6 条、饮水 3 条、体重 3 条/);
+    const pending = backup.importData();
+    await backup.importData();
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0].url, '/api/import');
+    assert.equal(calls[0].method, 'POST');
+    assert.deepEqual(JSON.parse(calls[0].body), fixture);
+    assert.equal(app.element('confirm-import').disabled, true);
+    assert.equal(app.element('cancel-import').disabled, true);
+    let cancelled = false;
+    app.element('import-dialog').listeners.cancel[0]({ preventDefault() { cancelled = true; } });
+    assert.equal(cancelled, true);
+    resolveFetch();
+    await pending;
+    assert.equal(reloads, 1);
+    assert.equal(app.element('import-dialog').open, false);
+});
+
+test('invalid files and cancelling import leave server data untouched', async () => {
+    let requests = 0;
+    const app = await loadApp({ fetch: async () => { requests++; throw new Error('unexpected request'); } });
+    const backup = await app.get('backup.js');
+    backup.initBackup();
+    for (const content of ['not json', '{}', JSON.stringify({ ...fixture, water: null })]) {
+        app.element('import-file').files = [{ text: async () => content }];
+        await backup.previewImport();
+        assert.notEqual(app.element('import-dialog').open, true);
+        assert.equal(app.element('import-data').disabled, false);
+        assert.equal(app.element('import-file').value, '');
+    }
+    app.element('import-file').files = [{ text: async () => JSON.stringify(fixture) }];
+    await backup.previewImport();
+    app.element('cancel-import').listeners.click[0]();
+    await backup.importData();
+    assert.equal(requests, 0);
+});
+
+test('failed import keeps the confirmation open with an error and does not reload', async () => {
+    const app = await loadApp({
+        location: { reload() { assert.fail('must not reload on failure'); } },
+        fetch: async () => ({ ok: false, status: 500, text: async () => 'failed' })
+    });
+    const backup = await app.get('backup.js');
+    backup.initBackup();
+    app.element('import-file').files = [{ text: async () => JSON.stringify(fixture) }];
+    await backup.previewImport();
+    await backup.importData();
+    assert.equal(app.element('import-dialog').open, true);
+    assert.equal(app.element('import-error').hidden, false);
+    assert.equal(app.element('confirm-import').disabled, false);
+    assert.equal(app.element('cancel-import').disabled, false);
+});
 
 test('calculations match the original single-file baseline', async () => {
     const app = await loadApp();

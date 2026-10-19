@@ -1,15 +1,16 @@
 import { resetDiaryAnimation, renderFoodPicker, renderDiary, initDiary, setMeal, getDefaultMeal } from './diary.js';
-import { hideFloatTip, showToast, initUi } from './ui.js';
+import { hideFloatTip, initUi } from './ui.js';
 import { renderWarehouse, initWarehouse } from './warehouse.js';
 import { renderSummary, initSummary } from './summary.js';
 import { renderAchievements, initAchievements, syncAchievements } from './achievements.js';
 import { fillSettingsForm, fillCycleForm, renderWeights, initSettings } from './settings.js';
 import { $, localDate } from './helpers.js';
-import { state, loadState } from './state.js';
+import { loadState } from './state.js';
 import { initApi } from './api.js';
 import { initWater, fillCustomWater } from './water.js';
 import { initQuote, loadQuote } from './quote.js';
 import { initLevel } from './level.js';
+import { initBackup } from './backup.js';
 
 // ── Navigation ──
 function switchPage(pageId) {
@@ -33,20 +34,6 @@ function navigateToDay(dateStr) {
     switchPage('diary');
 }
 
-// ── Data export ──
-function exportData() {
-    const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href     = url;
-    a.download = `macro-tracker-${localDate()}.json`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-    showToast('数据已导出');
-}
-
 initApi();
 initDiary(() => switchPage('warehouse'));
 initWater();
@@ -59,7 +46,7 @@ initLevel();
 initUi();
 document.querySelectorAll('.rail-item').forEach(btn =>
     btn.addEventListener('click', () => switchPage(btn.dataset.page)));
-$('export-data').addEventListener('click', exportData);
+initBackup();
 
 async function init() {
     setMeal(getDefaultMeal());

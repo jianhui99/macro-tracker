@@ -1,3 +1,5 @@
+import { validateBackup } from '../../public/js/backup-format.js';
+
 // ── Row <-> API shape mapping (keeps the frontend's `state` object unchanged) ──
 function foodToJson(row) {
     return {
@@ -54,6 +56,46 @@ async function getState({ db }) {
         dayPlan: Object.fromEntries(dayPlan.results.map(r => [r.date, r.type])),
         water: waterByDate
     });
+}
+
+async function importState({ db, body }) {
+    try { validateBackup(body); } catch (err) { return json({ error: err.message }, 400); }
+    const { user: u, foods, diary, achievements, weights, dayTypes, dayPlan, water } = body;
+    const tables = [
+        ['user_settings', 'id,height,weight,age,gender,activity,target_weight,water_target,last_water_ml,last_water_unit',
+            [[1, u.height, u.weight, u.age, u.gender, u.activity, u.targetWeight ?? null, u.waterTarget ?? null, u.lastWater?.ml ?? null, u.lastWater?.unit ?? null]]],
+        ['foods', 'id,category,name,unit,kcal,protein,carbs,fat,active,last_amount',
+            foods.map(f => [f.id, f.category, f.name, f.unit, f.kcal, f.protein, f.carbs, f.fat, Number(f.active), f.lastAmount ?? null])],
+        ['diary_entries', 'id,date,food_id,is_temporary,meal,name,raw_amount,display_amount,kcal,protein,carbs,fat',
+            Object.entries(diary).flatMap(([date, entries]) => entries.map(e => [e.id, date, e.foodId ?? null, Number(e.isTemporary), e.meal, e.name, e.rawAmount, e.displayAmount, e.kcal, e.protein, e.carbs, e.fat]))],
+        ['achievements', 'id,unlocked_at', Object.entries(achievements)],
+        ['weight_log', 'date,weight', weights.map(w => [w.date, w.weight])],
+        ['day_types', 'id,carbs_offset,fat_offset', Object.entries(dayTypes).map(([id, t]) => [id, t.carbs, t.fat])],
+        ['day_plan', 'date,type', Object.entries(dayPlan)],
+        ['water_log', 'id,date,time,ml', Object.entries(water).flatMap(([date, drinks]) => drinks.map(w => [w.id, date, w.time ?? null, w.ml]))]
+    ];
+    const statements = tables.map(([table]) => db.prepare(`DELETE FROM ${table}`));
+    const encoder = new TextEncoder();
+    for (const [table, columns, rows] of tables) {
+        const fields = columns.split(',').map((_, i) => `json_extract(value, '$[${i}]')`).join(',');
+        const insert = db.prepare(`INSERT INTO ${table} (${columns}) SELECT ${fields} FROM json_each(?)`);
+        let chunk = [], bytes = 2;
+        for (const row of rows) {
+            const encoded = JSON.stringify(row);
+            const size = encoder.encode(encoded).length + 1;
+            if (size > 1_999_998) return json({ error: '备份中有单条记录过大，未导入。' }, 400);
+            // D1 limits each bound string to 2 MB; keep bulk inserts below that limit.
+            if (chunk.length && bytes + size > 1_000_000) {
+                statements.push(insert.bind(`[${chunk.join(',')}]`));
+                chunk = []; bytes = 2;
+            }
+            chunk.push(encoded); bytes += size;
+        }
+        if (chunk.length) statements.push(insert.bind(`[${chunk.join(',')}]`));
+    }
+    // Deletes and inserts must commit together, including every chunk of large backups.
+    await db.batch(statements);
+    return noContent();
 }
 
 // ── User settings ──
@@ -337,6 +379,7 @@ async function getQuote({ env }) {
 
 const ROUTES = [
     ['GET',    /^\/api\/state$/,                getState],
+    ['POST',   /^\/api\/import$/,               importState],
     ['PUT',    /^\/api\/user$/,                 putUser],
     ['POST',   /^\/api\/foods$/,                postFood],
     ['PUT',    /^\/api\/foods\/([^/]+)$/,        putFood],
@@ -388,7 +431,7 @@ export async function onRequest({ request, env }) {
         try {
             return await handler({ db: env.DB, env, body, params: match.slice(1).map(decodeURIComponent) });
         } catch (err) {
-            console.error(`[api] ${method} ${pathname} failed: ${err.message}`, body);
+            console.error(`[api] ${method} ${pathname} failed: ${err.message}`, pathname === '/api/import' ? undefined : body);
             return json({ error: 'internal error' }, 500);
         }
     }

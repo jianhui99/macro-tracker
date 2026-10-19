@@ -1718,6 +1718,8 @@ button.cal-day:hover { transform: translateY(-2px); border-color: var(--accent);
     letter-spacing: .08em;
     color: var(--lv, var(--muted));
     background: var(--surface);
+    animation: fade .35s var(--ease-out) backwards;
+    animation-delay: calc(var(--j) * 25ms + 120ms);
 }
 .ld-row {
     display: grid;

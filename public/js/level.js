@@ -101,7 +101,7 @@ function openLevelDialog() {
         if (r !== rank) {
             rank = r;
             const next = RANKS[RANKS.indexOf(r) - 1];
-            html += `<li class="ld-rank${r[1] ? ` lv-${r[1]}` : ''}">${r[2]} · Lv ${level}${next ? `–${next[0] - 1}` : '+'}</li>`;
+            html += `<li class="ld-rank${r[1] ? ` lv-${r[1]}` : ''}" style="--j:${Math.min(level - 1, 14)}">${r[2]} · Lv ${level}${next ? `-${next[0] - 1}` : '+'}</li>`;
         }
         const status = level < lv.level ? 'is-done' : level === lv.level ? 'is-current' : 'is-locked';
         const side = status === 'is-current'

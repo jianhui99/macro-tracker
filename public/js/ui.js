@@ -100,7 +100,7 @@ function initUi() {
     // ── Dialogs ──
     // Clicking the backdrop lands on the <dialog> itself (content lives in an inner form).
     // The badge dialog animates its own close.
-    document.querySelectorAll('dialog:not(#key-dialog):not(#badge-dialog)').forEach(d =>
+    document.querySelectorAll('dialog:not(#key-dialog):not(#badge-dialog):not(#import-dialog)').forEach(d =>
         d.addEventListener('click', e => { if (e.target === d) d.close('cancel'); }));
 
     const tipScope = document.querySelector('main');

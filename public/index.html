@@ -456,8 +456,10 @@
                 </fieldset>
             </div>
             <div class="panel data-panel">
-                <p>导出全部背包食物与日记数据，用于备份或迁移。</p>
+                <p>备份全部个人设置、食物、饮食、饮水、体重、成就及碳循环数据。导入会替换全部现有业务数据，请先导出备份。</p>
                 <button class="btn btn-ghost" id="export-data"><span class="ms" aria-hidden="true">download</span>导出 JSON</button>
+                <button class="btn btn-ghost" id="import-data" type="button">导入 JSON</button>
+                <input type="file" id="import-file" accept=".json,application/json" hidden>
             </div>
         </div>
     </main>
@@ -516,6 +518,19 @@
             <div class="dialog-foot">
                 <button type="button" class="btn btn-ghost" data-close-warehouse>取消</button>
                 <button type="submit" class="btn">保存并重算历史</button>
+            </div>
+        </form>
+    </dialog>
+
+    <dialog id="import-dialog" class="confirm-dialog" aria-labelledby="import-title" aria-describedby="import-warning import-summary">
+        <form class="dialog-body">
+            <h3 class="dialog-title" id="import-title">恢复 JSON 备份</h3>
+            <p id="import-summary"></p>
+            <p id="import-warning">确认后将替换全部现有业务数据，无法撤销。请先导出当前备份，并暂停其他页面或设备的编辑。</p>
+            <p id="import-error" class="key-error" role="alert" hidden></p>
+            <div class="dialog-foot">
+                <button type="button" class="btn btn-ghost" id="cancel-import">取消</button>
+                <button type="submit" class="btn btn-danger" id="confirm-import">确认替换并导入</button>
             </div>
         </form>
     </dialog>
