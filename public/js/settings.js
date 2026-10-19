@@ -1,4 +1,4 @@
-import { $, fmt, fmtKg, localDate, fmtMonthDay, WEEKDAYS, parseLocalDate } from './helpers.js';
+import { $, fmt, fmtKg, localDate, fmtMonthDay, WEEKDAYS, parseLocalDate, reduceMotion } from './helpers.js';
 import { state } from './state.js';
 import { computePlan, autoWaterTarget, macroIcon, DAY_TYPES, MACRO_META, applyOffset } from './nutrition.js';
 import { tweenNumber, withBusy, showToast, showConfirm } from './ui.js';
@@ -299,7 +299,22 @@ async function deleteWeight(date) {
     syncAchievements();
 }
 
+// theme.js (loaded in <head>) owns applying the theme; this control only saves the choice and signals it
+function initThemePicker() {
+    let pref = 'dark';
+    try { pref = localStorage.getItem('macro_tracker_theme') || 'dark'; } catch { /* storage unavailable */ }
+    (document.querySelector(`input[name="theme"][value="${pref}"]`) || document.querySelector('input[name="theme"]')).checked = true;
+    $('theme-seg').addEventListener('change', e => {
+        try { localStorage.setItem('macro_tracker_theme', e.target.value); } catch { /* storage unavailable */ }
+        const swap = () => document.dispatchEvent(new Event('themechange'));
+        // Cross-fades the whole page where View Transitions exist; elsewhere the swap is instant
+        if (document.startViewTransition && !reduceMotion.matches) document.startViewTransition(swap);
+        else swap();
+    });
+}
+
 function initSettings() {
+    initThemePicker();
     // Redraw on size changes: the settings page starts hidden, and the panel reflows with the window and list
     new ResizeObserver(() => {
         const box = $('weight-chart');

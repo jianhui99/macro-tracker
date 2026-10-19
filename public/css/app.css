@@ -1,6 +1,8 @@
 /* Dark fantasy palette: night-stone surfaces, parchment text, brass rims, gold accent.
-   Every text pair clears 4.5:1 (subtle 4:1, graphics 3:1) on --surface */
-:root {
+   Every text pair clears 4.5:1 (subtle 4:1, graphics 3:1) on --surface.
+   The light theme keeps a few "dark islands" (scoreboard, level card, toasts, tooltips, level-up)
+   by giving them this same token set, so nothing inside them needs a light variant. */
+:root, :root[data-theme="light"] :is(.board, .level-card, .toast, .chart-tip, .levelup) {
     color-scheme: dark;
     --accent: #E8B04B;
     --accent-deep: #B9832A;
@@ -17,6 +19,31 @@
     --line-soft: #2C2538;
     --rim: #08060C;
     --glint: rgba(255, 228, 170, .07);
+    --page-glow: rgba(92, 64, 160, .16);
+    --rail-a: #1A1524;
+    --rail-b: #13101B;
+    --panel-top: #211B2C;
+    --dialog-top: #241D31;
+    --ghost-top: #2D2539;
+    --card-shadow: rgba(0, 0, 0, .35);
+    /* Sunken surfaces: inputs, segmented controls, bar sockets, inventory slots */
+    --well: #14101C;
+    --well-line: #3A3046;
+    --well-shadow: rgba(0, 0, 0, .45);
+    --socket: rgba(0, 0, 0, .5);
+    --track: rgba(255, 255, 255, .08);
+    --slot-edge: #15111D;
+    --glass-core: #263258;
+    /* Metallic gold for gradient fills; unlike --accent it stays bright in the light theme */
+    --metal: #E8B04B;
+    /* Tier tints for level titles, rarity gems and their text */
+    --t-bronze: #D08447;
+    --t-silver: #B9C3D6;
+    --t-gold: #F5C451;
+    --t-diamond: var(--arcane);
+    --star: #F5C451;
+    --star-off: rgba(255, 255, 255, .14);
+    --over-stripe: #7A2A28;
 
     /* Lane colors (validated for CVD + 3:1 contrast on dark surfaces) */
     --kcal: var(--ink);
@@ -54,6 +81,63 @@
     --ease-spring: cubic-bezier(.34, 1.4, .64, 1);
 }
 
+/* Light theme: sunlit parchment with darker gold ink (validated against the same contrast bars) */
+:root[data-theme="light"] {
+    color-scheme: light;
+    --accent: #86590A;
+    --accent-deep: #6E4908;
+    --accent-soft: #F3E3BE;
+    --arcane: #3B54D9;
+    --ink: #2B2014;
+    --muted: #6B5B45;
+    --subtle: #857560;
+    --paper: #F1E8D8;
+    --surface: #FFFBF2;
+    --surface-2: #F5EDDD;
+    --line: #D4BF98;
+    --line-soft: #EADFCB;
+    --rim: #CDB88F;
+    --glint: rgba(255, 255, 255, .8);
+    --page-glow: rgba(232, 176, 75, .16);
+    --rail-a: #FBF5EA;
+    --rail-b: #F1E7D4;
+    --panel-top: #FFFDF8;
+    --dialog-top: #FFFDF8;
+    --ghost-top: #FFFFFF;
+    --card-shadow: rgba(90, 60, 20, .1);
+    --well: #F7F0E2;
+    --well-line: #D9C9AA;
+    --well-shadow: rgba(120, 90, 40, .12);
+    --socket: rgba(90, 60, 20, .14);
+    --track: rgba(90, 60, 20, .12);
+    --slot-edge: #EFE6D4;
+    --glass-core: #D3E0FF;
+    --protein: #E5476A;
+    --carbs: #C27F00;
+    --fat: #159E80;
+    --done: #0B7A5F;
+    --ok: #0B7A5F;     --ok-bg: #E3F5EE;
+    --over: #BE2A22;   --over-bg: #FCE8E5;
+    --under: #925C00;  --under-bg: #FCF2DD;
+    --bronze-bg: #F5E6D8;
+    --silver-bg: #E9EDF3;
+    --gold-bg: #F8EDCB;
+    --diamond-bg: #E4E8FD;
+    --water: #2F6FEA;
+    --water-deep: #1C3FB8;
+    --water-soft: #E6EEFF;
+    --locked-bg: #ECE4D6;
+    --locked-medal: #D3C7B3;
+    --locked-ink: #6E6352;
+    --t-bronze: #9A5523;
+    --t-silver: #5E6B80;
+    --t-gold: #8A6400;
+    --t-diamond: #3B54D9;
+    --star: #B98200;
+    --star-off: rgba(90, 60, 20, .18);
+    --over-stripe: #F3B5AE;
+}
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 html { -webkit-text-size-adjust: 100%; }
@@ -63,7 +147,7 @@ body {
     line-height: 1.45;
     color: var(--ink);
     background:
-        radial-gradient(1200px 600px at 85% -10%, rgba(92, 64, 160, .16), transparent 60%),
+        radial-gradient(1200px 600px at 85% -10%, var(--page-glow), transparent 60%),
         radial-gradient(900px 500px at -10% 110%, rgba(232, 176, 75, .06), transparent 60%),
         var(--paper);
     display: grid;
@@ -114,7 +198,7 @@ button { cursor: pointer; background: none; border: 0; }
 
 /* ── Rail nav ── */
 .rail {
-    background: linear-gradient(180deg, #1A1524, #13101B);
+    background: linear-gradient(180deg, var(--rail-a), var(--rail-b));
     border-right: 1px solid var(--line);
     box-shadow: 1px 0 0 var(--rim);
     display: flex;
@@ -127,7 +211,7 @@ button { cursor: pointer; background: none; border: 0; }
     width: 40px;
     height: 40px;
     border-radius: 11px;
-    background: linear-gradient(180deg, #F4C978, var(--accent) 55%, var(--accent-deep));
+    background: linear-gradient(180deg, #F4C978, var(--metal) 55%, #B9832A);
     color: var(--on-accent);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, .5), 0 0 0 1px var(--rim), 0 3px 0 #6E4A14, 0 0 18px rgba(232, 176, 75, .3);
     display: grid;
@@ -136,17 +220,17 @@ button { cursor: pointer; background: none; border: 0; }
     margin-bottom: 14px;
 }
 /* Level: every badge, chip and card takes its tint (--lv) from the title's metal */
-.lv-bronze  { --lv: #D08447; }
-.lv-silver  { --lv: #B9C3D6; }
-.lv-gold    { --lv: #F5C451; }
-.lv-diamond { --lv: var(--arcane); }
+.lv-bronze  { --lv: var(--t-bronze); }
+.lv-silver  { --lv: var(--t-silver); }
+.lv-gold    { --lv: var(--t-gold); }
+.lv-diamond { --lv: var(--t-diamond); }
 .rail-level {
     margin: -6px 0 10px;
     padding: 1px 7px;
     border-radius: 999px;
     font-size: 12px;
     color: var(--lv, var(--accent));
-    background: rgba(0, 0, 0, .35);
+    background: var(--socket);
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--lv, var(--accent)) 55%, transparent);
     animation: chipIn .4s var(--ease-spring);
 }
@@ -228,10 +312,10 @@ main { overflow-y: auto; padding: 18px 22px 28px; }
 
 /* Carved stone card: brass border, dark outer rim, top glint and a solid drop for thickness */
 .panel, .quote-card {
-    background: linear-gradient(180deg, #211B2C, var(--surface) 120px);
+    background: linear-gradient(180deg, var(--panel-top), var(--surface) 120px);
     border: 1px solid var(--line);
     border-radius: 12px;
-    box-shadow: 0 0 0 1px var(--rim), inset 0 1px 0 var(--glint), 0 4px 0 var(--rim), 0 10px 24px rgba(0, 0, 0, .35);
+    box-shadow: 0 0 0 1px var(--rim), inset 0 1px 0 var(--glint), 0 4px 0 var(--rim), 0 10px 24px var(--card-shadow);
 }
 /* Banner header: a faint brass wash and a diamond stud before the title */
 .panel-head, .quote-head {
@@ -285,7 +369,7 @@ main { overflow-y: auto; padding: 18px 22px 28px; }
     height: 40px;
     padding: 0 16px;
     border-radius: 10px;
-    background: linear-gradient(180deg, #F4C978, var(--accent) 50%, #D99A2B);
+    background: linear-gradient(180deg, #F4C978, var(--metal) 50%, #D99A2B);
     color: var(--on-accent);
     font-weight: 800;
     letter-spacing: .03em;
@@ -304,7 +388,7 @@ main { overflow-y: auto; padding: 18px 22px 28px; }
 .btn:active { transform: translateY(var(--drop)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .3), 0 0 0 1px var(--rim), 0 0 0 var(--drop-color); }
 .btn:disabled { opacity: .5; cursor: progress; }
 .btn .ms { font-size: 18px; }
-.btn-ghost { background: linear-gradient(180deg, #2D2539, var(--surface-2)); color: var(--ink); --drop-color: var(--rim); box-shadow: inset 0 0 0 1px var(--line), inset 0 2px 0 var(--glint), 0 var(--drop) 0 var(--drop-color); font-weight: 500; }
+.btn-ghost { background: linear-gradient(180deg, var(--ghost-top), var(--surface-2)); color: var(--ink); --drop-color: var(--rim); box-shadow: inset 0 0 0 1px var(--line), inset 0 2px 0 var(--glint), 0 var(--drop) 0 var(--drop-color); font-weight: 500; }
 .btn-ghost:active { box-shadow: inset 0 0 0 1px var(--line), 0 0 0 var(--drop-color); }
 .btn-danger { background: linear-gradient(180deg, #E5554A, #C8382E); color: #fff; --drop-color: #6A1712; }
 .btn-sm { height: 34px; padding: 0 12px; font-size: 13px; border-radius: 9px; }
@@ -329,22 +413,22 @@ main { overflow-y: auto; padding: 18px 22px 28px; }
     width: 100%;
     height: 40px;
     padding: 0 12px;
-    border: 1px solid #3A3046;
+    border: 1px solid var(--well-line);
     border-radius: 10px;
-    background: #14101C;
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, .45);
+    background: var(--well);
+    box-shadow: inset 0 2px 4px var(--well-shadow);
     font-size: 14px;
     transition: border-color .15s, box-shadow .15s;
 }
 .input:hover { border-color: var(--accent-deep); }
-.input:focus { outline: none; border-color: var(--accent); box-shadow: inset 0 2px 4px rgba(0, 0, 0, .45), 0 0 0 3px rgba(232, 176, 75, .18); }
+.input:focus { outline: none; border-color: var(--accent); box-shadow: inset 0 2px 4px var(--well-shadow), 0 0 0 3px rgba(232, 176, 75, .18); }
 select.input { padding-right: 8px; }
 /* iOS Safari sizes native date inputs to their content and ignores width, overflowing narrow grid tracks */
 .input[type=date] { -webkit-appearance: none; appearance: none; min-width: 0; }
 .input[type=date]::-webkit-date-and-time-value { text-align: left; }
 .input[readonly] { background: transparent; border-style: dashed; box-shadow: none; color: var(--muted); }
-.input[readonly]:hover { border-color: #3A3046; }
-.input[readonly]:focus { border-color: #3A3046; box-shadow: none; }
+.input[readonly]:hover { border-color: var(--well-line); }
+.input[readonly]:focus { border-color: var(--well-line); box-shadow: none; }
 .field > span small { font-size: 11px; font-weight: 400; color: var(--subtle); }
 
 /* Segmented control built on native radios */
@@ -353,10 +437,10 @@ select.input { padding-right: 8px; }
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 4px;
     padding: 4px;
-    background: #14101C;
+    background: var(--well);
     border-radius: 12px;
     border: 0;
-    box-shadow: inset 0 0 0 1px #3A3046, inset 0 2px 4px rgba(0, 0, 0, .45);
+    box-shadow: inset 0 0 0 1px var(--well-line), inset 0 2px 4px var(--well-shadow);
 }
 .seg label { position: relative; }
 .seg input { position: absolute; opacity: 0; pointer-events: none; }
@@ -376,7 +460,7 @@ select.input { padding-right: 8px; }
 .seg-opt .ms { font-size: 18px; }
 .seg label:hover .seg-opt { color: var(--ink); }
 .seg input:checked + .seg-opt {
-    background: linear-gradient(180deg, #F4C978, var(--accent) 50%, #D99A2B);
+    background: linear-gradient(180deg, #F4C978, var(--metal) 50%, #D99A2B);
     color: var(--on-accent);
     font-weight: 700;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, .45), 0 2px 0 #6E4A14;
@@ -405,7 +489,7 @@ select.input { padding-right: 8px; }
     top: 0;
     left: 0;
     border-radius: 9px;
-    background: linear-gradient(180deg, #F4C978, var(--accent) 50%, #D99A2B);
+    background: linear-gradient(180deg, #F4C978, var(--metal) 50%, #D99A2B);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, .45), 0 2px 0 #6E4A14, 0 0 12px rgba(232, 176, 75, .3);
     pointer-events: none;
     transition: transform .3s var(--ease-spring), width .3s var(--ease-spring);
@@ -968,7 +1052,7 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
     position: absolute;
     inset: 0;
     clip-path: path('M27 0H49V6H46V26Q76 34 76 66Q76 104 38 104Q0 104 0 66Q0 34 30 26V6H27Z');
-    background: radial-gradient(circle at 38px 68px, #263258, var(--water-soft) 70%);
+    background: radial-gradient(circle at 38px 68px, var(--glass-core), var(--water-soft) 70%);
 }
 /* Gloss on the left and 25% graduations on the right, drawn over the water like marks on glass */
 .water-glass::before, .water-glass::after { content: ""; position: absolute; z-index: 1; pointer-events: none; }
@@ -1166,7 +1250,7 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
     width: 26px;
     height: 26px;
     border-radius: 8px;
-    background: var(--accent);
+    background: var(--metal);
     color: var(--on-accent);
     display: grid;
     place-items: center;
@@ -1204,9 +1288,9 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
 .inv-grid > .empty { grid-column: 1 / -1; }
 
 /* Rarity metals, reusing the badge tiers; gold and diamond pulse with the badge glow */
-.r-bronze  { --gem: #D08447; }
-.r-silver  { --gem: #B9C3D6; }
-.r-gold    { --gem: #F5C451; --glow: rgba(245, 196, 81, .6); --gem-fx: glow 2.6s ease-in-out infinite; }
+.r-bronze  { --gem: var(--t-bronze); }
+.r-silver  { --gem: var(--t-silver); }
+.r-gold    { --gem: var(--t-gold); --glow: rgba(245, 196, 81, .6); --gem-fx: glow 2.6s ease-in-out infinite; }
 .r-diamond { --gem: var(--arcane); --glow: rgba(142, 162, 255, .7); --gem-fx: glow 2.2s ease-in-out infinite; }
 
 /* Slot: a sunken stone well whose rim takes the rarity metal */
@@ -1223,8 +1307,8 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
     padding: 18px 8px 10px;
     border: 1px solid var(--gem);
     border-radius: 10px;
-    background: radial-gradient(circle at 50% 38%, color-mix(in srgb, var(--gem) 16%, var(--surface-2)), #15111D 72%);
-    box-shadow: inset 0 2px 8px rgba(0, 0, 0, .55), 0 0 0 1px var(--rim);
+    background: radial-gradient(circle at 50% 38%, color-mix(in srgb, var(--gem) 16%, var(--surface-2)), var(--slot-edge) 72%);
+    box-shadow: inset 0 2px 8px var(--well-shadow), 0 0 0 1px var(--rim);
     text-align: center;
     transition: transform .2s var(--ease-out);
     animation: var(--gem-fx, none);
@@ -1256,7 +1340,7 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
     overflow: hidden;
     overflow-wrap: anywhere;
 }
-.r-gold .slot-name, .r-gold .item-name { color: #F5C451; }
+.r-gold .slot-name, .r-gold .item-name { color: var(--t-gold); }
 .r-diamond .slot-name, .r-diamond .item-name { color: var(--arcane); }
 .slot-qty {
     position: absolute;
@@ -1396,7 +1480,7 @@ button.cal-day:hover { transform: translateY(-2px); border-color: var(--accent);
 .cal-kcal { font-size: 15px; }
 .cal-status { display: flex; align-items: center; gap: 2px; font-size: 11px; font-weight: 700; margin-top: auto; }
 .cal-status .ms { font-size: 14px; }
-.cal-bar { position: relative; height: 4px; border-radius: 999px; background: rgba(255, 255, 255, .08); margin-top: 4px; overflow: hidden; }
+.cal-bar { position: relative; height: 4px; border-radius: 999px; background: var(--track); margin-top: 4px; overflow: hidden; }
 .cal-bar i { position: absolute; inset: 0 auto 0 0; border-radius: 999px; background: currentColor; }
 .cal-bar::after { content: ""; position: absolute; left: 80%; top: 0; bottom: 0; width: 2px; background: var(--surface); }
 .cal-day.st-ok    { background: var(--ok-bg);    border-color: transparent; color: var(--ok); }
@@ -1410,9 +1494,9 @@ button.cal-day:hover { transform: translateY(-2px); border-color: var(--accent);
 /* Filled drop: the day's water goal was reached; hollow: some water logged, goal missed */
 .cal-water { position: absolute; top: 28px; right: 7px; font-size: 15px; color: var(--water); font-variation-settings: 'FILL' 0, 'wght' 500, 'opsz' 20; }
 .cal-stars { display: flex; gap: 1px; margin-top: 2px; }
-.cal-stars .ms { font-size: 13px; color: rgba(255, 255, 255, .14); font-variation-settings: 'FILL' 1, 'wght' 500, 'opsz' 20; }
-.cal-stars .is-on { color: #F5C451; filter: drop-shadow(0 0 3px rgba(245, 196, 81, .6)); }
-.cal-legend .lg-star { color: #F5C451; font-variation-settings: 'FILL' 1, 'wght' 500, 'opsz' 20; }
+.cal-stars .ms { font-size: 13px; color: var(--star-off); font-variation-settings: 'FILL' 1, 'wght' 500, 'opsz' 20; }
+.cal-stars .is-on { color: var(--star); filter: drop-shadow(0 0 3px rgba(245, 196, 81, .6)); }
+.cal-legend .lg-star { color: var(--star); font-variation-settings: 'FILL' 1, 'wght' 500, 'opsz' 20; }
 .cal-grid.is-entering .cal-stars .is-on { animation: tierPop .4s var(--ease-spring) backwards; animation-delay: calc(var(--i) * 12ms + 300ms); }
 .cal-grid.is-entering .cal-stars .is-on:nth-child(2) { animation-delay: calc(var(--i) * 12ms + 360ms); }
 .cal-grid.is-entering .cal-stars .is-on:nth-child(3) { animation-delay: calc(var(--i) * 12ms + 420ms); }
@@ -1456,8 +1540,8 @@ button.cal-day:hover { transform: translateY(-2px); border-color: var(--accent);
     height: 12px;
     border-radius: 4px;
     overflow: hidden;
-    background: rgba(0, 0, 0, .5);
-    box-shadow: inset 0 1px 2px rgba(0, 0, 0, .6), 0 0 0 1px rgba(232, 176, 75, .18);
+    background: var(--socket);
+    box-shadow: inset 0 1px 2px var(--well-shadow), 0 0 0 1px rgba(232, 176, 75, .18);
 }
 .xp-track::before {
     content: "";
@@ -1471,7 +1555,7 @@ button.cal-day:hover { transform: translateY(-2px); border-color: var(--accent);
     inset: 0 auto 0 0;
     width: calc(var(--p) * 100%);
     overflow: hidden;
-    background: linear-gradient(180deg, #FFE3A0 0 30%, var(--accent) 30% 70%, var(--accent-deep) 70%);
+    background: linear-gradient(180deg, #FFE3A0 0 30%, var(--metal) 30% 70%, #B9832A 70%);
     box-shadow: 0 0 10px rgba(232, 176, 75, .5);
     transform-origin: left;
     animation: growX .8s var(--ease-out) backwards;
@@ -1532,7 +1616,7 @@ button.cal-day:hover { transform: translateY(-2px); border-color: var(--accent);
 .plan-step { padding: 10px 12px; border-radius: 10px; background: var(--paper); }
 .plan-step span { font-size: 12px; color: var(--muted); display: block; }
 .plan-step b { font-size: 26px; line-height: 1.1; }
-.plan-step.is-goal { background: linear-gradient(180deg, #F4C978, var(--accent) 50%, #D99A2B); color: var(--on-accent); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .45), 0 3px 0 #6E4A14; }
+.plan-step.is-goal { background: linear-gradient(180deg, #F4C978, var(--metal) 50%, #D99A2B); color: var(--on-accent); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .45), 0 3px 0 #6E4A14; }
 .plan-step.is-goal span { color: rgba(26, 18, 6, .75); }
 .split-bar { display: flex; gap: 2px; height: 12px; border-radius: 4px; overflow: hidden; }
 .split-bar i { background: var(--accent); transition: flex-grow .6s var(--ease-out); }
@@ -1545,8 +1629,8 @@ button.cal-day:hover { transform: translateY(-2px); border-color: var(--accent);
 .plan-water .input { max-width: 220px; }
 .formula { font-size: 12px; color: var(--muted); line-height: 1.7; border-top: 1px solid var(--line-soft); padding-top: 12px; }
 .formula code { font-family: inherit; color: var(--ink); background: var(--paper); padding: 1px 5px; border-radius: 4px; }
-.data-panel { display: flex; align-items: center; gap: 12px; padding: 14px 16px; margin-top: 14px; }
-.data-panel p { font-size: 13px; color: var(--muted); margin-right: auto; }
+.data-panel { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 14px 16px; margin-top: 14px; }
+.data-panel p { flex: 1 1 220px; font-size: 13px; color: var(--muted); }
 
 /* ── Achievements ── */
 .seg.seg-inline { display: inline-grid; grid-template-columns: none; grid-auto-flow: column; background: rgba(255, 255, 255, .05); }
@@ -1558,6 +1642,7 @@ button.cal-day:hover { transform: translateY(-2px); border-color: var(--accent);
     align-items: center;
     gap: 16px;
     margin-bottom: 14px;
+    color: var(--ink);
     padding: 14px 18px;
     border: 1px solid var(--line);
     border-radius: 14px;
@@ -1779,7 +1864,7 @@ button.cal-day:hover { transform: translateY(-2px); border-color: var(--accent);
     animation: burst .9s var(--ease-out) calc(var(--i) * 25ms + 600ms) forwards;
 }
 .burst i:nth-child(even) { width: 4px; height: 4px; margin: -2px; background: var(--glow); }
-.new-chip { margin-left: 6px; padding: 1px 6px; border-radius: 999px; background: var(--accent); color: var(--on-accent); font-size: 10px; font-weight: 800; letter-spacing: .04em; vertical-align: 2px; }
+.new-chip { margin-left: 6px; padding: 1px 6px; border-radius: 999px; background: var(--metal); color: var(--on-accent); font-size: 10px; font-weight: 800; letter-spacing: .04em; vertical-align: 2px; }
 @keyframes badgeIn { from { opacity: 0; transform: translateY(8px); } }
 @keyframes medalIn { from { opacity: 0; transform: scale(.4) rotate(-25deg); } }
 @keyframes medalNew {
@@ -1808,7 +1893,7 @@ button.cal-day:hover { transform: translateY(-2px); border-color: var(--accent);
 .tier.is-on { background: var(--medal); color: var(--medal-ink); box-shadow: none; }
 .badge-prog { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
 .badge-prog b { font-size: 14px; color: var(--ink); }
-.badge-bar { flex: 1; height: 4px; border-radius: 999px; background: rgba(255, 255, 255, .08); overflow: hidden; }
+.badge-bar { flex: 1; height: 4px; border-radius: 999px; background: var(--track); overflow: hidden; }
 .badge-bar i { display: block; height: 100%; border-radius: inherit; background: var(--accent); }
 .badge-grid.is-entering .badge-bar i { transform-origin: left; animation: growX .6s var(--ease-out) backwards; animation-delay: calc(var(--i) * 25ms + 150ms); }
 
@@ -1933,7 +2018,7 @@ button.hm-cell { transition: transform .12s var(--ease-out); }
 button.hm-cell:hover, button.hm-cell:focus-visible { transform: scale(1.35); position: relative; z-index: 1; }
 /* Each status gets a distinct texture too, so the grid never relies on hue alone */
 .hm-cell.st-ok    { background: var(--ok); }
-.hm-cell.st-over  { background: repeating-linear-gradient(135deg, var(--over) 0 2px, #7A2A28 2px 4px); }
+.hm-cell.st-over  { background: repeating-linear-gradient(135deg, var(--over) 0 2px, var(--over-stripe) 2px 4px); }
 .hm-cell.st-under { background: var(--under-bg); box-shadow: inset 0 0 0 1.5px var(--under); }
 .hm-cell.is-future { background: transparent; box-shadow: inset 0 0 0 1px var(--line-soft); }
 .hm-cell.is-void { visibility: hidden; }
@@ -2013,7 +2098,7 @@ button.hm-cell:hover, button.hm-cell:focus-visible { transform: scale(1.35); pos
 .ring { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; text-align: center; }
 .ring svg { width: 88px; height: 88px; transform: rotate(-90deg); }
 /* 20 notches around r=38 (circumference 238.8) */
-.ring-track { fill: none; stroke: rgba(0, 0, 0, .45); stroke-width: 9; stroke-dasharray: 9.94 2; }
+.ring-track { fill: none; stroke: var(--socket); stroke-width: 9; stroke-dasharray: 9.94 2; }
 .ring-fill { fill: none; stroke: var(--accent); stroke-width: 9; stroke-linecap: round; filter: drop-shadow(0 0 4px rgba(232, 176, 75, .55)); }
 .ring.is-done .ring-fill { stroke: var(--done); filter: drop-shadow(0 0 6px rgba(62, 224, 184, .7)); }
 .ring.is-done span { color: var(--done); }
@@ -2067,7 +2152,7 @@ dialog {
     padding: 0;
     border-radius: 14px;
     width: min(440px, calc(100vw - 32px));
-    background: linear-gradient(180deg, #241D31, var(--surface) 160px);
+    background: linear-gradient(180deg, var(--dialog-top), var(--surface) 160px);
     color: var(--ink);
     box-shadow: inset 0 0 0 1px var(--line), inset 0 2px 0 var(--glint), 0 0 0 1px var(--rim), 0 24px 60px rgba(0, 0, 0, .6);
 }
@@ -2175,7 +2260,7 @@ dialog[open]::backdrop { animation: fade .2s ease; }
         padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
         border-right: 0;
         border-top: 1px solid var(--line);
-        box-shadow: 0 -1px 0 var(--rim), 0 -8px 24px rgba(0, 0, 0, .45);
+        box-shadow: 0 -1px 0 var(--rim), 0 -8px 24px var(--well-shadow);
     }
     .brand-mark, .rail-level { display: none; }
     .rail-item { width: auto; flex: 1; }
