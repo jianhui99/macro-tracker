@@ -6,6 +6,7 @@ import { api } from './api.js';
 import { syncAchievements } from './achievements.js';
 import { saveDayPlan } from './diary.js';
 import { lang, setLang } from './i18n.js';
+import { soundPref, setSoundPref } from './sound.js';
 
 // ── Settings ──
 // Activity level read as a character class: [class, icon, plain activity]
@@ -423,9 +424,15 @@ function initLangPicker() {
     $('lang-seg').addEventListener('change', e => setLang(e.target.value));
 }
 
+function initSoundPicker() {
+    (document.querySelector(`input[name="sound"][value="${soundPref()}"]`) || document.querySelector('input[name="sound"]')).checked = true;
+    $('sound-seg').addEventListener('change', e => setSoundPref(e.target.value));
+}
+
 function initSettings() {
     initThemePicker();
     initLangPicker();
+    initSoundPicker();
     // Redraw on size changes: the settings page starts hidden, and the panel reflows with the window and list
     new ResizeObserver(() => {
         const box = $('weight-chart');

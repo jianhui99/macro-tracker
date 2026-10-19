@@ -1,6 +1,7 @@
 import { parseLocalDate, diaryDate, $, localDate, reduceMotion, esc, fmt, fmt1, WEEKDAYS } from './helpers.js';
 import { MEAL_ORDER, MEALS, macroIcon, targetsFor, sumEntries, recordingStreak, MACRO_KEYS, FINISH_SCALE, dayStars } from './nutrition.js';
 import { moveSegThumb, replay, tweenNumber, showToast, withBusy, showConfirm } from './ui.js';
+import { sfx } from './sound.js';
 import { groupFoodsByCategory, unitText, unitBase, scaleFood } from './foods.js';
 import { state } from './state.js';
 import { renderWater } from './water.js';
@@ -282,6 +283,7 @@ function renderScoreboard(totals, celebrate) {
         if (celebrate && lit && !star.classList.contains('is-on')) replay(star, 'is-lighting');
         star.classList.toggle('is-on', lit);
     }));
+    if (celebrate && stars > prevStars) sfx('star');
     starsEl.classList.remove('is-complete');
     if (celebrate && stars === 3 && prevStars < 3) {
         replay(starsEl, 'is-complete');
@@ -318,9 +320,10 @@ function renderScoreboard(totals, celebrate) {
 
         if (!celebrate || prevPct === undefined) continue;
         if (pct > prevPct) { replay(lane, 'bump'); replay(miniLane, 'bump'); }
+        if (over && prevPct <= 1) sfx('over');
         if (prevPct < 1 && pct >= 1) {
             replay(lane, 'finish');
-            if (key === 'protein') showToast('蛋白质今日达标，保持住', 'success');
+            if (key === 'protein') showToast('蛋白质今日达标，保持住', 'success', 'goal');
             if (key === 'kcal') showToast('今日热量已到目标线', 'warning');
         }
     }
@@ -367,7 +370,7 @@ function addDiaryEntry() {
         lastAddedId = created.id;
         renderDiary({ celebrate: true });
         floatGain(created.kcal);
-        showToast(`已记录「${food.name}」到${MEALS[meal].label}`);
+        showToast(`已记录「${food.name}」到${MEALS[meal].label}`, 'success', 'food');
         syncAchievements();
         $('food-amount').focus();
     });
@@ -393,7 +396,7 @@ function addTemporaryDiaryEntry() {
         renderDiary({ celebrate: true });
         floatGain(created.kcal);
         ['temp-food-name', 'temp-food-kcal', 'temp-food-protein', 'temp-food-carbs', 'temp-food-fat'].forEach(id => { $(id).value = ''; });
-        showToast(`已记录「${name}」到${MEALS[meal].label}`);
+        showToast(`已记录「${name}」到${MEALS[meal].label}`, 'success', 'food');
         syncAchievements();
     });
 }
@@ -487,7 +490,7 @@ async function changeEntryPortion(index, delta) {
     state.diary[date][index] = updated;
     changedEntryId = updated.id;
     renderDiary({ celebrate: true });
-    showToast(next > 1 ? `「${base}」x ${next}` : `「${base}」已恢复一份`);
+    showToast(next > 1 ? `「${base}」x ${next}` : `「${base}」已恢复一份`, 'success', 'food');
     syncAchievements();
 }
 

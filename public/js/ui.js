@@ -1,7 +1,11 @@
 import { $, fmt, reduceMotion, esc } from './helpers.js';
+import { sfx } from './sound.js';
 
 // ── Toasts ──
-function showToast(message, type = 'success') {
+const TOAST_SOUNDS = { success: 'save', error: 'error', warning: 'over', info: 'delete', award: 'award' };
+
+function showToast(message, type = 'success', sound = TOAST_SOUNDS[type]) {
+    sfx(sound);
     const icons = { success: 'check_circle', error: 'error', warning: 'error', info: 'info', award: 'military_tech' };
     const toast = document.createElement('div');
     toast.className = `toast t-${type}`;

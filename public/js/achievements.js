@@ -4,6 +4,7 @@ import { sumEntries, kcalStatus, targetsFor } from './nutrition.js';
 import { state } from './state.js';
 import { api } from './api.js';
 import { showToast, replay } from './ui.js';
+import { sfx } from './sound.js';
 import { renderLevel, levelFor, xpTotals, XP } from './level.js';
 
 // ── Achievements ──
@@ -351,6 +352,7 @@ function openBadge(li) {
     if (!view || dlg.open) return;
     dlg.innerHTML = badgeDetailHtml(view);
     dlg.showModal();
+    if (view.metal !== 'locked') sfx('medal');
     badgeSource = li.querySelector('.medal');
     if (reduceMotion.matches) return;
 

@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,400..900;1,62..125,400..900&family=Cinzel:wght@700..900&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..24,400..600,0..1,0&icon_names=ac_unit,accessibility_new,add,arrow_downward,arrow_upward,backpack,blender,bolt,cake,calendar_month,check,check_circle,chevron_left,chevron_right,close,contrast,dark_mode,delete,diamond,dinner_dining,download,edit,edit_note,egg,egg_alt,emoji_events,error,event_available,explore,fitness_center,flag,free_breakfast,glass_cup,grain,hiking,info,inventory_2,kebab_dining,landscape,light_mode,local_fire_department,lunch_dining,menu_book,military_tech,monitor_weight,nutrition,palette,person,ramen_dining,remove,restart_alt,restaurant,rice_bowl,save,search,sports_score,sprint,star,straighten,swords,target,translate,trending_down,unfold_less,unfold_more,upload,verified,vertical_align_bottom,water_bottle,water_bottle_large,water_drop,water_full&display=block" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..24,400..600,0..1,0&icon_names=ac_unit,accessibility_new,add,arrow_downward,arrow_upward,backpack,blender,bolt,cake,calendar_month,check,check_circle,chevron_left,chevron_right,close,contrast,dark_mode,delete,diamond,dinner_dining,download,edit,edit_note,egg,egg_alt,emoji_events,error,event_available,explore,fitness_center,flag,free_breakfast,glass_cup,grain,hiking,info,inventory_2,kebab_dining,landscape,light_mode,local_fire_department,lunch_dining,menu_book,military_tech,monitor_weight,music_note,nutrition,palette,person,ramen_dining,remove,restart_alt,restaurant,rice_bowl,save,search,sports_score,sprint,star,straighten,swords,target,translate,trending_down,unfold_less,unfold_more,upload,verified,vertical_align_bottom,volume_off,volume_up,water_bottle,water_bottle_large,water_drop,water_full&display=block" rel="stylesheet">
 
     <link rel="stylesheet" href="/css/app.css">
 </head>
@@ -491,6 +491,15 @@
                     <fieldset class="seg seg-inline" id="lang-seg" aria-label="语言 / Language" translate="no">
                         <label><input type="radio" name="lang" value="zh"><span class="seg-opt" lang="zh-CN">中文</span></label>
                         <label><input type="radio" name="lang" value="en"><span class="seg-opt" lang="en">English</span></label>
+                    </fieldset>
+                </div>
+                <div class="sys-row">
+                    <span class="sys-icon" aria-hidden="true"><span class="ms">volume_up</span></span>
+                    <div class="sys-text"><b>声音</b><small>背景音乐和操作音效，浏览器要求点击页面后才会开始播放</small></div>
+                    <fieldset class="seg seg-inline" id="sound-seg" aria-label="声音">
+                        <label><input type="radio" name="sound" value="all"><span class="seg-opt"><span class="ms" aria-hidden="true">music_note</span>全部</span></label>
+                        <label><input type="radio" name="sound" value="sfx"><span class="seg-opt"><span class="ms" aria-hidden="true">volume_up</span>仅音效</span></label>
+                        <label><input type="radio" name="sound" value="off"><span class="seg-opt"><span class="ms" aria-hidden="true">volume_off</span>静音</span></label>
                     </fieldset>
                 </div>
                 <div class="sys-row">

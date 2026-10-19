@@ -3,6 +3,7 @@ import { diaryDate, $, fmt, localDate, reduceMotion } from './helpers.js';
 import { targetsFor } from './nutrition.js';
 import { replay, showToast, tweenNumber, withBusy, moveSegThumb } from './ui.js';
 import { api } from './api.js';
+import { sfx } from './sound.js';
 import { syncAchievements } from './achievements.js';
 
 // ── Water ──
@@ -20,7 +21,7 @@ function renderWater(celebrate = false) {
     const card = $('water-card');
     if (celebrate && full && !card.classList.contains('is-full')) {
         replay(card, 'is-celebrating');
-        showToast('今日饮水达标，继续保持', 'success');
+        showToast('今日饮水达标，继续保持', 'success', 'goal');
     }
     card.classList.toggle('is-full', full);
     card.classList.toggle('is-empty', !total);
@@ -51,6 +52,7 @@ function addWater(ml, btn, customUnit = null) {
         if (customUnit) state.user.lastWater = { ml, unit: customUnit };
         lastWaterId = created.id;
         replay($('water-vis'), 'is-pouring');
+        sfx('water');
         renderWater(true);
         syncAchievements();
     });

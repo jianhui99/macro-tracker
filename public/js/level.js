@@ -77,7 +77,7 @@ function floatXp(gain) {
 }
 
 function celebrateLevelUp({ level, title }) {
-    showToast(`升级到 Lv ${level}「${title}」`, 'award');
+    showToast(`升级到 Lv ${level}「${title}」`, 'award', 'levelup');
     if (reduceMotion.matches) return;
     const el = document.createElement('div');
     el.className = 'levelup';

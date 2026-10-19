@@ -12,6 +12,7 @@ import { initQuote, loadQuote } from './quote.js';
 import { initLevel } from './level.js';
 import { initBackup } from './backup.js';
 import { startI18n } from './i18n.js';
+import { initSound } from './sound.js';
 
 // ── Navigation ──
 // The page lives in the URL hash so a reload stays on it
@@ -60,6 +61,7 @@ initSettings();
 initQuote();
 initLevel();
 initUi();
+initSound();
 document.querySelectorAll('.rail-item').forEach(btn =>
     btn.addEventListener('click', () => switchPage(btn.dataset.page)));
 initBackup();
