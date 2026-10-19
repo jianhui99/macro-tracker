@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,400..900;1,62..125,400..900&family=Cinzel:wght@700..900&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..24,400..600,0..1,0&icon_names=ac_unit,accessibility_new,add,arrow_downward,arrow_upward,backpack,blender,bolt,cake,calendar_month,check,check_circle,chevron_left,chevron_right,close,contrast,dark_mode,delete,diamond,dinner_dining,download,edit,edit_note,egg,egg_alt,emoji_events,error,event_available,explore,fitness_center,flag,free_breakfast,glass_cup,grain,hiking,info,inventory_2,kebab_dining,light_mode,local_fire_department,lunch_dining,menu_book,military_tech,monitor_weight,nutrition,person,ramen_dining,remove,restart_alt,restaurant,rice_bowl,search,sports_score,sprint,star,straighten,swords,target,trending_down,unfold_less,unfold_more,verified,vertical_align_bottom,water_bottle,water_bottle_large,water_drop,water_full&display=block" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..24,400..600,0..1,0&icon_names=ac_unit,accessibility_new,add,arrow_downward,arrow_upward,backpack,blender,bolt,cake,calendar_month,check,check_circle,chevron_left,chevron_right,close,contrast,dark_mode,delete,diamond,dinner_dining,download,edit,edit_note,egg,egg_alt,emoji_events,error,event_available,explore,fitness_center,flag,free_breakfast,glass_cup,grain,hiking,info,inventory_2,kebab_dining,landscape,light_mode,local_fire_department,lunch_dining,menu_book,military_tech,monitor_weight,nutrition,person,ramen_dining,remove,restart_alt,restaurant,rice_bowl,search,sports_score,sprint,star,straighten,swords,target,trending_down,unfold_less,unfold_more,verified,vertical_align_bottom,water_bottle,water_bottle_large,water_drop,water_full&display=block" rel="stylesheet">
 
     <link rel="stylesheet" href="/css/app.css">
 </head>
@@ -77,8 +77,8 @@
                             <span id="chip-protein" class="chip"></span>
                             <label class="chip day-type-chip">
                                 <span class="ms" aria-hidden="true">flag</span>
-                                <span class="chip-label">关卡</span>
-                                <select id="day-type" aria-label="关卡难度（当天目标）">
+                                <span class="chip-label">形态</span>
+                                <select id="day-type" aria-label="元素形态（当天目标）">
                                     <option value="">自动目标</option>
                                     <option value="high">高碳日</option>
                                     <option value="medium">中碳日</option>
@@ -432,12 +432,12 @@
             </div>
 
             <section class="panel cycle-panel" aria-labelledby="cycle-title">
-                <div class="panel-head"><h2 id="cycle-title">碳循环</h2><span class="hint">在自动目标上增减碳水和脂肪</span></div>
+                <div class="panel-head"><h2 id="cycle-title">元素形态</h2><span class="hint">碳循环：每种形态在自动目标上增减碳水和脂肪；设为今日形态后，今天按它计算目标，也可以在日记页切换</span></div>
                 <form id="cycle-form">
                     <div id="cycle-rows" class="cycle-rows"></div>
                 </form>
                 <div class="settings-foot">
-                    <button type="submit" form="cycle-form" class="btn" id="save-cycle">保存碳循环目标</button>
+                    <button type="submit" form="cycle-form" class="btn" id="save-cycle">保存形态设定</button>
                 </div>
             </section>
 

@@ -490,19 +490,24 @@ async function deleteDiaryEntry(index) {
 }
 
 // ── Carb cycling ──
-async function setDayType(type) {
-    const date = diaryDate();
+// Saves one date's element form (carb-cycle type, '' clears it); resolves false when the request failed
+async function saveDayPlan(date, type) {
     try {
         if (type) await api(`/api/day-plan/${date}`, 'PUT', { type });
         else await api(`/api/day-plan/${date}`, 'DELETE');
     } catch {
-        $('day-type').value = state.dayPlan[date] || '';
-        return;
+        return false;
     }
     if (type) state.dayPlan[date] = type;
     else delete state.dayPlan[date];
-    renderDiary();
     syncAchievements();
+    return true;
+}
+
+async function setDayType(type) {
+    const date = diaryDate();
+    if (!(await saveDayPlan(date, type))) { $('day-type').value = state.dayPlan[date] || ''; return; }
+    renderDiary();
 }
 
 function resetDiaryAnimation() { lanePct = {}; }
@@ -561,4 +566,4 @@ function initDiary(openWarehouse) {
     document.querySelector('[data-close-diary]').addEventListener('click', closeModal);
 }
 
-export { resetDiaryAnimation, renderFoodPicker, renderDiary, initDiary, setMeal, getDefaultMeal };
+export { resetDiaryAnimation, renderFoodPicker, renderDiary, initDiary, setMeal, getDefaultMeal, saveDayPlan };

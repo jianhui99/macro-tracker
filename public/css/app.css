@@ -59,6 +59,10 @@
     --hot: #FFB45C;
     --on-done: #1A1206;
     --star-locked: #3A3050;
+    /* Element forms (carb cycle): fire = high, earth = medium, ice = low */
+    --el-fire: #FF7A45;
+    --el-earth: #D2A867;
+    --el-ice: #7FD4FF;
     --emblem-ink: #1A1206;
 
     /* Lane colors (validated for CVD + 3:1 contrast on dark surfaces) */
@@ -166,6 +170,9 @@
     --hot: #C2570C;
     --on-done: #FFFFFF;
     --star-locked: #DCCDB3;
+    --el-fire: #C2410C;
+    --el-earth: #8A6A2E;
+    --el-ice: #1F7FB8;
     /* Light tier tints are darker, so emblem numbers flip to white */
     --emblem-ink: #FFFFFF;
 }
@@ -1581,8 +1588,60 @@ button.cal-day:hover { transform: translateY(-2px); border-color: var(--accent);
 /* ── Weight log ── */
 .cycle-panel, .weight-panel { margin-top: 14px; }
 .cycle-rows { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; padding: 16px 16px 14px; }
-.cycle-row { display: flex; flex-direction: column; gap: 10px; padding: 12px; border-radius: 10px; background: var(--paper); min-width: 0; }
-.cycle-name { font-size: 13px; font-weight: 700; }
+/* Element form cards: tinted by their element, the one set for today glows with a turning rune ring */
+.el-fire  { --el: var(--el-fire); }
+.el-earth { --el: var(--el-earth); }
+.el-ice   { --el: var(--el-ice); }
+.cycle-row {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+    padding: 12px;
+    border-radius: 12px;
+    background: radial-gradient(120% 90% at 100% 0%, color-mix(in srgb, var(--el) 18%, transparent), transparent 65%), var(--well);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--el) 30%, var(--well-line)), inset 0 2px 4px var(--well-shadow);
+    transition: box-shadow .3s, transform .3s var(--ease-spring);
+    animation: badgeIn .35s var(--ease-out) backwards;
+    animation-delay: calc(var(--i) * 50ms);
+}
+.cycle-row.is-today {
+    box-shadow: inset 0 0 0 2px var(--el), inset 0 2px 4px var(--well-shadow), 0 0 22px color-mix(in srgb, var(--el) 35%, transparent);
+    transform: translateY(-2px);
+}
+.cycle-top { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.el-emblem {
+    position: relative;
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    color: var(--el);
+    background: radial-gradient(circle, color-mix(in srgb, var(--el) 22%, transparent), transparent 70%);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--el) 55%, transparent);
+}
+.el-emblem .ms { font-size: 22px; font-variation-settings: 'FILL' 1, 'wght' 500, 'opsz' 24; filter: drop-shadow(0 0 6px color-mix(in srgb, var(--el) 70%, transparent)); }
+.el-emblem::before {
+    content: "";
+    position: absolute;
+    inset: -5px;
+    border-radius: 50%;
+    border: 1px dashed color-mix(in srgb, var(--el) 70%, transparent);
+    opacity: 0;
+    transition: opacity .3s;
+}
+.cycle-row.is-today .el-emblem::before { opacity: 1; animation: raySpin 10s linear infinite; }
+.cycle-row.is-today .el-emblem .ms { animation: tierPop .45s var(--ease-spring); }
+.cycle-title { display: flex; flex-direction: column; min-width: 0; margin-right: auto; }
+.cycle-name { font-size: 14px; font-weight: 800; letter-spacing: .04em; color: var(--el); }
+.cycle-title small { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.today-tag { flex-shrink: 0; padding: 1px 8px; border-radius: 999px; font-size: 11px; font-weight: 800; color: var(--on-accent); background: var(--metal); visibility: hidden; }
+.cycle-row.is-today .today-tag { visibility: visible; animation: stamp .4s var(--ease-spring); }
+.cycle-pick { align-self: stretch; }
+.cycle-row.is-today .cycle-pick { color: var(--el); box-shadow: inset 0 0 0 1px var(--el), 0 var(--drop) 0 var(--drop-color); }
 .cycle-result { display: flex; flex-direction: column; gap: 2px; font-size: 12px; color: var(--muted); }
 .cycle-result b { font-size: 26px; line-height: 1.1; color: var(--ink); }
 .cycle-inputs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }

@@ -4,6 +4,7 @@ import { computePlan, autoWaterTarget, DAY_TYPES, MACRO_META, applyOffset } from
 import { tweenNumber, withBusy, showToast, showConfirm } from './ui.js';
 import { api } from './api.js';
 import { syncAchievements } from './achievements.js';
+import { saveDayPlan } from './diary.js';
 
 // ── Settings ──
 // Activity level read as a character class: [class, icon, plain activity]
@@ -103,16 +104,55 @@ function renderPlan(user) {
         </div>`).join('');
 }
 
+// Carb-cycle day types read as element forms: [element class, form name, tagline, icon]
+const ELEMENTS = {
+    high:   ['el-fire', '火之形态', '训练日爆发', 'local_fire_department'],
+    medium: ['el-earth', '大地形态', '平衡稳定', 'landscape'],
+    low:    ['el-ice', '冰霜形态', '燃脂冰封', 'ac_unit']
+};
+
 function fillCycleForm() {
-    $('cycle-rows').innerHTML = Object.entries(DAY_TYPES).map(([id, label]) => `
-        <div class="cycle-row" data-type="${id}">
-            <span class="cycle-name">${label}</span>
+    $('cycle-rows').innerHTML = Object.entries(DAY_TYPES).map(([id, label], i) => {
+        const [cls, name, tagline, icon] = ELEMENTS[id];
+        return `
+        <div class="cycle-row ${cls}" data-type="${id}" style="--i:${i}">
+            <div class="cycle-top">
+                <span class="el-emblem" aria-hidden="true"><span class="ms">${icon}</span></span>
+                <div class="cycle-title"><span class="cycle-name">${name}</span><small>${label} · ${tagline}</small></div>
+                <span class="today-tag">今日</span>
+            </div>
             <div class="cycle-result"></div>
             <div class="cycle-inputs">
                 ${['carbs', 'fat'].map(k => `<label class="field"><span>${MACRO_META[k][0]}增减 g</span><input type="number" class="input" name="${k}" value="${state.dayTypes[id][k]}" min="-500" max="500" step="any" required></label>`).join('')}
             </div>
-        </div>`).join('');
+            <button type="button" class="btn btn-ghost btn-sm cycle-pick" data-type="${id}"></button>
+        </div>`;
+    }).join('');
     renderCyclePreview();
+    renderTodayForm();
+}
+
+// Only classes and labels change, so unsaved offset edits in the cards survive a form switch
+function renderTodayForm() {
+    const today = state.dayPlan[localDate()] || '';
+    document.querySelectorAll('.cycle-row').forEach(row => {
+        const active = row.dataset.type === today;
+        row.classList.toggle('is-today', active);
+        const btn = row.querySelector('.cycle-pick');
+        btn.setAttribute('aria-pressed', String(active));
+        btn.innerHTML = active
+            ? '<span class="ms" aria-hidden="true">check</span>今日形态 · 点击取消'
+            : '设为今日形态';
+    });
+}
+
+async function pickTodayForm(btn) {
+    const type = state.dayPlan[localDate()] === btn.dataset.type ? '' : btn.dataset.type;
+    await withBusy(btn, async () => {
+        if (!(await saveDayPlan(localDate(), type))) return;
+        renderTodayForm();
+        showToast(type ? `今日形态：${ELEMENTS[type][1]}` : '今天已恢复自动目标');
+    });
 }
 
 function readCycleForm() {
@@ -134,7 +174,7 @@ async function saveDayTypes() {
         const types = readCycleForm();
         await api('/api/day-types', 'PUT', types);
         state.dayTypes = types;
-        showToast('已保存碳循环目标');
+        showToast('已保存形态设定');
         syncAchievements();
     });
 }
@@ -370,6 +410,10 @@ function initSettings() {
     $('user-activity').addEventListener('change', onSettingsInput);
     $('user-water-target').addEventListener('input', onSettingsInput);
     $('cycle-form').addEventListener('input', renderCyclePreview);
+    $('cycle-rows').addEventListener('click', e => {
+        const btn = e.target.closest('.cycle-pick');
+        if (btn) pickTodayForm(btn);
+    });
     $('cycle-form').addEventListener('submit', e => { e.preventDefault(); saveDayTypes(); });
     document.querySelector('.weight-form').addEventListener('submit', e => { e.preventDefault(); logWeight(); });
     $('weight-list').addEventListener('click', e => {
