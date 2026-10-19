@@ -786,16 +786,17 @@ select.input { padding-right: 8px; }
 .chip.is-hot .ms { color: var(--hot); font-variation-settings: 'FILL' 1, 'wght' 600, 'opsz' 24; transform-origin: 50% 90%; animation: flicker 1.6s ease-in-out infinite; }
 @keyframes flicker { 50% { transform: scale(1.12) rotate(-4deg); filter: drop-shadow(0 0 4px rgba(255, 180, 92, .7)); } }
 
-.lanes { position: relative; display: flex; flex-direction: column; }
+/* The name column fits the longest label (two characters in Chinese, a word in English); subgrid keeps every track aligned */
+.lanes { position: relative; display: grid; grid-template-columns: max-content minmax(0, 1fr) 172px; column-gap: 12px; }
 .lane {
     display: grid;
-    grid-template-columns: 52px minmax(0, 1fr) 172px;
+    grid-column: 1 / -1;
+    grid-template-columns: subgrid;
     align-items: center;
-    gap: 12px;
     padding: 7px 0;
     border-top: 1px solid rgba(232, 176, 75, .14);
 }
-.lane-name { font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+.lane-name { font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
 .lane-name .ms { font-size: 18px; color: var(--c); }
 /* HP-style bars: a sunken socket, glossy fill, and segment notches every 10% of target */
 .lane-track {
