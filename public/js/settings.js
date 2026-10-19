@@ -207,6 +207,14 @@ function goalStatHtml(first, latest, list) {
     return `<div><span>距目标 ${fmtKg(target)}</span>${remaining > 0 ? `<b class="num">${fmtKg(remaining)}</b><small>kg</small>` : '<b>已达成</b>'}</div>`;
 }
 
+// Indices of weigh-ins lower than every earlier one; the first weigh-in only sets the bar
+function newLows(list) {
+    const lows = new Set();
+    let min = Infinity;
+    list.forEach((w, i) => { if (i && w.weight < min) lows.add(i); min = Math.min(min, w.weight); });
+    return lows;
+}
+
 // Share of the way from the first weigh-in to the target (a gain goal counts upward), clamped to [0, 1]
 function weightProgress(start, current, target) {
     if (!target || target === start) return null;
@@ -220,7 +228,7 @@ function renderWeightXp(first, latest) {
     if (progress === null) return;
     const pct = Math.round(progress * 100);
     xp.innerHTML = `
-        <div class="xp-head"><span>目标进度</span><b class="num">${pct}<small>%</small></b><em>${fmtKg(first.weight)} → ${fmtKg(state.user.targetWeight)} kg</em></div>
+        <div class="xp-head"><span>修炼进度</span><b class="num">${pct}<small>%</small></b><em>${fmtKg(first.weight)} → ${fmtKg(state.user.targetWeight)} kg</em></div>
         <div class="xp-track" role="progressbar" aria-label="体重目标进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"><i style="--p:${progress}"></i></div>`;
 }
 
@@ -239,10 +247,12 @@ function renderWeights() {
     $('weight-stats').hidden = !latest;
     renderWeightXp(first, latest);
 
+    // Each weigh-in is a save slot; one that undercuts every earlier weigh-in is a record (the 刷新最低 rule)
+    const lows = newLows(list);
     $('weight-list').innerHTML = list.map((w, i) => {
         const day = fmtMonthDay(w.date);
-        return `<li>
-                <span class="w-date">${day}<small>${WEEKDAYS[parseLocalDate(w.date).getDay()]}</small></span>
+        return `<li class="${lows.has(i) ? 'is-record' : ''}">
+                <span class="w-date"><b class="slot-no num">#${i + 1}</b>${day}<small>${WEEKDAYS[parseLocalDate(w.date).getDay()]}</small>${lows.has(i) ? '<span class="rec-tag">新纪录</span>' : ''}</span>
                 <span class="w-kg num">${fmtKg(w.weight)}</span>
                 ${i ? weightDeltaHtml(w.weight - list[i - 1].weight) : '<span class="w-delta"></span>'}
                 <span class="w-actions">
@@ -293,13 +303,25 @@ function renderWeightChart(animate = false) {
 
     const xs = ts.map(x), ys = ws.map(y);
     const last = pts.length - 1;
+    const lows = newLows(pts);
+    // BMI ladder: the 28 and 24 cut-offs as weights for this height, clipped to the visible range
+    const h2 = (state.user.height / 100) ** 2;
+    const bands = [[Infinity, 28 * h2, 'obese', '肥胖'], [28 * h2, 24 * h2, 'over', '超重'], [24 * h2, -Infinity, 'normal', '正常']]
+        .map(([top, bottom, cls, label]) => {
+            const y1 = y(Math.min(top, hi)), y2 = y(Math.max(bottom, lo));
+            if (y2 - y1 < 1) return '';
+            return `<g class="band band-${cls}"><rect x="${m.left}" y="${y1}" width="${plotW}" height="${y2 - y1}"/>${y2 - y1 > 18 ? `<text x="${width - m.right - 6}" y="${y1 + 14}" text-anchor="end">${label}</text>` : ''}</g>`;
+        }).join('');
     box.innerHTML = `
         <svg class="${animate ? 'is-drawing' : ''}" width="${width}" height="${height}" role="img" aria-label="体重趋势：${fmtMonthDay(pts[0].date)} ${fmtKg(ws[0])} kg，${fmtMonthDay(pts[last].date)} ${fmtKg(ws[last])} kg">
+            ${bands}
             <g class="grid axis">${yTicks.map(v => `<line x1="${m.left}" x2="${width - m.right}" y1="${y(v)}" y2="${y(v)}"/><text x="${m.left - 8}" y="${y(v) + 4}" text-anchor="end">${fmtKg(v)}</text>`).join('')}</g>
             <g class="axis">${xTicks.map(tk => `<text x="${x(tk.t)}" y="${height - 10}" text-anchor="middle">${tk.label}</text>`).join('')}</g>
-            ${target ? `<g class="goal"><line x1="${m.left}" x2="${width - m.right}" y1="${y(target)}" y2="${y(target)}"/><text x="${m.left + 6}" y="${y(target) - 6 < m.top + 4 ? y(target) + 15 : y(target) - 6}">目标 ${fmtKg(target)} kg</text></g>` : ''}
+            ${target ? `<g class="goal"><line x1="${m.left}" x2="${width - m.right}" y1="${y(target)}" y2="${y(target)}"/><path class="goal-flag" d="M${m.left + 4},${y(target)}v-15l10,4.5l-10,4.5"/><text x="${m.left + 18}" y="${y(target) - 6 < m.top + 4 ? y(target) + 15 : y(target) - 6}">终点 ${fmtKg(target)} kg</text></g>` : ''}
             <line class="crosshair" y1="${m.top}" y2="${height - m.bottom}" visibility="hidden"/>
             <path class="series" d="${xs.map((px, i) => `${i ? 'L' : 'M'}${px.toFixed(1)},${ys[i].toFixed(1)}`).join('')}" pathLength="1"/>
+            ${last ? `<g class="start-mark"><circle r="3.5" cx="${xs[0]}" cy="${ys[0]}"/><text x="${xs[0]}" y="${ys[0] - 9}" text-anchor="${xs[0] < m.left + 20 ? 'start' : 'middle'}">起点</text></g>` : ''}
+            ${[...lows].filter(i => i !== last).map(i => `<path class="low-mark" d="M${xs[i]},${ys[i] - 5}l5,5l-5,5l-5,-5z"/>`).join('')}
             <circle class="dot" r="4" cx="${xs[last]}" cy="${ys[last]}"/>
             <text class="end-label num" x="${xs[last] + 9}" y="${ys[last] + 4}">${fmtKg(ws[last])}</text>
             <circle class="dot hover-dot" r="4" visibility="hidden"/>
@@ -323,7 +345,7 @@ function renderWeightChart(animate = false) {
 
         const diff = i ? Math.round((ws[i] - ws[i - 1]) * 100) / 100 : null;
         const diffText = diff === null ? '' : diff === 0 ? '与上次持平' : `比上次 ${diff > 0 ? '+' : '-'}${fmtKg(Math.abs(diff))} kg`;
-        tip.innerHTML = `${fmtMonthDay(pts[i].date)} ${WEEKDAYS[parseLocalDate(pts[i].date).getDay()]}<b class="num">${fmtKg(ws[i])} kg</b>${diffText}`;
+        tip.innerHTML = `${fmtMonthDay(pts[i].date)} ${WEEKDAYS[parseLocalDate(pts[i].date).getDay()]}<b class="num">${fmtKg(ws[i])} kg</b>${diffText}${lows.has(i) ? ' · 新纪录' : ''}`;
         tip.hidden = false;
         // Sit above the point, or below it when there's no room
         const py = ys[i] + svg.getBoundingClientRect().top - box.getBoundingClientRect().top;

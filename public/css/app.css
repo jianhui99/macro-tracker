@@ -1697,8 +1697,12 @@ button.cal-day:hover { transform: translateY(-2px); border-color: var(--accent);
 .weight-list li { display: grid; grid-template-columns: minmax(0, 1fr) auto 56px auto; align-items: center; gap: 8px; min-height: 44px; padding: 0 8px; border-radius: 8px; }
 .weight-list li + li { box-shadow: 0 -1px 0 var(--line-soft); }
 .weight-list li:hover { background: var(--line-soft); }
-.w-date { font-size: 13px; }
-.w-date small { color: var(--subtle); margin-left: 4px; }
+.w-date { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0 6px; min-width: 0; font-size: 13px; }
+.w-date small { color: var(--subtle); }
+/* Save slots: a slot number, and records get a gold tag and gold weight */
+.slot-no { font-size: 12px; color: var(--subtle); }
+.rec-tag { padding: 0 6px; border-radius: 999px; font-size: 10px; font-weight: 800; line-height: 16px; color: var(--on-accent); background: var(--metal); align-self: center; }
+.weight-list li.is-record .w-kg { color: var(--t-gold); }
 .w-kg { font-size: 16px; text-align: right; }
 .w-delta { display: inline-flex; align-items: center; justify-content: flex-end; gap: 1px; font-size: 12px; font-weight: 700; color: var(--subtle); }
 .w-delta .ms { font-size: 14px; }
@@ -1715,6 +1719,18 @@ button.cal-day:hover { transform: translateY(-2px); border-color: var(--accent);
 .weight-chart .crosshair { stroke: var(--subtle); stroke-width: 1; }
 .weight-chart .goal line { stroke: var(--ok); stroke-width: 1.5; stroke-dasharray: 4 4; }
 .weight-chart .goal text { font-size: 11px; font-weight: 600; fill: var(--muted); }
+.weight-chart .goal-flag { fill: var(--ok); stroke: var(--ok); stroke-width: 1.5; stroke-linejoin: round; }
+/* BMI ladder bands behind the line, plus start and record markers on it */
+.weight-chart .band rect { fill: color-mix(in srgb, var(--band) 9%, transparent); }
+.weight-chart .band text { font-size: 11px; font-weight: 700; letter-spacing: .1em; fill: color-mix(in srgb, var(--band) 75%, transparent); }
+.weight-chart .band-normal { --band: var(--ok); }
+.weight-chart .band-over   { --band: var(--under); }
+.weight-chart .band-obese  { --band: var(--over); }
+.weight-chart .start-mark circle { fill: var(--surface); stroke: var(--accent); stroke-width: 2; }
+.weight-chart .start-mark text { font-size: 11px; font-weight: 700; fill: var(--muted); }
+.weight-chart .low-mark { fill: var(--t-gold); stroke: var(--surface); stroke-width: 1.5; filter: drop-shadow(0 0 3px rgba(245, 196, 81, .7)); }
+.is-drawing .band { animation: fade .5s ease backwards; }
+.is-drawing .start-mark, .is-drawing .low-mark, .is-drawing .goal-flag { animation: fade .3s ease .7s backwards; }
 .chart-tip {
     position: absolute;
     top: 12px;
