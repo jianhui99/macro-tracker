@@ -264,6 +264,9 @@ function renderScoreboard(totals, celebrate) {
     $('board').classList.toggle('is-over', remaining < 0);
     $('hero-label').textContent = remaining < 0 ? '能量溢出' : '剩余能量';
     tweenNumber($('hero-num'), Math.abs(remaining));
+    $('mini-hud').classList.toggle('is-over', remaining < 0);
+    $('mini-hero-label').textContent = remaining < 0 ? '溢出' : '剩余';
+    tweenNumber($('mini-hero-num'), Math.abs(remaining));
 
     const streak = recordingStreak();
     $('chip-streak').classList.toggle('is-hot', streak >= 3);
@@ -274,11 +277,11 @@ function renderScoreboard(totals, celebrate) {
     const prevStars = Number(starsEl.dataset.stars || 0);
     starsEl.dataset.stars = stars;
     starsEl.setAttribute('aria-label', `星级 ${stars} / 3`);
-    starsEl.querySelectorAll('.ms').forEach((star, i) => {
+    [starsEl, $('mini-stars')].forEach(row => row.querySelectorAll('.ms').forEach((star, i) => {
         const lit = i < stars;
         if (celebrate && lit && !star.classList.contains('is-on')) replay(star, 'is-lighting');
         star.classList.toggle('is-on', lit);
-    });
+    }));
     starsEl.classList.remove('is-complete');
     if (celebrate && stars === 3 && prevStars < 3) {
         replay(starsEl, 'is-complete');
@@ -292,11 +295,14 @@ function renderScoreboard(totals, celebrate) {
 
     for (const key of MACRO_KEYS) {
         const lane = document.querySelector(`.lane[data-key="${key}"]`);
+        const miniLane = document.querySelector(`.mini-lane[data-key="${key}"]`);
         const pct = t[key] > 0 ? totals[key] / t[key] : 0;
         const prevPct = lanePct[key];
         lanePct[key] = pct;
 
-        lane.querySelector('.lane-fill').style.width = `${Math.min(pct, FINISH_SCALE) / FINISH_SCALE * 100}%`;
+        const width = `${Math.min(pct, FINISH_SCALE) / FINISH_SCALE * 100}%`;
+        lane.querySelector('.lane-fill').style.width = width;
+        miniLane.querySelector('.lane-fill').style.width = width;
         lane.querySelector('.lane-target').textContent = fmt(t[key]);
         tweenNumber(lane.querySelector('.lane-cur'), totals[key]);
 
@@ -305,12 +311,13 @@ function renderScoreboard(totals, celebrate) {
         const over = key !== 'protein' && pct > 1;
         lane.classList.toggle('is-done', done);
         lane.classList.toggle('is-over', over);
+        miniLane.classList.toggle('is-over', over);
         lane.querySelector('.lane-flag').innerHTML = done
             ? '<span class="ms" aria-hidden="true">check</span>达标'
             : over ? `+${fmt(totals[key] - t[key])}` : '';
 
         if (!celebrate || prevPct === undefined) continue;
-        if (pct > prevPct) replay(lane, 'bump');
+        if (pct > prevPct) { replay(lane, 'bump'); replay(miniLane, 'bump'); }
         if (prevPct < 1 && pct >= 1) {
             replay(lane, 'finish');
             if (key === 'protein') showToast('蛋白质今日达标，保持住', 'success');
@@ -326,7 +333,18 @@ function floatGain(kcal) {
     el.setAttribute('aria-hidden', 'true');
     el.innerHTML = `+${fmt(kcal)}<small>kcal</small>`;
     el.addEventListener('animationend', () => el.remove(), { once: true });
-    document.querySelector('#board .hero').append(el);
+    const host = $('mini-hud').classList.contains('is-shown') ? '#mini-hud .mini-hero' : '#board .hero';
+    document.querySelector(host).append(el);
+}
+
+// Pin the mini HUD once the board's bars have scrolled above the viewport; a hidden page reports a zero rect, so it stays off there
+function watchBoard() {
+    const hud = $('mini-hud');
+    new IntersectionObserver(([e]) => {
+        hud.classList.toggle('is-shown', !e.isIntersecting && e.boundingClientRect.bottom < 0);
+    }).observe(document.querySelector('#board .lanes'));
+    hud.addEventListener('click', () =>
+        $('board').scrollIntoView({ behavior: reduceMotion.matches ? 'auto' : 'smooth', block: 'start' }));
 }
 
 function addDiaryEntry() {
@@ -531,6 +549,7 @@ function initDiary(openWarehouse) {
     $('meal-seg').addEventListener('change', updateGoLabels);
 
     $('diary-date').value = localDate();
+    watchBoard();
     document.querySelectorAll('[data-day-shift]').forEach(btn =>
         btn.addEventListener('click', () => shiftDay(Number(btn.dataset.dayShift))));
     document.querySelector('.date-label').addEventListener('click', openDatePicker);

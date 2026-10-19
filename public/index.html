@@ -42,6 +42,18 @@
     <main>
         <!-- ── Diary ── -->
         <div id="page-diary" class="page is-active">
+            <div class="hud-dock" aria-hidden="true">
+                <div class="mini-hud" id="mini-hud">
+                    <span class="mini-hero"><span class="mini-hero-label" id="mini-hero-label">剩余</span><b class="num" id="mini-hero-num">0</b><small>kcal</small></span>
+                    <span class="mini-stars" id="mini-stars"><span class="ms">star</span><span class="ms">star</span><span class="ms">star</span></span>
+                    <span class="mini-lanes">
+                        <span class="mini-lane" data-key="kcal" data-macro="kcal"><i class="lane-fill"></i></span>
+                        <span class="mini-lane" data-key="protein" data-macro="protein"><i class="lane-fill"></i></span>
+                        <span class="mini-lane" data-key="carbs" data-macro="carbs"><i class="lane-fill"></i></span>
+                        <span class="mini-lane" data-key="fat" data-macro="fat"><i class="lane-fill"></i></span>
+                    </span>
+                </div>
+            </div>
             <div class="topbar">
                 <div class="date-nav">
                     <button class="icon-btn" data-day-shift="-1" aria-label="前一天"><span class="ms" aria-hidden="true">chevron_left</span></button>

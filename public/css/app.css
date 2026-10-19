@@ -854,7 +854,7 @@ select.input { padding-right: 8px; }
     background-position: 150% 0;
     animation: sheen 6s ease-in-out infinite;
 }
-.lane.is-over .lane-fill {
+.lane.is-over .lane-fill, .mini-lane.is-over .lane-fill {
     background: repeating-linear-gradient(-45deg, var(--hazard) 0 5px, #FF7752 5px 10px);
     box-shadow: 0 0 12px rgba(255, 75, 38, .6);
 }
@@ -877,7 +877,7 @@ select.input { padding-right: 8px; }
 .lane:not(.is-done):not(.is-over) .lane-flag { display: none; }
 
 /* Action feedback: the bar head flashes when an entry lands in it */
-.lane.bump .lane-fill { animation: bump .7s var(--ease-out); }
+.lane.bump .lane-fill, .mini-lane.bump .lane-fill { animation: bump .7s var(--ease-out); }
 @keyframes bump {
     0%   { box-shadow: 0 0 0 0 rgba(255,255,255,.75); filter: brightness(1.35); }
     100% { box-shadow: 0 0 0 10px rgba(255,255,255,0); filter: none; }
@@ -886,6 +886,78 @@ select.input { padding-right: 8px; }
 @keyframes finish {
     0%, 100% { transform: scaleY(1); opacity: .9; }
     40%      { transform: scaleY(1.9); opacity: 1; }
+}
+
+/* Mini HUD: pinned mirror of the board for single-column layouts, shown once the board scrolls out of view.
+   The dock is a zero-height sticky strip so it takes no layout space in either scroll container */
+.hud-dock { display: none; }
+.mini-hud {
+    position: absolute;
+    inset: 0 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 14px;
+    background: var(--board-bg);
+    color: var(--ink);
+    border: 1px solid var(--line);
+    border-top: 0;
+    border-radius: 0 0 14px 14px;
+    box-shadow: 0 0 0 1px var(--rim), inset 0 -1px 0 var(--glint), 0 8px 20px var(--board-drop);
+    cursor: pointer;
+    opacity: 0;
+    transform: translateY(-110%);
+    pointer-events: none;
+    transition: transform .3s var(--ease-out), opacity .2s;
+}
+.mini-hud.is-shown { opacity: 1; transform: none; pointer-events: auto; }
+.mini-hero { position: relative; display: flex; align-items: baseline; gap: 4px; flex-shrink: 0; }
+.mini-hero-label { font-size: 12px; font-weight: 700; color: var(--accent); }
+.mini-hero b {
+    font-size: 24px;
+    line-height: 1;
+    background: var(--hero-grad);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    filter: drop-shadow(0 2px 0 var(--rim));
+}
+.mini-hud.is-over b { background-image: var(--hero-over-grad); }
+.mini-hero small { font-size: 11px; font-weight: 700; opacity: .8; }
+.mini-hero .float-gain { left: 0; top: 100%; font-size: 18px; }
+.mini-hero .float-gain small { font-size: 11px; }
+.mini-stars { display: flex; flex-shrink: 0; }
+.mini-stars .ms {
+    font-size: 18px;
+    color: var(--star-locked);
+    background: var(--hero-grad);
+    -webkit-background-clip: text;
+    background-clip: text;
+    font-variation-settings: 'FILL' 1, 'wght' 500, 'opsz' 24;
+    filter: drop-shadow(0 1px 0 var(--rim));
+    transition: color .4s;
+}
+.mini-stars .is-on { color: transparent; }
+.mini-stars .is-on.is-lighting { animation: starLight .7s var(--ease-spring); }
+.mini-lanes { flex: 1; min-width: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px 8px; }
+.mini-lane {
+    position: relative;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--socket);
+    box-shadow: inset 0 1px 2px var(--well-shadow), 0 0 0 1px rgba(232, 176, 75, .18);
+}
+/* Same scale as the board: the finish tick sits at 80% (FINISH_SCALE) */
+.mini-lane::after {
+    content: "";
+    position: absolute;
+    left: 80%;
+    top: -2px;
+    bottom: -2px;
+    z-index: 2;
+    width: 2px;
+    background: var(--ink);
+    opacity: .7;
 }
 
 /* ── Quote of the day ── */
@@ -2446,6 +2518,7 @@ dialog[open]::backdrop { animation: fade .2s ease; }
     .diary-grid { grid-template-columns: minmax(0, 1fr); grid-template-areas: "quote" "board" "quick" "water" "log"; }
     .diary-grid:has(> .quote-card[hidden]) { grid-template-areas: "board" "quick" "water" "log"; grid-template-rows: auto; }
     .quick { position: static; max-height: none; }
+    .hud-dock { display: block; position: sticky; top: 0; z-index: 90; height: 0; }
     .food-list { max-height: 240px; }
     .new-food-form { grid-template-columns: repeat(4, minmax(0, 1fr)); }
     .new-food-form .wide { grid-column: span 2; }
@@ -2496,6 +2569,7 @@ dialog[open]::backdrop { animation: fade .2s ease; }
     .rail-item[aria-current="page"]::before { left: 50%; top: -5px; width: 10px; height: 6px; margin: 0 0 0 -5px; clip-path: polygon(0 0, 100% 0, 50% 100%); animation: chipIn .3s var(--ease-spring), promptBob 1s ease-in-out .3s infinite; }
     main { overflow: visible; padding: 12px 12px calc(96px + env(safe-area-inset-bottom)); }
     #toast-container { bottom: 88px; }
+    .mini-hud { padding-top: calc(8px + env(safe-area-inset-top)); }
     .board { padding: 16px 16px 12px; border-radius: 16px; }
     .board-head { min-height: 0; }
     .board-stars { gap: 2px; }
