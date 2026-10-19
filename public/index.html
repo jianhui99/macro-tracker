@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,400..900;1,62..125,400..900&family=Cinzel:wght@700..900&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..24,400..600,0..1,0&icon_names=ac_unit,accessibility_new,add,arrow_downward,arrow_upward,backpack,blender,bolt,cake,calendar_month,check,check_circle,chevron_left,chevron_right,close,contrast,dark_mode,delete,diamond,dinner_dining,download,edit,edit_note,egg,egg_alt,emoji_events,error,event_available,explore,fitness_center,flag,free_breakfast,glass_cup,grain,hiking,info,inventory_2,kebab_dining,landscape,light_mode,local_fire_department,lunch_dining,menu_book,military_tech,monitor_weight,nutrition,person,ramen_dining,remove,restart_alt,restaurant,rice_bowl,search,sports_score,sprint,star,straighten,swords,target,trending_down,unfold_less,unfold_more,verified,vertical_align_bottom,water_bottle,water_bottle_large,water_drop,water_full&display=block" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..24,400..600,0..1,0&icon_names=ac_unit,accessibility_new,add,arrow_downward,arrow_upward,backpack,blender,bolt,cake,calendar_month,check,check_circle,chevron_left,chevron_right,close,contrast,dark_mode,delete,diamond,dinner_dining,download,edit,edit_note,egg,egg_alt,emoji_events,error,event_available,explore,fitness_center,flag,free_breakfast,glass_cup,grain,hiking,info,inventory_2,kebab_dining,landscape,light_mode,local_fire_department,lunch_dining,menu_book,military_tech,monitor_weight,nutrition,palette,person,ramen_dining,remove,restart_alt,restaurant,rice_bowl,save,search,sports_score,sprint,star,straighten,swords,target,trending_down,unfold_less,unfold_more,upload,verified,vertical_align_bottom,water_bottle,water_bottle_large,water_drop,water_full&display=block" rel="stylesheet">
 
     <link rel="stylesheet" href="/css/app.css">
 </head>
@@ -458,20 +458,27 @@
                 </div>
             </section>
 
-            <div class="panel data-panel">
-                <p>外观主题，跟随系统时随设备的深浅色自动切换。</p>
-                <fieldset class="seg seg-inline theme-seg" id="theme-seg" aria-label="外观主题">
-                    <label><input type="radio" name="theme" value="dark"><span class="seg-opt"><span class="ms" aria-hidden="true">dark_mode</span>暗色</span></label>
-                    <label><input type="radio" name="theme" value="light"><span class="seg-opt"><span class="ms" aria-hidden="true">light_mode</span>浅色</span></label>
-                    <label><input type="radio" name="theme" value="system"><span class="seg-opt"><span class="ms" aria-hidden="true">contrast</span>跟随系统</span></label>
-                </fieldset>
-            </div>
-            <div class="panel data-panel">
-                <p>备份全部个人设置、食物、饮食、饮水、体重、成就及碳循环数据。导入会替换全部现有业务数据，请先导出备份。</p>
-                <button class="btn btn-ghost" id="export-data"><span class="ms" aria-hidden="true">download</span>导出 JSON</button>
-                <button class="btn btn-ghost" id="import-data" type="button">导入 JSON</button>
-                <input type="file" id="import-file" accept=".json,application/json" hidden>
-            </div>
+            <section class="panel system-panel" aria-labelledby="system-title">
+                <div class="panel-head"><h2 id="system-title">系统</h2></div>
+                <div class="sys-row">
+                    <span class="sys-icon" aria-hidden="true"><span class="ms">palette</span></span>
+                    <div class="sys-text"><b>画面</b><small>外观主题，跟随系统时随设备的深浅色自动切换</small></div>
+                    <fieldset class="seg seg-inline theme-seg" id="theme-seg" aria-label="外观主题">
+                        <label><input type="radio" name="theme" value="dark"><span class="seg-opt"><span class="ms" aria-hidden="true">dark_mode</span>暗色</span></label>
+                        <label><input type="radio" name="theme" value="light"><span class="seg-opt"><span class="ms" aria-hidden="true">light_mode</span>浅色</span></label>
+                        <label><input type="radio" name="theme" value="system"><span class="seg-opt"><span class="ms" aria-hidden="true">contrast</span>跟随系统</span></label>
+                    </fieldset>
+                </div>
+                <div class="sys-row">
+                    <span class="sys-icon" aria-hidden="true"><span class="ms">save</span></span>
+                    <div class="sys-text"><b>存档</b><small>存档是一个 JSON 文件，包含个人设置、食物、饮食、饮水、体重、成就和元素形态。读取存档会覆盖全部现有数据，请先保存当前存档。</small></div>
+                    <div class="sys-actions">
+                        <button class="btn btn-ghost" id="export-data"><span class="ms" aria-hidden="true">download</span>保存存档</button>
+                        <button class="btn btn-ghost" id="import-data" type="button"><span class="ms" aria-hidden="true">upload</span>读取存档</button>
+                    </div>
+                    <input type="file" id="import-file" accept=".json,application/json" hidden>
+                </div>
+            </section>
         </div>
     </main>
 
@@ -535,13 +542,13 @@
 
     <dialog id="import-dialog" class="confirm-dialog" aria-labelledby="import-title" aria-describedby="import-warning import-summary">
         <form class="dialog-body">
-            <h3 class="dialog-title" id="import-title">恢复 JSON 备份</h3>
+            <h3 class="dialog-title" id="import-title">读取存档</h3>
             <p id="import-summary"></p>
-            <p id="import-warning">确认后将替换全部现有业务数据，无法撤销。请先导出当前备份，并暂停其他页面或设备的编辑。</p>
+            <p id="import-warning">确认后将覆盖全部现有数据，无法撤销。请先保存当前存档，并暂停其他页面或设备的编辑。</p>
             <p id="import-error" class="key-error" role="alert" hidden></p>
             <div class="dialog-foot">
                 <button type="button" class="btn btn-ghost" id="cancel-import">取消</button>
-                <button type="submit" class="btn btn-danger" id="confirm-import">确认替换并导入</button>
+                <button type="submit" class="btn btn-danger" id="confirm-import">覆盖并读取存档</button>
             </div>
         </form>
     </dialog>

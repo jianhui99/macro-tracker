@@ -21,7 +21,7 @@ async function exportData() {
         a.click();
         a.remove();
         setTimeout(() => URL.revokeObjectURL(url), 1000);
-        showToast('数据已导出');
+        showToast('存档已保存');
     });
 }
 
@@ -57,7 +57,7 @@ async function importData() {
             $('import-dialog').close();
             location.reload();
         } catch {
-            $('import-error').textContent = '导入未确认成功。请检查网络并刷新页面核对数据后再试。';
+            $('import-error').textContent = '读取存档未确认成功。请检查网络并刷新页面核对数据后再试。';
             $('import-error').hidden = false;
         } finally { $('cancel-import').disabled = false; }
     });
