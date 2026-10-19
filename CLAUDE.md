@@ -50,7 +50,7 @@ Run `npm run db:migrate` once before the first `npm start`, and after adding a m
 - **Achievements are evaluated client-side** by `evaluateAchievements`, which replays history day by day.
   Newly reached tiers are POSTed as `series:threshold` ids and stored with `INSERT OR IGNORE`; unlocked badges are never revoked even if the stats later drop.
   Adding a series means adding it to `ACHIEVEMENTS` plus an image at `public/badges/<id>.webp` (crop/size notes in `public/badges/CREDITS.txt`).
-  Every new series must also get a `<id> | <subject>` line in the subject list of `ref/generate-badge.md`, matching the existing RPG-mascot style, so the owner can generate its artwork.
+  Every new series must also get a `<id> | <subject>` line in the subject list of `docs/generate-badge.md`, matching the existing RPG-mascot style, so the owner can generate its artwork.
 - **Level and XP are derived, never stored.** `level.js` replays history (calendar stars, water goals, weigh-ins, unlocked medal tiers) on every `syncAchievements`, so deleting records can lower the level; only the last-seen level sits in `localStorage` to replay a missed level-up.
 - **New UI must ship with matching animation.** Every element that appears, changes, or disappears gets motion consistent with the rest of the app, reusing what already exists before adding new keyframes:
   - Easing tokens `--ease-out` (entrances/exits) and `--ease-spring` (pops, bars, thumbs).
