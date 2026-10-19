@@ -6,6 +6,39 @@ import { api } from './api.js';
 import { syncAchievements } from './achievements.js';
 
 // ── Settings ──
+// Activity level read as a character class: [class, icon, plain activity]
+const CLASSES = {
+    '1.2':   ['学者', 'menu_book', '久坐不动'],
+    '1.375': ['旅人', 'hiking', '轻度活动'],
+    '1.55':  ['冒险者', 'explore', '中度活动'],
+    '1.725': ['战士', 'swords', '重度活动']
+};
+
+function renderCharStats(user) {
+    const [job, jobIcon, activity] = CLASSES[String(user.activity)] || CLASSES['1.55'];
+    const target = user.targetWeight;
+    const tiles = [
+        ['straighten', '身高', fmtKg(user.height), 'cm'],
+        ['monitor_weight', '体重', fmtKg(user.weight), 'kg', '按最新称重'],
+        ['cake', '年龄', String(user.age), '岁'],
+        ['person', '性别', user.gender === 'female' ? '女' : '男'],
+        [jobIcon, '职业', job, '', activity],
+        ['flag', '终极目标', target ? fmtKg(target) : '未设定', target ? 'kg' : '']
+    ];
+    $('char-stats').innerHTML = tiles.map(([icon, label, value, unit, note], i) => `
+        <div class="stat-tile" style="--i:${i}">
+            <span class="ms" aria-hidden="true">${icon}</span>
+            <dt>${label}</dt>
+            <dd><b${/\d/.test(value) ? ' class="num"' : ''}>${value}</b>${unit ? `<small>${unit}</small>` : ''}${note ? `<em>${note}</em>` : ''}</dd>
+        </div>`).join('');
+}
+
+// The sheet reads as stat tiles; 编辑属性 swaps in the form, and leaving edit mode drops unsaved edits
+function setEditing(editing, focus = true) {
+    $('char-panel').classList.toggle('is-editing', editing);
+    if (focus) (editing ? $('user-height') : $('edit-settings')).focus({ preventScroll: true });
+}
+
 function fillSettingsForm() {
     $('user-height').value   = state.user.height;
     $('user-weight').value   = state.user.weight;
@@ -16,6 +49,8 @@ function fillSettingsForm() {
     $('user-water-target').value = state.user.waterTarget ?? '';
     $('dirty-note').hidden = true;
     $('save-settings').disabled = true;
+    $('char-panel').classList.remove('is-editing');
+    renderCharStats(state.user);
     renderPlan(state.user);
 }
 
@@ -108,6 +143,7 @@ async function saveSettings() {
         syncAchievements();
     });
     fillSettingsForm();
+    $('edit-settings').focus({ preventScroll: true });
     renderWeights();
 }
 
@@ -264,6 +300,7 @@ function renderWeightChart(animate = false) {
 function applySyncedWeight(user) {
     state.user = user;
     $('user-weight').value = user.weight;
+    renderCharStats(user);
     onSettingsInput();
 }
 
@@ -320,6 +357,8 @@ function initSettings() {
         const box = $('weight-chart');
         if (box.clientWidth && `${box.clientWidth}x${box.clientHeight}` !== box.dataset.size) renderWeightChart();
     }).observe($('weight-chart'));
+    $('edit-settings').addEventListener('click', () => setEditing(true));
+    $('cancel-settings').addEventListener('click', () => { fillSettingsForm(); setEditing(false); });
     $('settings-form').addEventListener('input', onSettingsInput);
     $('settings-form').addEventListener('submit', e => { e.preventDefault(); saveSettings(); });
     $('user-gender').addEventListener('change', onSettingsInput);
