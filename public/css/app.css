@@ -1,8 +1,8 @@
 /* Dark fantasy palette: night-stone surfaces, parchment text, brass rims, gold accent.
    Every text pair clears 4.5:1 (subtle 4:1, graphics 3:1) on --surface.
-   The light theme keeps a few "dark islands" (scoreboard, level card, toasts, tooltips, level-up)
+   The light theme keeps a few "dark islands" (level card, toasts, tooltips, level-up)
    by giving them this same token set, so nothing inside them needs a light variant. */
-:root, :root[data-theme="light"] :is(.board, .level-card, .toast, .chart-tip, .levelup) {
+:root, :root[data-theme="light"] :is(.level-card, .toast, .chart-tip, .levelup) {
     color-scheme: dark;
     --accent: #E8B04B;
     --accent-deep: #B9832A;
@@ -44,6 +44,21 @@
     --star: #F5C451;
     --star-off: rgba(255, 255, 255, .14);
     --over-stripe: #7A2A28;
+    /* Scoreboard: arcane night panel with molten-gold numerals */
+    --board-bg:
+        radial-gradient(120% 160% at 100% 0%, rgba(110, 76, 200, .45), transparent 55%),
+        radial-gradient(80% 120% at 0% 100%, rgba(232, 176, 75, .10), transparent 60%),
+        linear-gradient(160deg, #261C3D, #15111F);
+    --board-glow: rgba(110, 76, 200, .18);
+    --board-drop: rgba(0, 0, 0, .4);
+    --hero-grad: linear-gradient(180deg, #FFF8E6 15%, #F6D28A 55%, #E8B04B);
+    --hero-over-grad: linear-gradient(180deg, #FFE1D6 15%, #FF9B7A 55%, #FF4B26);
+    --chip-bg: rgba(0, 0, 0, .3);
+    --float-gain: #FFE3A0;
+    --float-xp: #C8D3FF;
+    --hot: #FFB45C;
+    --on-done: #1A1206;
+    --star-locked: #3A3050;
 
     /* Lane colors (validated for CVD + 3:1 contrast on dark surfaces) */
     --kcal: var(--ink);
@@ -136,6 +151,20 @@
     --star: #B98200;
     --star-off: rgba(90, 60, 20, .18);
     --over-stripe: #F3B5AE;
+    --board-bg:
+        radial-gradient(120% 160% at 100% 0%, rgba(142, 110, 220, .16), transparent 55%),
+        radial-gradient(80% 120% at 0% 100%, rgba(232, 176, 75, .24), transparent 60%),
+        linear-gradient(160deg, #FFFDF6, #F5EAD3);
+    --board-glow: rgba(232, 176, 75, .12);
+    --board-drop: rgba(90, 60, 20, .12);
+    --hero-grad: linear-gradient(180deg, #D9A23A 10%, #A87412 55%, #6E4908);
+    --hero-over-grad: linear-gradient(180deg, #F0704F 10%, #D23A22 55%, #9E2015);
+    --chip-bg: rgba(255, 255, 255, .65);
+    --float-gain: #8A5A08;
+    --float-xp: #3B54D9;
+    --hot: #C2570C;
+    --on-done: #FFFFFF;
+    --star-locked: #DCCDB3;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -529,14 +558,11 @@ select.input { padding-right: 8px; }
     grid-area: board;
     position: relative;
     overflow: hidden;
-    background:
-        radial-gradient(120% 160% at 100% 0%, rgba(110, 76, 200, .45), transparent 55%),
-        radial-gradient(80% 120% at 0% 100%, rgba(232, 176, 75, .10), transparent 60%),
-        linear-gradient(160deg, #261C3D, #15111F);
+    background: var(--board-bg);
     color: var(--ink);
     border: 1px solid var(--line);
     border-radius: 16px;
-    box-shadow: 0 0 0 1px var(--rim), inset 0 1px 0 var(--glint), inset 0 0 40px rgba(110, 76, 200, .18), 0 4px 0 var(--rim), 0 14px 30px rgba(0, 0, 0, .4);
+    box-shadow: 0 0 0 1px var(--rim), inset 0 1px 0 var(--glint), inset 0 0 40px var(--board-glow), 0 4px 0 var(--rim), 0 14px 30px var(--board-drop);
     padding: 18px 22px 16px;
 }
 /* Arcane runes band: a faint diagonal hatch in the corner */
@@ -573,7 +599,7 @@ select.input { padding-right: 8px; }
     font-size: clamp(48px, 5vw, 70px);
     line-height: .9;
     padding-right: .06em;
-    background: linear-gradient(180deg, #FFF8E6 15%, #F6D28A 55%, var(--accent));
+    background: var(--hero-grad);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -588,7 +614,7 @@ select.input { padding-right: 8px; }
     top: 4px;
     z-index: 4;
     font-size: 26px;
-    color: #FFE3A0;
+    color: var(--float-gain);
     white-space: nowrap;
     pointer-events: none;
     text-shadow: 0 2px 0 var(--rim), 0 0 12px rgba(232, 176, 75, .8);
@@ -603,7 +629,7 @@ select.input { padding-right: 8px; }
     100% { opacity: 0; transform: translateY(-34px) scale(.95); }
 }
 .board.is-over .hero-num {
-    background-image: linear-gradient(180deg, #FFE1D6 15%, var(--hazard-on-cobalt) 55%, var(--hazard));
+    background-image: var(--hero-over-grad);
     filter: drop-shadow(0 3px 0 var(--rim)) drop-shadow(0 0 16px rgba(255, 75, 38, .45));
 }
 
@@ -612,7 +638,7 @@ select.input { padding-right: 8px; }
    a breathing halo and sparks */
 .board-head { min-height: 96px; }
 .board-stars {
-    --gold: linear-gradient(180deg, #FFF8E6 15%, #F6D28A 55%, var(--accent));
+    --gold: var(--hero-grad);
     position: absolute;
     top: 0;
     right: 0;
@@ -626,7 +652,7 @@ select.input { padding-right: 8px; }
 }
 .board-stars .ms {
     font-size: 40px;
-    color: #3A3050;
+    color: var(--star-locked);
     background: linear-gradient(115deg, transparent 40%, rgba(255, 255, 255, .95) 50%, transparent 60%) 150% 0 / 250% 100% no-repeat, var(--gold);
     -webkit-background-clip: text;
     background-clip: text;
@@ -719,7 +745,7 @@ select.input { padding-right: 8px; }
     height: 32px;
     padding: 0 12px 0 10px;
     border-radius: 999px;
-    background: rgba(0, 0, 0, .3);
+    background: var(--chip-bg);
     box-shadow: inset 0 0 0 1px rgba(232, 176, 75, .3);
     font-size: 13px;
     font-weight: 500;
@@ -740,12 +766,12 @@ select.input { padding-right: 8px; }
 .xp-track.is-mini::before { display: none; }
 /* Level bars are updated in place, so they glide to the new value instead of regrowing */
 .level-chip .xp-track i, .level-card .xp-track i { animation: none; transition: width .8s var(--ease-spring); }
-.float-gain.is-xp { left: calc(50% - 26px); top: -8px; font-size: 18px; color: #C8D3FF; text-shadow: 0 2px 0 var(--rim), 0 0 12px rgba(142, 162, 255, .9); }
+.float-gain.is-xp { left: calc(50% - 26px); top: -8px; font-size: 18px; color: var(--float-xp); text-shadow: 0 2px 0 var(--rim), 0 0 12px rgba(142, 162, 255, .9); }
 .float-gain.is-xp small { font-size: 11px; }
 /* Combo: three or more days in a row sets the chip alight */
 .chip.is-hot { box-shadow: inset 0 0 0 1px rgba(255, 180, 92, .65), 0 0 14px rgba(255, 140, 60, .3); }
-.chip.is-hot b { color: #FFB45C; }
-.chip.is-hot .ms { color: #FFB45C; font-variation-settings: 'FILL' 1, 'wght' 600, 'opsz' 24; transform-origin: 50% 90%; animation: flicker 1.6s ease-in-out infinite; }
+.chip.is-hot b { color: var(--hot); }
+.chip.is-hot .ms { color: var(--hot); font-variation-settings: 'FILL' 1, 'wght' 600, 'opsz' 24; transform-origin: 50% 90%; animation: flicker 1.6s ease-in-out infinite; }
 @keyframes flicker { 50% { transform: scale(1.12) rotate(-4deg); filter: drop-shadow(0 0 4px rgba(255, 180, 92, .7)); } }
 
 .lanes { position: relative; display: flex; flex-direction: column; }
@@ -764,8 +790,8 @@ select.input { padding-right: 8px; }
     position: relative;
     height: 12px;
     border-radius: 4px;
-    background: rgba(0, 0, 0, .5);
-    box-shadow: inset 0 1px 2px rgba(0, 0, 0, .6), 0 0 0 1px rgba(232, 176, 75, .18), 0 1px 0 rgba(255, 228, 170, .08);
+    background: var(--socket);
+    box-shadow: inset 0 1px 2px var(--well-shadow), 0 0 0 1px rgba(232, 176, 75, .18), 0 1px 0 rgba(255, 228, 170, .08);
 }
 .lane[data-key="kcal"] .lane-track { height: 16px; }
 /* The finish line sits at 80% of the track (FINISH_SCALE), so 8% of the track is 10% of target */
@@ -794,7 +820,7 @@ select.input { padding-right: 8px; }
     width: 6px;
     z-index: 3;
     border-radius: 1px;
-    background: repeating-conic-gradient(var(--ink) 0 25%, #0B0910 0 50%) 0 0 / 6px 6px;
+    background: repeating-conic-gradient(var(--ink) 0 25%, var(--surface) 0 50%) 0 0 / 6px 6px;
     opacity: .9;
 }
 .lane-fill {
@@ -836,7 +862,7 @@ select.input { padding-right: 8px; }
     line-height: 18px;
 }
 .lane-flag .ms { font-size: 14px; }
-.lane.is-done .lane-flag { background: var(--done); color: var(--on-accent); }
+.lane.is-done .lane-flag { background: var(--done); color: var(--on-done); }
 .lane.is-over .lane-flag { background: var(--hazard); color: #fff; }
 .lane:not(.is-done):not(.is-over) .lane-flag { display: none; }
 
