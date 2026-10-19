@@ -352,7 +352,7 @@ function openBadge(li) {
     if (!view || dlg.open) return;
     dlg.innerHTML = badgeDetailHtml(view);
     dlg.showModal();
-    if (view.metal !== 'locked') sfx('medal');
+    if (view.metal !== 'locked') sfx(`medal-${view.metal}`);
     badgeSource = li.querySelector('.medal');
     if (reduceMotion.matches) return;
 

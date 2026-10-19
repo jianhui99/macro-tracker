@@ -61,7 +61,11 @@ const SOUNDS = {
     over:    [3, t => [0, 0.17].forEach(d => voice(sfxBus, 233, t + d, 0.14, 'sawtooth', 0.06, { to: 210 }))],
     goal:    [3, t => arp(t, [72, 76, 79, 84], 0.08, 0.45, 'triangle', 0.16)],
     star:    [4, t => { arp(t, [88, 91, 95, 100], 0.06, 0.4, 'triangle', 0.1); noise(t, 0.45, 0.05, 6000, 10000); }],
-    medal:   [4, t => { noise(t, 0.35, 0.14, 700, 5000); arp(t + 0.28, [84, 91, 96], 0.07, 0.9, 'triangle', 0.11); }],
+    // Opening a medal: the flip whoosh, then a strike on landing that rings brighter and longer with each metal
+    'medal-bronze':  [4, t => { noise(t, 0.35, 0.14, 700, 3000); voice(sfxBus, hz(67), t + 0.32, 0.5, 'square', 0.04); chord(t + 0.32, [67, 74], 0.6, 'triangle', 0.13); }],
+    'medal-silver':  [4, t => { noise(t, 0.35, 0.14, 700, 4500); arp(t + 0.3, [79, 86], 0.06, 0.9, 'triangle', 0.11); voice(sfxBus, hz(91), t + 0.42, 0.9, 'sine', 0.06); }],
+    'medal-gold':    [4, t => { noise(t, 0.35, 0.14, 700, 5500); arp(t + 0.28, [84, 88, 91], 0.06, 1, 'triangle', 0.1); chord(t + 0.46, [72, 96], 1.2, 'sine', 0.07); noise(t + 0.4, 0.6, 0.04, 6000, 9000); }],
+    'medal-diamond': [4, t => { noise(t, 0.35, 0.14, 700, 6500); arp(t + 0.26, [91, 95, 98, 103, 107], 0.05, 1.4, 'sine', 0.09); chord(t + 0.5, [79, 86, 91], 1.6, 'triangle', 0.06); noise(t + 0.3, 1.2, 0.05, 8000, 12000); }],
     award:   [5, t => { arp(t, [67, 72, 76], 0.1, 0.16, 'square', 0.05); chord(t + 0.3, [72, 76, 79, 84], 0.9, 'triangle', 0.09); }],
     levelup: [6, t => { arp(t, [60, 64, 67, 72, 76, 79], 0.06, 0.18, 'square', 0.045); chord(t + 0.38, [84, 88, 91], 1.3, 'triangle', 0.1); noise(t + 0.38, 0.8, 0.04, 5000, 9000); }]
 };
