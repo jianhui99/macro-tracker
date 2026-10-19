@@ -398,20 +398,28 @@
                 </div>
 
                 <div class="panel">
-                    <div class="panel-head"><h2>每日目标</h2><span class="hint">减脂期，未选碳循环类型的日子使用</span></div>
+                    <div class="panel-head"><h2>今日能量上限</h2><span class="hint">减脂期每日目标：总消耗减去 550 kcal 的燃脂缺口，未选元素形态的日子使用</span></div>
                     <div class="plan">
-                        <div class="plan-chain">
-                            <div class="plan-step"><span>基础代谢 BMR</span><b class="num" id="plan-bmr">0</b></div>
-                            <div class="plan-step"><span>总消耗 TDEE</span><b class="num" id="plan-tdee">0</b></div>
-                            <div class="plan-step is-goal"><span>目标摄入</span><b class="num" id="plan-kcal">0</b></div>
-                        </div>
-                        <div>
-                            <div class="split-bar" id="split-bar">
-                                <i></i><i></i><i></i>
+                        <div class="pool">
+                            <div class="pool-head">
+                                <span class="pool-label">可用能量</span>
+                                <b class="num" id="plan-kcal">0</b><small>kcal</small>
+                                <span class="pool-of">总消耗 TDEE <b class="num" id="plan-tdee">0</b></span>
                             </div>
-                            <div class="split-legend" id="split-legend"></div>
+                            <div class="pool-bar" id="pool-bar" aria-hidden="true"><i class="pool-fill"></i><i class="pool-bmr"></i></div>
+                            <div class="pool-legend">
+                                <span><i class="lg-fill"></i>可用能量</span>
+                                <span><i class="lg-bmr"></i>基础代谢 BMR <b class="num" id="plan-bmr">0</b></span>
+                                <span class="is-buff"><i class="lg-buff"></i>燃脂 Buff <b class="num" id="plan-deficit">0</b></span>
+                            </div>
                         </div>
-                        <label class="field plan-water"><span>每日饮水 ml <small>留空则按体重 35 ml/kg 自动计算</small></span>
+                        <div class="gems">
+                            <div class="split-bar" id="split-bar" aria-hidden="true">
+                                <i data-macro="protein"></i><i data-macro="carbs"></i><i data-macro="fat"></i>
+                            </div>
+                            <div class="gem-row" id="gem-row"></div>
+                        </div>
+                        <label class="field plan-water"><span>药水补给 · 每日饮水 ml <small>留空则按体重 35 ml/kg 自动计算</small></span>
                             <input type="number" id="user-water-target" form="settings-form" class="input" step="any" min="500" max="10000" inputmode="numeric">
                         </label>
                         <!-- <p class="formula">

@@ -1,6 +1,6 @@
 import { $, fmt, fmtKg, localDate, fmtMonthDay, WEEKDAYS, parseLocalDate, reduceMotion } from './helpers.js';
 import { state } from './state.js';
-import { computePlan, autoWaterTarget, macroIcon, DAY_TYPES, MACRO_META, applyOffset } from './nutrition.js';
+import { computePlan, autoWaterTarget, DAY_TYPES, MACRO_META, applyOffset } from './nutrition.js';
 import { tweenNumber, withBusy, showToast, showConfirm } from './ui.js';
 import { api } from './api.js';
 import { syncAchievements } from './achievements.js';
@@ -77,11 +77,15 @@ function onSettingsInput() {
     renderPlan(draft);
 }
 
+// Energy pool: the bar spans TDEE, the fill is the day's limit, the rest is the fat-loss deficit
 function renderPlan(user) {
     const p = computePlan(user);
     tweenNumber($('plan-bmr'), p.bmr);
     tweenNumber($('plan-tdee'), p.tdee);
     tweenNumber($('plan-kcal'), p.kcal);
+    tweenNumber($('plan-deficit'), p.tdee - p.kcal, n => `-${fmt(n)}`);
+    $('pool-bar').style.setProperty('--fill', String(Math.min(p.kcal / p.tdee, 1)));
+    $('pool-bar').style.setProperty('--bmr', String(Math.min(p.bmr / p.tdee, 1)));
     $('user-water-target').placeholder = `自动 ${fmt(autoWaterTarget(user.weight))}`;
     const split = [
         { key: 'protein', label: '蛋白', g: p.protein, kcal: p.protein * 4 },
@@ -90,9 +94,10 @@ function renderPlan(user) {
     ];
     const total = split.reduce((s, x) => s + Math.max(x.kcal, 0), 0) || 1;
     $('split-bar').querySelectorAll('i').forEach((el, i) => { el.style.flexGrow = Math.max(split[i].kcal, 0); });
-    $('split-legend').innerHTML = split.map(x => `
-        <div style="flex-grow: ${Math.max(x.kcal, 0)}">
-            <span>${macroIcon(x.key)}${x.label}</span>
+    $('gem-row').innerHTML = split.map((x, i) => `
+        <div class="gem-socket" data-macro="${x.key}" style="--i:${i}">
+            <span class="gem" aria-hidden="true"></span>
+            <span class="gem-name">${x.label}</span>
             <b class="num">${fmt(x.g)}<small> g</small></b>
             <small>${Math.round(Math.max(x.kcal, 0) / total * 100)}% 热量</small>
         </div>`).join('');
