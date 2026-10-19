@@ -6,7 +6,10 @@ import { renderAchievements, initAchievements, syncAchievements } from './achiev
 import { fillSettingsForm, fillCycleForm, renderWeights, initSettings } from './settings.js';
 import { $, localDate } from './helpers.js';
 import { loadState } from './state.js';
-import { initApi } from './api.js';
+import { api } from './api.js';
+import { loadSession, initSession, expireSession } from './session.js';
+import { initAccount } from './account.js';
+import { setRules, rulesVersion, rules } from './rules.js';
 import { initWater, fillCustomWater } from './water.js';
 import { initQuote, loadQuote } from './quote.js';
 import { initLevel } from './level.js';
@@ -49,23 +52,6 @@ function navigateToDay(dateStr) {
     switchPage('diary');
 }
 
-// First, so every module renders into an already-translated page and the observer catches the rest
-startI18n();
-initApi();
-initDiary(() => switchPage('warehouse'));
-initWater();
-initWarehouse();
-initSummary(navigateToDay);
-initAchievements();
-initSettings();
-initQuote();
-initLevel();
-initUi();
-initSound();
-document.querySelectorAll('.rail-item').forEach(btn =>
-    btn.addEventListener('click', () => switchPage(btn.dataset.page)));
-initBackup();
-
 async function init() {
     const startPage = pageFromHash();
     // Only the DOM here: page renderers need the loaded state
@@ -73,10 +59,12 @@ async function init() {
     setMeal(getDefaultMeal());
     try {
         await loadState();
+        document.body.removeAttribute('data-auth-loading');
         $('diary-date').value = localDate();
         fillSettingsForm();
         fillCustomWater();
     } catch {
+        document.body.removeAttribute('data-auth-loading');
         showPage('diary');
         $('diary-log').innerHTML = '<div class="empty">数据加载失败，请检查网络后刷新页面。</div>';
         return;
@@ -88,4 +76,42 @@ async function init() {
     loadQuote();
 }
 
-init();
+async function start() {
+    const data = await loadSession();
+    if (!data.account) return expireSession();
+    if (!data.account.onboarded) return location.replace('/character.html');
+    const config = await api('/api/rules');
+    setRules(config.rules, config.version);
+    const labels = { ok: `达标（目标 -${rules.kcalBelow} 至 +${rules.kcalAbove} kcal）`, over: `超标（高于 +${rules.kcalAbove}）`, under: `缺口过大（低于 -${rules.kcalBelow}）`, band: `达标区间（目标 -${rules.kcalBelow} 至 +${rules.kcalAbove}）` };
+    document.querySelectorAll('[data-rule-label]').forEach(el => { el.textContent = labels[el.dataset.ruleLabel]; });
+    $('reload-rules').addEventListener('click', () => location.reload());
+    // First, so every module renders into an already-translated page and the observer catches the rest
+    startI18n();
+    initSession();
+    initAccount();
+    initDiary(() => switchPage('warehouse'));
+    initWater();
+    initWarehouse();
+    initSummary(navigateToDay);
+    initAchievements();
+    initSettings();
+    initQuote();
+    initLevel();
+    initUi();
+    initSound();
+    document.querySelectorAll('.rail-item').forEach(btn =>
+        btn.addEventListener('click', () => switchPage(btn.dataset.page)));
+    initBackup();
+
+    await init();
+    async function checkRules() {
+        if (document.hidden) return;
+        try {
+            const config = await api('/api/rules');
+            if (config.version !== rulesVersion) $('rules-update').hidden = false;
+        } catch { /* The next focus or interval will retry. */ }
+    }
+    window.addEventListener('focus', checkRules);
+    setInterval(checkRules, 60000);
+}
+start().catch(() => location.replace('/login.html?error=login_failed'));

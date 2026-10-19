@@ -1,55 +1,7 @@
 import assert from 'node:assert/strict';
-import { readFileSync, readdirSync } from 'node:fs';
 import { test } from 'node:test';
-import { DatabaseSync } from 'node:sqlite';
-import { timingSafeEqual } from 'node:crypto';
-import { createContext, SourceTextModule, SyntheticModule } from 'node:vm';
 import { validateBackup } from '../public/js/backup-format.js';
-
-const fixture = JSON.parse(readFileSync(new URL('./fixtures/state.json', import.meta.url)));
-
-async function backend(t) {
-    const sqlite = new DatabaseSync(':memory:');
-    t.after(() => sqlite.close());
-    const migrations = new URL('../db/migrations/', import.meta.url);
-    for (const file of readdirSync(migrations).sort()) sqlite.exec(readFileSync(new URL(file, migrations), 'utf8'));
-    let batches = 0, failAt = -1;
-    const db = {
-        prepare(sql) {
-            return { sql, values: [], bind(...values) { return { sql, values }; } };
-        },
-        async batch(statements) {
-            batches++;
-            sqlite.exec('BEGIN');
-            try {
-                const results = statements.map(({ sql, values }, i) => {
-                    if (i === failAt) throw new Error('simulated database failure');
-                    return { results: sqlite.prepare(sql).all(...values) };
-                });
-                sqlite.exec('COMMIT');
-                return results;
-            } catch (err) {
-                sqlite.exec('ROLLBACK');
-                throw err;
-            }
-        }
-    };
-    const context = createContext({ Response, URL, TextEncoder, crypto: { subtle: { timingSafeEqual } }, console: { error() {} } });
-    const mod = new SourceTextModule(readFileSync(new URL('../functions/api/[[path]].js', import.meta.url), 'utf8'), { context });
-    await mod.link(() => new SyntheticModule(['validateBackup'], function () { this.setExport('validateBackup', validateBackup); }, { context }));
-    await mod.evaluate();
-    const request = (path, body, key = 'test') => mod.namespace.onRequest({
-        request: new Request(`https://example.test/api/${path}`, {
-            method: body === undefined ? 'GET' : 'POST',
-            headers: { Authorization: `Bearer ${key}`, ...(body === undefined ? {} : { 'Content-Type': 'application/json' }) },
-            body: body === undefined ? undefined : JSON.stringify(body)
-        }),
-        env: { DB: db, API_KEY: 'test' }
-    });
-    const snapshot = () => Object.fromEntries(sqlite.prepare("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name").all()
-        .map(({ name }) => [name, sqlite.prepare(`SELECT * FROM ${name} ORDER BY rowid`).all()]));
-    return { sqlite, request, snapshot, batches: () => batches, fail: index => { failAt = index; } };
-}
+import { backend, fixture } from './helpers/backend.mjs';
 
 test('import restores all eight tables and round-trips a server export', async t => {
     const api = await backend(t);
@@ -68,8 +20,8 @@ test('import restores all eight tables and round-trips a server export', async t
     const after = api.snapshot();
     delete before.sqlite_sequence; delete after.sqlite_sequence;
     assert.deepEqual(after, before);
-    const next = api.sqlite.prepare("INSERT INTO water_log(date,time,ml) VALUES ('2026-10-20',NULL,250) RETURNING id").get();
-    assert.ok(next.id > 99);
+    const next = await (await api.request('water', { date: '2026-10-20', ml: 250 })).json();
+    assert.ok(next.id > Math.max(...exported.water['2026-10-18'].map(row => row.id)));
 });
 
 test('invalid and unauthorized imports never write, and database failures roll back deletions', async t => {

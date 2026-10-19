@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="referrer" content="no-referrer">
+    <meta name="theme-color" content="#110E18"><title>MacroTracker</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23E8B04B'/%3E%3Cpath d='M8 23 12 9h3l1 7 4-7h3l-4 14h-3l2.3-8-4.3 7h-2l-1-7-2 8z' fill='%231A1206'/%3E%3C/svg%3E">
+    <script src="/js/theme.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,400..900;1,62..125,400..900&family=Cinzel:wght@700..900&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..24,400..600,0..1,0&icon_names=confirmation_number,history_edu,key,person,swords,translate&display=block" rel="stylesheet">
+    <link rel="stylesheet" href="/css/app.css"><link rel="stylesheet" href="/css/auth.css">
+</head>
+<body class="auth-page title-screen">
+    <div id="toast-container" role="status" aria-live="polite"></div>
+    <div class="embers" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    <main>
+        <header class="title-hero">
+            <div class="party" aria-hidden="true">
+                <img src="/badges/first_entry.webp" alt="" width="320" height="320">
+                <img src="/badges/level_rank.webp" alt="" width="320" height="320">
+                <img src="/badges/goal_weight.webp" alt="" width="320" height="320">
+            </div>
+            <h1 class="game-logo" translate="no">MacroTracker</h1>
+            <p class="guild-ribbon">冒险者公会</p>
+            <p>记录每一餐，让你的冒险者升级。</p>
+        </header>
+        <section class="panel">
+            <div class="title-menu">
+                <button type="button" data-mode="login" aria-pressed="true">继续冒险</button>
+                <button type="button" data-mode="register" aria-pressed="false">新的冒险</button>
+                <button type="button" class="title-lang" id="lang-toggle" aria-label="切换语言" title="切换语言"><span class="ms" aria-hidden="true">translate</span></button>
+            </div>
+            <p id="login-error" role="alert" hidden></p>
+            <form id="login-form">
+                <label class="field"><span><i class="ms" aria-hidden="true">person</i>用户名</span><input class="input" name="username" required maxlength="32" autocomplete="username" autocapitalize="none" spellcheck="false" translate="no"></label>
+                <label class="field"><span><i class="ms" aria-hidden="true">key</i>密码</span><input class="input" name="password" type="password" required maxlength="128" autocomplete="current-password"></label>
+                <button class="btn" type="submit"><i class="ms" aria-hidden="true">swords</i>进入公会</button>
+            </form>
+            <form id="register-form" hidden>
+                <label class="field"><span><i class="ms" aria-hidden="true">confirmation_number</i>邀请码</span><input class="input" name="invite" required maxlength="256" autocomplete="off" translate="no"></label>
+                <label class="field"><span><i class="ms" aria-hidden="true">person</i>用户名</span><input class="input" name="username" required minlength="3" maxlength="32" pattern="[A-Za-z0-9_]{3,32}" autocomplete="username" autocapitalize="none" spellcheck="false" translate="no"><small>3 到 32 个字母、数字或下划线，用于登录。</small></label>
+                <label class="field"><span><i class="ms" aria-hidden="true">key</i>密码</span><input class="input" name="password" type="password" required minlength="4" maxlength="128" autocomplete="new-password"><small>至少 4 个字符。</small></label>
+                <button class="btn" type="submit"><i class="ms" aria-hidden="true">history_edu</i>注册并创建角色</button>
+            </form>
+        </section>
+        <p class="title-foot">忘记密码？请联系管理员获取临时密码。</p>
+    </main>
+    <script type="module" src="/js/login.js"></script>
+</body>
+</html>

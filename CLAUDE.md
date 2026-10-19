@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-A single-user diet diary (macros, water, weight, carb cycling, achievement badges) on Cloudflare Pages Functions + D1.
+An invite-only multi-user diet diary (macros, water, weight, carb cycling, achievement badges) on Cloudflare Pages Functions + D1.
 The UI is written in Chinese (`zh-CN`), with an English mode chosen in the system panel (see the i18n rule below).
-There is no build step, bundler, framework, or linter: `public/` is served as-is and `functions/api/[[path]].js` is the whole backend. Frontend regression tests use Node's built-in test runner.
+There is no build step, bundler, framework, or linter: `public/` is served as-is and `functions/` and `lib/` implement the backend. Frontend regression tests use Node's built-in test runner.
 
 ## Commands
 
@@ -18,22 +18,22 @@ npm run db:migrate:remote  # apply db/migrations to the production D1
 npm run deploy             # wrangler pages deploy
 ```
 
-Local dev needs `API_KEY=...` in `.dev.vars`; production sets it with `wrangler pages secret put API_KEY`.
-Without it the API refuses every request with 500.
+Accounts use our own username/password login (salted SHA-256, kept cheap for the free-plan 10 ms CPU limit); friends join through invitation links from `/admin`. The only secret is `ADMIN_ACCESS_KEY` (see `docs/用户登陆-部署配置.md`); without it the admin entry fails closed.
 Run `npm run db:migrate` once before the first `npm start`, and after adding a migration.
 
 ## Architecture
 
 - **Backend** (`functions/api/[[path]].js`): one catch-all Pages Function with a regex `ROUTES` table.
-  Every request needs `Authorization: Bearer <API_KEY>`.
-  Handlers receive `{ db, env, body, params }`; snake_case rows are mapped to the camelCase JSON the frontend uses by `foodToJson` / `entryToJson` / `userToJson`.
+  Business requests need a D1-backed HttpOnly session. Mutations require same-origin, CSRF and account-id checks.
+  `lib/auth.js` owns authentication; `lib/account.js` owns onboarding; `lib/admin.js` owns admin APIs. `functions/admin/[[path]].js` guards the admin page.
+  Handlers receive `{ db, env, body, userId, params }`; snake_case rows are mapped to the camelCase JSON the frontend uses by `foodToJson` / `entryToJson` / `userToJson`.
   Multi-statement writes use `db.batch` because a D1 batch is one transaction.
 - **Frontend**: `public/index.html` holds the markup, `public/css/app.css` holds styles, and `public/js/app.js` loads native ES modules with no build step. Feature modules own their event listeners; dynamic lists use event delegation, with no inline handlers or global function bridge.
   Pages (`page-diary`, `page-warehouse`, `page-summary`, `page-achievements`, `page-settings`) are toggled by `switchPage` in `app.js`. Shared helpers, nutrition calculations, food utilities, API access and UI controls live in their corresponding modules; settings also owns the weight log.
   `GET /api/state` loads everything into the shared binding exported by `state.js` once; mutations call `api()` and then patch `state` locally and re-render, rather than refetching.
-  `api()` re-prompts for the key on 401 and stores it in `localStorage` (`macro_tracker_api_key`); other `localStorage` keys are UI-only conveniences.
+  `session.js` loads the current identity and detects account changes. On 401 or account mismatch, hide private state and return to login; never replay a mutation under another account. Tokens are never stored in localStorage.
 - **Database** (`db/migrations/*.sql`): add a new numbered migration for any schema change; never edit applied ones.
-  `user_settings` is a single row with `id = 1`.
+  Every business table is scoped by `user_id`. Migration 0007 assigns all legacy records to owner. The owner claims that account once by registering with `ADMIN_ACCESS_KEY` as the invitation code. Diary/water sequences are per-account and never decrease after delete or import.
 
 ## Non-obvious rules
 
@@ -46,12 +46,12 @@ Run `npm run db:migrate` once before the first `npm start`, and after adding a m
   Keep both in sync.
 - **Dates are local `YYYY-MM-DD`.** Use `localDate()` on the client, never `toISOString()` (UTC shifts the day in UTC+8).
   The server uses `env.TIME_ZONE` (`wrangler.toml`) for the quote-of-the-day rollover.
-- **Day compliance** is `[-300, +50]` kcal around target (`kcalStatus`).
+- **Global rewards** come from `public/js/rules.js` defaults and the versioned D1 `game_rules` row. Defaults keep compliance at `[-300, +50]` kcal; protein threshold affects stars and achievements without changing nutrition targets. Admin edits recalculate historical rewards and preserve unlocked medals. Open pages prompt to refresh.
 - **Achievements are evaluated client-side** by `evaluateAchievements`, which replays history day by day.
   Newly reached tiers are POSTed as `series:threshold` ids and stored with `INSERT OR IGNORE`; unlocked badges are never revoked even if the stats later drop.
   Adding a series means adding it to `ACHIEVEMENTS` plus an image at `public/badges/<id>.webp` (crop/size notes in `public/badges/CREDITS.txt`).
   Every new series must also get a `<id> | <subject>` line in the subject list of `docs/generate-badge.md`, matching the existing RPG-mascot style, so the owner can generate its artwork.
-- **Level and XP are derived, never stored.** `level.js` replays history (calendar stars, water goals, weigh-ins, unlocked medal tiers) on every `syncAchievements`, so deleting records can lower the level; only the last-seen level sits in `localStorage` to replay a missed level-up.
+- **Level and XP are derived, never stored.** `level.js` replays history (calendar stars, water goals, weigh-ins, unlocked medal tiers) on every `syncAchievements`, so deleting records can lower the level; only the last-seen level sits in `localStorage`, keyed by account and rules version, to replay a missed level-up.
 - **New UI must ship with matching animation.** Every element that appears, changes, or disappears gets motion consistent with the rest of the app, reusing what already exists before adding new keyframes:
   - Easing tokens `--ease-out` (entrances/exits) and `--ease-spring` (pops, bars, thumbs).
   - Existing keyframes such as `pageIn`, `panelIn`, `chipIn` / `chipOut`, `wordIn`, `bump`.
@@ -67,4 +67,4 @@ Run `npm run db:migrate` once before the first `npm start`, and after adding a m
   Any new UI text needs an entry in `i18n-en.js`, keyed by the exact Chinese text node or attribute; text with values uses `{n}` patterns, whose captures are translated on their own (meal names, units, weekdays).
   Dates like `10月19日` are handled by rules in `i18n.js`, and labels joined with `，、：；·` resolve segment by segment.
   User data (food names, categories) passes through untranslated; mark text that must never be translated with `translate="no"`.
-  `npm test` checks every string in `index.html`; for dynamic text, switch to English and check the page for leftover Chinese (dev builds log misses as `[i18n] no English for ...`).
+  `npm test` checks static Chinese strings in the app, login, character and admin pages; for dynamic text, switch to English and check the page for leftover Chinese (dev builds log misses as `[i18n] no English for ...`).

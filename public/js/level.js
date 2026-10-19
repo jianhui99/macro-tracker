@@ -1,3 +1,5 @@
+import { rules, rulesVersion } from './rules.js';
+import { account } from './session.js';
 import { $, fmt, localDate, reduceMotion } from './helpers.js';
 import { dayStars, targetsFor } from './nutrition.js';
 import { state } from './state.js';
@@ -7,7 +9,8 @@ import { ACHIEVEMENTS, tierMetal } from './achievements.js';
 // ── Level ──
 // XP is replayed from history on every render rather than stored, so the level always matches the
 // data: deleting records can lower it. Only the level-up celebration remembers anything.
-const XP = { star: 10, water: 10, weigh: 5, medal: { bronze: 50, silver: 100, gold: 200, diamond: 400 } };
+const XP = { get star() { return rules.star; }, get water() { return rules.water; }, get weigh() { return rules.weigh; },
+    get medal() { return { bronze: rules.bronze, silver: rules.silver, gold: rules.gold, diamond: rules.diamond }; } };
 
 // One title per level up to 30; past that the last title gains a "+N"
 const LEVEL_TITLES = [
@@ -26,10 +29,10 @@ const rankOf = level => RANKS.find(([min]) => level >= min);
 
 const titleOf = level => LEVEL_TITLES[level - 1] ?? `${LEVEL_TITLES.at(-1)} +${level - LEVEL_TITLES.length}`;
 
-// Total XP at which a level starts: the sum of 100 + 25 × (k - 1) over k < level
-const levelStart = level => 100 * (level - 1) + 12.5 * (level - 1) * (level - 2);
+// Sum the configured cost of every preceding level.
+const levelStart = level => rules.levelBase * (level - 1) + rules.levelStep / 2 * (level - 1) * (level - 2);
 
-const SEEN_KEY = 'macro_tracker_seen_level';
+const seenKey = () => `macro_tracker_seen_level:${account?.id || 'local'}:${rulesVersion}`;
 
 function dayXp(date, weighed) {
     const drank = (state.water?.[date] || []).reduce((sum, w) => sum + w.ml, 0);
@@ -58,11 +61,15 @@ function xpTotals(today = localDate()) {
     return { total, today: todayXp };
 }
 
-// Lv L → L+1 costs 100 + 25 × (L - 1) XP
+// Invert the arithmetic series without walking through potentially millions of levels.
 function levelFor(xp) {
-    let level = 1, need = 100;
-    while (xp >= need) { xp -= need; level++; need += 25; }
-    return { level, into: xp, need, title: titleOf(level), metal: rankOf(level)[1] };
+    const { levelBase: base, levelStep: step } = rules;
+    const b = base - step / 2;
+    let completed = step === 0 ? Math.floor(xp / base) : Math.floor((Math.sqrt(b * b + 2 * step * xp) - b) / step);
+    if (levelStart(completed + 2) <= xp) completed++;
+    if (levelStart(completed + 1) > xp) completed--;
+    const level = completed + 1, need = base + step * completed;
+    return { level, into: xp - levelStart(level), need, title: titleOf(level), metal: rankOf(level)[1] };
 }
 
 function floatXp(gain) {
@@ -96,7 +103,8 @@ function openLevelDialog() {
     $('ld-sub').textContent = `累计 ${fmt(total)} XP，距 Lv ${lv.level + 1} 还差 ${fmt(lv.need - lv.into)}`;
 
     let html = '', rank = null;
-    for (let level = 1; level <= Math.max(LEVEL_TITLES.length, lv.level); level++) {
+    const levels = [...new Set([...LEVEL_TITLES.map((_, i) => i + 1), lv.level])].sort((a, b) => a - b);
+    for (const level of levels) {
         const r = rankOf(level);
         if (r !== rank) {
             rank = r;
@@ -158,9 +166,9 @@ function renderLevel() {
 
     // First visit only records the level; later visits replay a level-up that happened while away
     let seen = null;
-    try { seen = Number(localStorage.getItem(SEEN_KEY)) || null; } catch { /* storage unavailable */ }
+    try { seen = Number(localStorage.getItem(seenKey())) || null; } catch { /* storage unavailable */ }
     if (seen !== null && lv.level > seen) celebrateLevelUp(lv);
-    if (seen !== lv.level) try { localStorage.setItem(SEEN_KEY, String(lv.level)); } catch { /* storage unavailable */ }
+    if (seen !== lv.level) try { localStorage.setItem(seenKey(), String(lv.level)); } catch { /* storage unavailable */ }
 }
 
 export { renderLevel, initLevel, levelFor, xpTotals, levelStart, XP };

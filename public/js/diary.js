@@ -1,3 +1,4 @@
+import { rules } from './rules.js';
 import { parseLocalDate, diaryDate, $, localDate, reduceMotion, esc, fmt, fmt1, WEEKDAYS } from './helpers.js';
 import { MEAL_ORDER, MEALS, macroIcon, targetsFor, sumEntries, recordingStreak, MACRO_KEYS, FINISH_SCALE, dayStars } from './nutrition.js';
 import { moveSegThumb, replay, tweenNumber, showToast, withBusy, showConfirm } from './ui.js';
@@ -290,7 +291,7 @@ function renderScoreboard(totals, celebrate) {
         showToast('今日三星达成', 'award');
     }
 
-    const proteinGap = t.protein - totals.protein;
+    const proteinGap = t.protein * rules.proteinPercent / 100 - totals.protein;
     $('chip-protein').innerHTML = proteinGap > 0
         ? `<span class="ms" aria-hidden="true">egg_alt</span><span>蛋白还差 <b class="num">${fmt(proteinGap)}</b> g</span>`
         : `<span class="ms" aria-hidden="true">check_circle</span><span>蛋白已达标</span>`;
@@ -309,7 +310,7 @@ function renderScoreboard(totals, celebrate) {
         tweenNumber(lane.querySelector('.lane-cur'), totals[key]);
 
         // On a cut, protein past target is the goal; everything else past target is overshoot
-        const done = key === 'protein' && pct >= 1;
+        const done = key === 'protein' && pct >= rules.proteinPercent / 100;
         const over = key !== 'protein' && pct > 1;
         lane.classList.toggle('is-done', done);
         lane.classList.toggle('is-over', over);

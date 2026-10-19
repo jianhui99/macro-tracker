@@ -1,3 +1,4 @@
+import { rules } from './rules.js';
 import { state } from './state.js';
 import { localDate } from './helpers.js';
 
@@ -55,10 +56,10 @@ function sumEntries(entries) {
     return t;
 }
 
-// A recorded day is compliant within [-300, +50] kcal of target
+// Compliance follows the same global rule as stars and achievements.
 function kcalStatus(kcal, targetKcal) {
     const diff = kcal - targetKcal;
-    return diff > 50 ? 'over' : diff < -300 ? 'under' : 'ok';
+    return diff > rules.kcalAbove ? 'over' : diff < -rules.kcalBelow ? 'under' : 'ok';
 }
 
 function dayStatus(dateStr, targetKcal) {
@@ -72,7 +73,7 @@ function dayStars(dateStr) {
     const t = sumEntries(state.diary[dateStr] || []);
     if (t.kcal <= 0) return 0;
     const target = targetsFor(dateStr);
-    return 1 + (kcalStatus(t.kcal, target.kcal) === 'ok') + (t.protein >= target.protein);
+    return 1 + (kcalStatus(t.kcal, target.kcal) === 'ok') + (t.protein >= target.protein * rules.proteinPercent / 100);
 }
 
 // Consecutive recorded days ending today; an unrecorded today doesn't break the streak yet

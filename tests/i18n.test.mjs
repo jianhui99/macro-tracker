@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { test } from 'node:test';
 import { createContext, SourceTextModule } from 'node:vm';
+import { adminHtml } from '../lib/admin-page.js';
 
 // Same loader as frontend.test.mjs: public/js is plain browser ESM, so it is linked in a vm context
 const context = createContext({ localStorage: { getItem: () => null } });
@@ -20,9 +21,12 @@ const { lookup } = i18n.namespace;
 const { EN } = (await module('i18n-en.js')).namespace;
 const ZH = /[\u4e00-\u9fff]/;
 
-test('every Chinese string in index.html has English', async () => {
-    const html = (await readFile(new URL('../public/index.html', import.meta.url), 'utf8'))
+test('every Chinese string in application, login, character and admin pages has English', async () => {
+    const pages = await Promise.all(['index.html', 'login.html', 'character.html'].map(name => readFile(new URL(`../public/${name}`, import.meta.url), 'utf8')));
+    pages.push(...['gate', 'login', 'panel'].map(adminHtml));
+    const html = pages.join('\n')
         .replace(/<!--[\s\S]*?-->/g, '')
+        .replace(/<div[^>]*translate="no"[\s\S]*?<\/div>/g, '')
         .replace(/<fieldset[^>]*translate="no"[\s\S]*?<\/fieldset>/g, '');
     const strings = [
         ...[...html.matchAll(/>([^<>]+)</g)].map(m => m[1].trim()),

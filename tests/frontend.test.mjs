@@ -82,7 +82,7 @@ test('export failure never downloads defaults and releases the button', async ()
     for (const failure of ['http', 'network']) {
         const app = await loadApp({ fetch: async () => {
             if (failure === 'network') throw new Error('offline');
-            return { ok: false, status: 500, text: async () => 'failed' };
+            return { ok: false, status: 500, json: async () => ({ error: 'internal_error' }) };
         } });
         await (await app.get('backup.js')).exportData();
         assert.equal(app.element('download').clicked, undefined);
@@ -148,7 +148,7 @@ test('invalid files and cancelling import leave server data untouched', async ()
 test('failed import keeps the confirmation open with an error and does not reload', async () => {
     const app = await loadApp({
         location: { reload() { assert.fail('must not reload on failure'); } },
-        fetch: async () => ({ ok: false, status: 500, text: async () => 'failed' })
+        fetch: async () => ({ ok: false, status: 500, json: async () => ({ error: 'internal_error' }) })
     });
     const backup = await app.get('backup.js');
     backup.initBackup();
@@ -255,34 +255,26 @@ test('quote loading hides the card on failure and escapes quote markup', async (
     assert.doesNotMatch(app.element('quote-text').innerHTML, /<img|English/);
 });
 
-test('concurrent 401 responses share one dialog and retry the original payload', async () => {
-    const calls = [];
-    const app = await loadApp({ fetch: async (url, options) => {
-        calls.push({ url, ...options });
-        return options.headers.Authorization === 'Bearer test-key'
-            ? { ok: true, status: 204 }
-            : { ok: false, status: 401 };
+test('concurrent 401 responses leave once without replaying mutations under another account', async () => {
+    const calls = [], redirects = [];
+    const app = await loadApp({ location: { replace(url) { redirects.push(url); } }, fetch: async (url, options) => {
+        calls.push({ url, ...options }); return { ok: false, status: 401 };
     } });
-    const api = await app.get('api.js');
-    api.initApi();
-    const requests = [api.api('/api/one', 'POST', { amount: 1 }), api.api('/api/two', 'DELETE')];
-    await new Promise(resolve => setImmediate(resolve));
-    assert.equal(app.element('key-dialog').openCount, 1);
-    app.element('key-input').value = ' test-key ';
-    let prevented = false;
-    app.element('key-dialog form').listeners.submit[0]({ preventDefault() { prevented = true; } });
-    assert.deepEqual(await Promise.all(requests), [null, null]);
-    assert.equal(prevented, true);
-    assert.equal(calls.length, 4);
-    assert.deepEqual(calls.filter(c => c.url === '/api/one').map(c => c.body), ['{"amount":1}', '{"amount":1}']);
-    assert.ok(calls.slice(2).every(c => c.headers.Authorization === 'Bearer test-key'));
+    (await app.get('session.js')).setSession({ account: { id: 'alice' }, csrf: 'csrf-a' });
+    const { api } = await app.get('api.js');
+    const results = await Promise.allSettled([api('/api/one', 'POST', { amount: 1 }), api('/api/two', 'DELETE')]);
+    assert.ok(results.every(r => r.status === 'rejected'));
+    assert.deepEqual(redirects, ['/login.html']);
+    assert.equal(calls.length, 2);
+    assert.ok(calls.every(c => c.headers['X-Account-Id'] === 'alice' && c.headers['X-CSRF-Token'] === 'csrf-a'));
+    assert.ok(calls.every(c => !c.headers.Authorization));
 });
 
 test('API failures still reject and show an error without replacing state', async () => {
     for (const failure of ['http', 'network']) {
         const app = await loadApp({ fetch: async () => {
             if (failure === 'network') throw new Error('offline');
-            return { ok: false, status: 500, text: async () => 'failed' };
+            return { ok: false, status: 500, json: async () => ({ error: 'internal_error' }) };
         } });
         const store = await app.get('state.js');
         const initial = store.state;
@@ -291,6 +283,63 @@ test('API failures still reject and show an error without replacing state', asyn
         assert.equal(app.element('toast-container').children.length, 1);
         assert.match(app.element('toast').className, /t-error/);
     }
+});
+
+test('an in-flight response cannot replace state after account changes', async () => {
+    let resolve;
+    const redirects = [];
+    const app = await loadApp({ location: { replace(url) { redirects.push(url); } }, fetch: () => new Promise(done => { resolve = done; }) });
+    const session = await app.get('session.js');
+    session.setSession({ account: { id: 'alice' }, csrf: 'a' });
+    const store = await app.get('state.js'), before = store.state;
+    const pending = store.loadState();
+    session.setSession({ account: { id: 'bob' }, csrf: 'b' });
+    resolve({ status: 200, ok: true, json: async () => fixture });
+    await assert.rejects(pending);
+    assert.equal(store.state, before);
+    assert.deepEqual(redirects, ['/login.html']);
+});
+
+test('storage and focus detect account changes between tabs', async () => {
+    for (const event of ['storage', 'focus']) {
+        const listeners = {}, redirects = [];
+        const app = await loadApp({ window: { addEventListener(name, fn) { listeners[name] = fn; } },
+            location: { replace(url) { redirects.push(url); } },
+            fetch: async () => ({ ok: true, json: async () => ({ account: { id: 'bob' }, csrf: 'b' }) }) });
+        const session = await app.get('session.js');
+        session.setSession({ account: { id: 'alice' }, csrf: 'a' });
+        session.initSession();
+        await listeners[event]({ key: 'macro_tracker_account', newValue: 'bob' });
+        assert.deepEqual(redirects, ['/login.html']);
+    }
+});
+
+test('global reward changes affect stars, achievements and XP without changing nutrition targets or old medals', async () => {
+    const app = await loadApp();
+    const store = await app.get('state.js'); await store.loadState();
+    const config = await app.get('rules.js');
+    const nutrition = await app.get('nutrition.js');
+    const level = await app.get('level.js');
+    const achievements = await app.get('achievements.js');
+    const plan = plain(nutrition.targetsFor('2026-10-17'));
+    const oldMedals = plain(store.state.achievements);
+    store.state.diary = { '2026-10-17': [{ kcal: plan.kcal, protein: plan.protein / 2, carbs: 0, fat: 0 }] };
+    assert.equal(nutrition.dayStars('2026-10-17'), 2);
+    config.setRules({ ...config.DEFAULT_RULES, proteinPercent: 50, star: 25, levelBase: 1, levelStep: 0 }, 1);
+    assert.equal(nutrition.dayStars('2026-10-17'), 3);
+    assert.deepEqual(plain(nutrition.targetsFor('2026-10-17')), plan);
+    assert.deepEqual(plain(store.state.achievements), oldMedals);
+    assert.equal(level.levelFor(1000000000).level, 1000000001);
+    assert.equal(level.XP.star, 25);
+    const stats = achievements.evaluateAchievements(store.state.diary, [], {}, store.state.user, [], nutrition.targetsFor, '2026-10-18');
+    assert.equal(stats.star_days.value, 1);
+    assert.equal(stats.star_total.value, 3);
+    for (const changes of [{ levelBase: 0 }, { proteinPercent: 201 }, { star: -1 }, { levelStep: 0.5 }, { arbitrary: 2 }]) {
+        assert.equal(config.validateRules({ ...config.DEFAULT_RULES, ...changes }), false);
+    }
+    config.setRules({ ...config.DEFAULT_RULES, kcalBelow: 10, kcalAbove: 20 }, 2);
+    assert.equal(nutrition.kcalStatus(plan.kcal - 11, plan.kcal), 'under');
+    assert.equal(nutrition.kcalStatus(plan.kcal + 21, plan.kcal), 'over');
 });
 
 test('HTML and rendered templates contain no inline event handlers', async () => {

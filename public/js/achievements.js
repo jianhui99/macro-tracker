@@ -1,3 +1,4 @@
+import { rules } from './rules.js';
 import { fmt1, fmtKg, localDate, parseLocalDate, $, fmt, fmtMonthDay, reduceMotion } from './helpers.js';
 import { unitText, unitBase } from './foods.js';
 import { sumEntries, kcalStatus, targetsFor } from './nutrition.js';
@@ -109,7 +110,7 @@ function evaluateAchievements(diary, weights, water, user, foodList, dayTargets,
         const finished = ds < today;
         const recorded = list.length > 0;
         const ok = finished && t.kcal > 0 && kcalStatus(t.kcal, targets.kcal) === 'ok';
-        const protein = finished && t.protein >= targets.protein;
+        const protein = finished && t.protein >= targets.protein * rules.proteinPercent / 100;
         const perfect = ok && protein && t.carbs <= targets.carbs * 1.05 && t.fat <= targets.fat * 1.05;
         const meals = ['breakfast', 'lunch', 'dinner'].every(m => list.some(e => e.meal === m));
         // The calendar's dayStars, except the kcal and protein stars wait for the day to finish

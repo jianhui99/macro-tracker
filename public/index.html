@@ -10,11 +10,13 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wdth,wght@0,62..125,400..900;1,62..125,400..900&family=Cinzel:wght@700..900&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..24,400..600,0..1,0&icon_names=ac_unit,accessibility_new,add,arrow_downward,arrow_upward,backpack,blender,bolt,cake,calendar_month,check,check_circle,chevron_left,chevron_right,close,contrast,dark_mode,delete,diamond,dinner_dining,download,edit,edit_note,egg,egg_alt,emoji_events,error,event_available,explore,fitness_center,flag,free_breakfast,glass_cup,grain,hiking,info,inventory_2,kebab_dining,landscape,light_mode,local_fire_department,lunch_dining,menu_book,military_tech,monitor_weight,music_note,nutrition,palette,person,ramen_dining,remove,restart_alt,restaurant,rice_bowl,save,search,sports_score,sprint,star,straighten,swords,target,translate,trending_down,unfold_less,unfold_more,upload,verified,vertical_align_bottom,volume_off,volume_up,water_bottle,water_bottle_large,water_drop,water_full&display=block" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..24,400..600,0..1,0&icon_names=ac_unit,accessibility_new,add,arrow_downward,arrow_upward,backpack,badge,blender,bolt,cake,calendar_month,check,check_circle,chevron_left,chevron_right,close,contrast,dark_mode,delete,diamond,dinner_dining,download,edit,edit_note,egg,egg_alt,emoji_events,error,event_available,explore,fitness_center,flag,free_breakfast,glass_cup,grain,hiking,info,inventory_2,kebab_dining,key,landscape,light_mode,local_fire_department,logout,lunch_dining,menu_book,military_tech,monitor_weight,music_note,nutrition,palette,person,ramen_dining,remove,restart_alt,restaurant,rice_bowl,save,search,shield_person,sports_score,sprint,star,straighten,swords,target,translate,trending_down,unfold_less,unfold_more,upload,verified,vertical_align_bottom,volume_off,volume_up,water_bottle,water_bottle_large,water_drop,water_full&display=block" rel="stylesheet">
 
     <link rel="stylesheet" href="/css/app.css">
+    <link rel="stylesheet" href="/css/auth.css">
 </head>
-<body>
+<body data-auth-loading>
+    <aside id="rules-update" class="rules-update" hidden role="status"><span>全站规则已更新，刷新页面后生效。</span><button class="btn btn-ghost" id="reload-rules">刷新页面</button></aside>
 
     <div id="toast-container" role="status" aria-live="polite"></div>
     <div id="float-tip" class="chart-tip is-floating" hidden></div>
@@ -289,9 +291,9 @@
 
             <div class="panel" id="summary-month">
                 <div class="cal-legend">
-                    <span class="lg-ok"><span class="ms" aria-hidden="true">check</span>达标（目标 -300 至 +50 kcal）</span>
-                    <span class="lg-over"><span class="ms" aria-hidden="true">arrow_upward</span>超标（高于 +50）</span>
-                    <span class="lg-under"><span class="ms" aria-hidden="true">arrow_downward</span>缺口过大（低于 -300）</span>
+                    <span class="lg-ok"><span class="ms" aria-hidden="true">check</span><span data-rule-label="ok">达标（目标 -300 至 +50 kcal）</span></span>
+                    <span class="lg-over"><span class="ms" aria-hidden="true">arrow_upward</span><span data-rule-label="over">超标（高于 +50）</span></span>
+                    <span class="lg-under"><span class="ms" aria-hidden="true">arrow_downward</span><span data-rule-label="under">缺口过大（低于 -300）</span></span>
                     <span><span class="ms lg-water" aria-hidden="true">water_drop</span>喝够饮水目标（空心为没喝够）</span>
                     <span><span class="ms lg-star" aria-hidden="true">star</span>星级：记录 1 星，热量达标再加 1 星，蛋白吃够再加 1 星</span>
                     <span>点日期可查看当天明细</span>
@@ -322,7 +324,7 @@
                 <div class="trend-legend" aria-hidden="true">
                     <span><i class="lg-dot"></i>每日热量</span>
                     <span><i class="lg-line"></i>7 日均线</span>
-                    <span><i class="lg-band"></i>达标区间（目标 -300 至 +50）</span>
+                    <span><i class="lg-band"></i><span data-rule-label="band">达标区间（目标 -300 至 +50）</span></span>
                 </div>
                 <div class="trend-chart" id="trend-chart" data-tip-host></div>
             </section>
@@ -474,6 +476,35 @@
                 </div>
             </section>
 
+            <section class="panel account-panel" aria-labelledby="account-title">
+                <div class="panel-head"><h2 id="account-title">公会账号</h2></div>
+                <div class="sys-row">
+                    <span class="sys-icon" aria-hidden="true"><span class="ms">person</span></span>
+                    <div class="sys-text"><b id="account-username" translate="no"></b><small>登录用户名，注册后不能修改</small></div>
+                    <div class="sys-actions">
+                        <a href="/admin" class="btn btn-ghost" id="admin-link" hidden><span class="ms" aria-hidden="true">shield_person</span>管理公会</a>
+                        <button type="button" class="btn btn-ghost" id="logout"><span class="ms" aria-hidden="true">logout</span>退出登录</button>
+                    </div>
+                </div>
+                <form class="sys-row" id="account-form">
+                    <span class="sys-icon" aria-hidden="true"><span class="ms">badge</span></span>
+                    <div class="sys-text"><b>角色昵称</b><small>显示在公会里的名字</small></div>
+                    <div class="sys-actions account-fields">
+                        <input class="input" id="account-nickname" required maxlength="40" aria-label="角色昵称" translate="no">
+                        <button type="submit" class="btn btn-ghost" id="save-nickname">保存昵称</button>
+                    </div>
+                </form>
+                <form class="sys-row" id="password-form">
+                    <span class="sys-icon" aria-hidden="true"><span class="ms">key</span></span>
+                    <div class="sys-text"><b>修改密码</b><small>至少 4 个字符，修改后其他设备会退出登录</small></div>
+                    <div class="sys-actions account-fields">
+                        <input class="input" name="current" type="password" required maxlength="128" autocomplete="current-password" placeholder="当前密码" aria-label="当前密码">
+                        <input class="input" name="next" type="password" required minlength="4" maxlength="128" autocomplete="new-password" placeholder="新密码" aria-label="新密码">
+                        <button type="submit" class="btn btn-ghost" id="change-password">修改密码</button>
+                    </div>
+                </form>
+            </section>
+
             <section class="panel system-panel" aria-labelledby="system-title">
                 <div class="panel-head"><h2 id="system-title">系统</h2></div>
                 <div class="sys-row">
@@ -504,7 +535,7 @@
                 </div>
                 <div class="sys-row">
                     <span class="sys-icon" aria-hidden="true"><span class="ms">save</span></span>
-                    <div class="sys-text"><b>存档</b><small>存档是一个 JSON 文件，包含个人设置、食物、饮食、饮水、体重、成就和元素形态。读取存档会覆盖全部现有数据，请先保存当前存档。</small></div>
+                    <div class="sys-text"><b>存档</b><small>存档是一个 JSON 文件，包含个人设置、食物、饮食、饮水、体重、成就和元素形态。读取存档会覆盖当前账号的全部现有数据，请先保存当前存档。</small></div>
                     <div class="sys-actions">
                         <button class="btn btn-ghost" id="export-data"><span class="ms" aria-hidden="true">download</span>保存存档</button>
                         <button class="btn btn-ghost" id="import-data" type="button"><span class="ms" aria-hidden="true">upload</span>读取存档</button>
@@ -577,7 +608,7 @@
         <form class="dialog-body">
             <h3 class="dialog-title" id="import-title">读取存档</h3>
             <p id="import-summary"></p>
-            <p id="import-warning">确认后将覆盖全部现有数据，无法撤销。请先保存当前存档，并暂停其他页面或设备的编辑。</p>
+            <p id="import-warning">确认后将覆盖当前账号的全部现有数据，无法撤销。请先保存当前存档，并暂停其他页面或设备的编辑。</p>
             <p id="import-error" class="key-error" role="alert" hidden></p>
             <div class="dialog-foot">
                 <button type="button" class="btn btn-ghost" id="cancel-import">取消</button>
@@ -596,19 +627,6 @@
             </div>
         </form>
     </dialog>
-
-    <!-- ── Access key ── -->
-    <dialog id="key-dialog" class="confirm-dialog" aria-labelledby="key-title">
-        <form class="dialog-body">
-            <h3 class="dialog-title" id="key-title">输入访问密钥</h3>
-            <label class="field"><span>密钥</span><input type="password" id="key-input" class="input" autocomplete="current-password" required></label>
-            <p id="key-error" class="key-error" role="alert" hidden>密钥不对，请重新输入</p>
-            <div class="dialog-foot">
-                <button type="submit" class="btn">进入</button>
-            </div>
-        </form>
-    </dialog>
-
 
     <script type="module" src="/js/app.js"></script>
 </body>

@@ -1,72 +1,40 @@
-import { $ } from './helpers.js';
 import { showToast } from './ui.js';
+import { account, authHeaders, expireSession } from './session.js';
 
-// ── Access key ──
-const KEY_STORAGE = 'macro_tracker_api_key';
+const ERRORS = {
+    admin_not_configured: '管理入口尚未配置', invite_unavailable: '邀请码无效或已用完', invite_required: '需要邀请码才能加入',
+    invalid_login: '用户名或密码不对', wrong_password: '当前密码不对', username_taken: '这个用户名已被使用',
+    invalid_username: '用户名需要 3 到 32 个字母、数字或下划线', invalid_password: '密码需要 4 到 128 个字符',
+    account_disabled: '账号已停用', invalid_profile: '请检查角色属性的填写范围',
+    invalid_nickname: '角色昵称需要 1 到 40 个字符', invalid_entry: '请检查记录内容',
+    rate_limited: '操作太频繁，请稍后再试', invalid_key: '密钥不对，请重新输入',
+    admin_required: '请重新验证管理入口和管理员身份', rules_changed: '规则已被修改，请刷新后再试',
+    request_too_large: '请求内容过大，请缩小后再试', too_many_records: '记录数量超过限制', login_failed: '登录失败，请重新开始'
+};
+const errorMessage = code => ERRORS[code] || '操作失败，请稍后再试';
 
-let apiKey = (() => { try { return localStorage.getItem(KEY_STORAGE) || ''; } catch { return ''; } })();
-
-const authHeaders = () => ({ Authorization: `Bearer ${apiKey}` });
-
-let keyPrompt = null;
-
-let resolveKeyPrompt = null;
-
-// Concurrent 401s share one open dialog
-function askForKey(rejected) {
-    if (!keyPrompt) {
-        $('key-error').hidden = !rejected;
-        $('key-input').value = '';
-        $('key-dialog').showModal();
-        keyPrompt = new Promise(resolve => { resolveKeyPrompt = resolve; });
-    }
-    return keyPrompt;
-}
-
-function submitKey() {
-    apiKey = $('key-input').value.trim();
-    try { localStorage.setItem(KEY_STORAGE, apiKey); } catch { /* storage unavailable */ }
-    $('key-dialog').close();
-    keyPrompt = null;
-    resolveKeyPrompt();
-}
-
-// ── API ──
 async function api(url, method = 'GET', body) {
-    const sentKey = apiKey;
-    let res;
+    const sentAccount = account?.id;
+    let response;
     try {
-        res = await fetch(url, {
-            method,
-            headers: { ...authHeaders(), ...(body && { 'Content-Type': 'application/json' }) },
-            body: body ? JSON.stringify(body) : undefined
-        });
-    } catch (err) {
-        console.error(`[api] ${method} ${url} network error`, err, body);
+        response = await fetch(url, { method, cache: 'no-store',
+            headers: { ...authHeaders(), ...(method !== 'GET' && { 'Content-Type': 'application/json' }) },
+            body: method === 'GET' ? undefined : JSON.stringify(body ?? {}) });
+    } catch (error) {
         showToast('连不上服务器，请检查网络', 'error');
-        throw err;
+        throw error;
     }
-    if (res.status === 401) {
-        // A key entered while this request was in flight may already be the right one
-        if (apiKey === sentKey) await askForKey(Boolean(sentKey));
-        return api(url, method, body);
+    if (response.status === 401 || sentAccount !== account?.id) {
+        expireSession();
+        throw new Error('login_required');
     }
-    if (!res.ok) {
-        const text = await res.text().catch(() => '');
-        console.error(`[api] ${method} ${url} -> ${res.status}`, text, body);
-        showToast(`操作失败（${res.status}），数据未保存`, 'error');
-        throw new Error(`${method} ${url} -> ${res.status}`);
+    if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        if (data.error === 'account_changed') expireSession();
+        showToast(errorMessage(data.error), 'error');
+        throw new Error(data.error || `${method} ${url} -> ${response.status}`);
     }
-    return res.status === 204 ? null : res.json();
+    return response.status === 204 ? null : response.json();
 }
 
-function initApi() {
-    // The app is unusable without a key, so Esc must not dismiss the dialog
-    $('key-dialog').addEventListener('cancel', e => e.preventDefault());
-    $('key-dialog').querySelector('form').addEventListener('submit', e => {
-        e.preventDefault();
-        submitKey();
-    });
-}
-
-export { api, initApi, authHeaders };
+export { api, authHeaders, errorMessage };

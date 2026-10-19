@@ -1,3 +1,4 @@
+import { rules } from './rules.js';
 import { moveSegThumb, hideFloatTip, tweenNumber, replay, showFloatTipAt } from './ui.js';
 import { MEAL_ORDER, sumEntries, targetsFor, MACRO_KEYS, kcalStatus, MEALS, computePlan, recordingStreak, dayStatus, dayStars, FINISH_SCALE, MACRO_META, macroIcon } from './nutrition.js';
 import { state } from './state.js';
@@ -68,7 +69,7 @@ function periodStats(from, to) {
         weekday.kcal += t.kcal;
         weekday.dev += t.kcal - targets.kcal;
         stats.daily[ds] = t.kcal;
-        stats.proteinDays += t.protein >= targets.protein;
+        stats.proteinDays += t.protein >= targets.protein * rules.proteinPercent / 100;
         MACRO_KEYS.forEach(k => { stats.sum[k] += t[k]; });
         for (const e of entries) {
             stats.mealKcal[MEALS[e.meal] ? e.meal : 'snack'] += e.kcal;
@@ -315,7 +316,7 @@ function renderInsights(stats, targets, elapsed, animate) {
         const avg = stats.avg[key], target = targets[key];
         const ratio = target > 0 ? avg / target : 0;
         const overPct = Math.round((ratio - 1) * 100);
-        const done = key === 'protein' && ratio >= 1;
+        const done = key === 'protein' && ratio >= rules.proteinPercent / 100;
         const over = key !== 'protein' && overPct > 0;
         const flag = done ? '<span class="ins-flag is-done"><span class="ms" aria-hidden="true">check</span>达标</span>'
             : over ? `<span class="ins-flag is-over">+${overPct}%</span>`
@@ -449,7 +450,7 @@ function renderTrendChart(animate = false) {
 
     const height = box.clientHeight, m = { top: 12, right: 16, bottom: 26, left: 48 };
     const plotW = width - m.left - m.right, plotH = height - m.top - m.bottom;
-    const maxV = Math.max(...values.filter(v => v !== null), target + 50);
+    const maxV = Math.max(...values.filter(v => v !== null), target + rules.kcalAbove);
     const step = maxV > 4000 ? 1000 : 500;
     const top = Math.ceil(maxV * 1.05 / step) * step;
     const x = i => m.left + (totalDays === 1 ? plotW / 2 : i / (totalDays - 1) * plotW);
@@ -467,10 +468,10 @@ function renderTrendChart(animate = false) {
 
     box.innerHTML = `
         <svg class="${animate ? 'is-drawing' : ''}" width="${width}" height="${height}" role="img" aria-label="每日热量趋势，目标 ${fmt(target)} kcal">
-            <rect class="band" x="${m.left}" width="${plotW}" y="${y(target + 50)}" height="${y(target - 300) - y(target + 50)}"/>
+            <rect class="band" x="${m.left}" width="${plotW}" y="${y(target + rules.kcalAbove)}" height="${y(Math.max(0, target - rules.kcalBelow)) - y(target + rules.kcalAbove)}"/>
             <g class="grid axis">${yTicks.map(v => `<line x1="${m.left}" x2="${width - m.right}" y1="${y(v)}" y2="${y(v)}"/><text x="${m.left - 8}" y="${y(v) + 4}" text-anchor="end">${fmt(v)}</text>`).join('')}</g>
             <g class="axis">${xTicks.filter((_, i) => i % every === 0).map(t => `<text x="${x(t.i)}" y="${height - 8}" text-anchor="middle">${t.label}</text>`).join('')}</g>
-            <text class="band-label" x="${width - m.right - 4}" y="${y(target + 50) - 5}" text-anchor="end">目标 ${fmt(target)}</text>
+            <text class="band-label" x="${width - m.right - 4}" y="${y(target + rules.kcalAbove) - 5}" text-anchor="end">目标 ${fmt(target)}</text>
             <line class="crosshair" y1="${m.top}" y2="${height - m.bottom}" visibility="hidden"/>
             ${values.map((v, i) => v === null ? '' : `<circle class="day-dot" r="${r}" cx="${x(i).toFixed(1)}" cy="${y(v).toFixed(1)}"/>`).join('')}
             <path class="ma" d="${path}" pathLength="1"/>

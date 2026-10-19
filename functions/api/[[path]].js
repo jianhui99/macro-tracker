@@ -1,4 +1,8 @@
 import { validateBackup } from '../../public/js/backup-format.js';
+import { handleAuth, requireSession } from '../../lib/auth.js';
+import { fail, json, rateLimit, readBody } from '../../lib/http.js';
+import { saveProfile, validateProfile, validateEntry, validDate } from '../../lib/account.js';
+import { handleAdmin, getRules } from '../../lib/admin.js';
 
 // ── Row <-> API shape mapping (keeps the frontend's `state` object unchanged) ──
 function foodToJson(row) {
@@ -20,22 +24,20 @@ function userToJson(u) {
         lastWater: u.last_water_ml == null ? null : { ml: u.last_water_ml, unit: u.last_water_unit } };
 }
 
-const json = (data, status = 200) => Response.json(data, { status });
 const noContent = () => new Response(null, { status: 204 });
-const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const DAY_TYPE_IDS = ['high', 'medium', 'low'];
 
 // ── Full state bootstrap ──
-async function getState({ db }) {
+async function getState({ db, userId }) {
     const [foods, entries, achievements, weights, user, dayTypes, dayPlan, water] = await db.batch([
-        db.prepare('SELECT * FROM foods'),
-        db.prepare('SELECT * FROM diary_entries ORDER BY id'),
-        db.prepare('SELECT id, unlocked_at FROM achievements'),
-        db.prepare('SELECT date, weight FROM weight_log ORDER BY date'),
-        db.prepare('SELECT * FROM user_settings WHERE id = 1'),
-        db.prepare('SELECT id, carbs_offset AS carbs, fat_offset AS fat FROM day_types'),
-        db.prepare('SELECT date, type FROM day_plan'),
-        db.prepare('SELECT id, date, time, ml FROM water_log ORDER BY id')
+        db.prepare('SELECT * FROM foods WHERE user_id = ?').bind(userId),
+        db.prepare('SELECT * FROM diary_entries WHERE user_id = ? ORDER BY id').bind(userId),
+        db.prepare('SELECT id, unlocked_at FROM achievements WHERE user_id = ?').bind(userId),
+        db.prepare('SELECT date, weight FROM weight_log WHERE user_id = ? ORDER BY date').bind(userId),
+        db.prepare('SELECT * FROM user_settings WHERE user_id = ?').bind(userId),
+        db.prepare('SELECT id, carbs_offset AS carbs, fat_offset AS fat FROM day_types WHERE user_id = ?').bind(userId),
+        db.prepare('SELECT date, type FROM day_plan WHERE user_id = ?').bind(userId),
+        db.prepare('SELECT id, date, time, ml FROM water_log WHERE user_id = ? ORDER BY id').bind(userId)
     ]);
 
     const diary = {};
@@ -58,12 +60,12 @@ async function getState({ db }) {
     });
 }
 
-async function importState({ db, body }) {
+async function importState({ db, userId, body }) {
     try { validateBackup(body); } catch (err) { return json({ error: err.message }, 400); }
     const { user: u, foods, diary, achievements, weights, dayTypes, dayPlan, water } = body;
     const tables = [
-        ['user_settings', 'id,height,weight,age,gender,activity,target_weight,water_target,last_water_ml,last_water_unit',
-            [[1, u.height, u.weight, u.age, u.gender, u.activity, u.targetWeight ?? null, u.waterTarget ?? null, u.lastWater?.ml ?? null, u.lastWater?.unit ?? null]]],
+        ['user_settings', 'height,weight,age,gender,activity,target_weight,water_target,last_water_ml,last_water_unit',
+            [[u.height, u.weight, u.age, u.gender, u.activity, u.targetWeight ?? null, u.waterTarget ?? null, u.lastWater?.ml ?? null, u.lastWater?.unit ?? null]]],
         ['foods', 'id,category,name,unit,kcal,protein,carbs,fat,active,last_amount',
             foods.map(f => [f.id, f.category, f.name, f.unit, f.kcal, f.protein, f.carbs, f.fat, Number(f.active), f.lastAmount ?? null])],
         ['diary_entries', 'id,date,food_id,is_temporary,meal,name,raw_amount,display_amount,kcal,protein,carbs,fat',
@@ -74,11 +76,12 @@ async function importState({ db, body }) {
         ['day_plan', 'date,type', Object.entries(dayPlan)],
         ['water_log', 'id,date,time,ml', Object.entries(water).flatMap(([date, drinks]) => drinks.map(w => [w.id, date, w.time ?? null, w.ml]))]
     ];
-    const statements = tables.map(([table]) => db.prepare(`DELETE FROM ${table}`));
+    if (tables.reduce((sum, [, , rows]) => sum + rows.length, 0) > 50000) return json({ error: 'too_many_records' }, 413);
+    const statements = tables.map(([table]) => db.prepare(`DELETE FROM ${table} WHERE user_id = ?`).bind(userId));
     const encoder = new TextEncoder();
     for (const [table, columns, rows] of tables) {
         const fields = columns.split(',').map((_, i) => `json_extract(value, '$[${i}]')`).join(',');
-        const insert = db.prepare(`INSERT INTO ${table} (${columns}) SELECT ${fields} FROM json_each(?)`);
+        const insert = db.prepare(`INSERT INTO ${table} (user_id,${columns}) SELECT ?,${fields} FROM json_each(?)`);
         let chunk = [], bytes = 2;
         for (const row of rows) {
             const encoded = JSON.stringify(row);
@@ -86,20 +89,25 @@ async function importState({ db, body }) {
             if (size > 1_999_998) return json({ error: '备份中有单条记录过大，未导入。' }, 400);
             // D1 limits each bound string to 2 MB; keep bulk inserts below that limit.
             if (chunk.length && bytes + size > 1_000_000) {
-                statements.push(insert.bind(`[${chunk.join(',')}]`));
+                statements.push(insert.bind(userId, `[${chunk.join(',')}]`));
                 chunk = []; bytes = 2;
             }
             chunk.push(encoded); bytes += size;
         }
-        if (chunk.length) statements.push(insert.bind(`[${chunk.join(',')}]`));
+        if (chunk.length) statements.push(insert.bind(userId, `[${chunk.join(',')}]`));
     }
+    statements.push(db.prepare(`UPDATE accounts SET
+        diary_sequence = MAX(diary_sequence, (SELECT COALESCE(MAX(id), 0) FROM diary_entries WHERE user_id = ?)),
+        water_sequence = MAX(water_sequence, (SELECT COALESCE(MAX(id), 0) FROM water_log WHERE user_id = ?)) WHERE id = ?`)
+        .bind(userId, userId, userId));
     // Deletes and inserts must commit together, including every chunk of large backups.
     await db.batch(statements);
     return noContent();
 }
 
 // ── User settings ──
-async function putUser({ db, body }) {
+async function putUser({ db, userId, body }) {
+    validateProfile(body);
     const { height, weight, age, gender, activity } = body;
     const targetWeight = body.targetWeight == null ? null : Number(body.targetWeight);
     if (targetWeight !== null && !(targetWeight >= 20 && targetWeight <= 400)) {
@@ -110,157 +118,153 @@ async function putUser({ db, body }) {
         return json({ error: 'waterTarget must be null or between 500 and 10000' }, 400);
     }
     await db.prepare(`
-        INSERT INTO user_settings (id, height, weight, age, gender, activity, target_weight, water_target) VALUES (1, ?, ?, ?, ?, ?, ?, ?)
-        ON CONFLICT(id) DO UPDATE SET height = excluded.height, weight = excluded.weight,
+        INSERT INTO user_settings (user_id, height, weight, age, gender, activity, target_weight, water_target) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(user_id) DO UPDATE SET height = excluded.height, weight = excluded.weight,
             age = excluded.age, gender = excluded.gender, activity = excluded.activity,
             target_weight = excluded.target_weight, water_target = excluded.water_target
-    `).bind(height, weight, age, gender, activity, targetWeight, waterTarget).run();
+    `).bind(userId, height, weight, age, gender, activity, targetWeight, waterTarget).run();
     // The weight log is the source of truth for weight whenever it has entries
-    return json(await syncSettingsWeight(db));
+    return json(await syncSettingsWeight(db, userId));
 }
 
 // ── Foods (warehouse) ──
-async function postFood({ db, body }) {
+async function postFood({ db, userId, body }) {
+    validateEntry(body, true);
     const { category, name, unit, kcal, protein, carbs, fat } = body;
     const row = await db.prepare(`
-        INSERT INTO foods (id, category, name, unit, kcal, protein, carbs, fat, active)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1) RETURNING *
-    `).bind(Date.now().toString(), category, name, unit, kcal, protein, carbs, fat).first();
+        INSERT INTO foods (user_id, id, category, name, unit, kcal, protein, carbs, fat, active)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1) RETURNING *
+    `).bind(userId, crypto.randomUUID(), category, name, unit, kcal, protein, carbs, fat).first();
     return json(foodToJson(row), 201);
 }
 
-async function putFood({ db, body, params: [id] }) {
-    const existing = await db.prepare('SELECT id FROM foods WHERE id = ?').bind(id).first();
+async function putFood({ db, userId, body, params: [id] }) {
+    const existing = await db.prepare('SELECT id FROM foods WHERE user_id = ? AND id = ?').bind(userId, id).first();
     if (!existing) return json({ error: 'food not found' }, 404);
 
+    validateEntry(body, true);
     const { category, name, unit, kcal, protein, carbs, fat } = body;
     // Cascade: recompute macros for every historical (non-temporary) entry referencing this food,
     // scaled by each entry's own raw_amount against the food's new base unit
     const baseAmount = parseFloat(unit) || 1;
     const unitText = unit.replace(/[0-9.]/g, '') || '单位';
-    const { results: affected } = await db.prepare(
-        'SELECT * FROM diary_entries WHERE food_id = ? AND is_temporary = 0').bind(id).all();
-    const updateEntry = db.prepare(`
-        UPDATE diary_entries SET name = ?, display_amount = ?, kcal = ?, protein = ?, carbs = ?, fat = ?
-        WHERE id = ?
-    `);
-    const updatedEntries = affected.map(entry => {
-        const multiplier = entry.raw_amount / baseAmount;
-        return {
-            id: entry.id, date: entry.date, name, displayAmount: entry.raw_amount + unitText,
-            kcal: kcal * multiplier, protein: protein * multiplier,
-            carbs: carbs * multiplier, fat: fat * multiplier
-        };
-    });
-
     // A D1 batch is one transaction, so the food and its entries never drift apart
-    const [foodResult] = await db.batch([
+    const [foodResult, entriesResult] = await db.batch([
         db.prepare(`
             UPDATE foods SET category = ?, name = ?, unit = ?, kcal = ?, protein = ?, carbs = ?, fat = ?
-            WHERE id = ? RETURNING *
-        `).bind(category, name, unit, kcal, protein, carbs, fat, id),
-        ...updatedEntries.map(e => updateEntry.bind(e.name, e.displayAmount, e.kcal, e.protein, e.carbs, e.fat, e.id))
+            WHERE user_id = ? AND id = ? RETURNING *
+        `).bind(category, name, unit, kcal, protein, carbs, fat, userId, id),
+        db.prepare(`UPDATE diary_entries SET name = ?,
+            display_amount = (CASE WHEN raw_amount = CAST(raw_amount AS INTEGER) THEN CAST(raw_amount AS INTEGER) ELSE raw_amount END) || ?,
+            kcal = ? * (raw_amount / ?), protein = ? * (raw_amount / ?), carbs = ? * (raw_amount / ?), fat = ? * (raw_amount / ?)
+            WHERE user_id = ? AND food_id = ? AND is_temporary = 0 RETURNING *`)
+            .bind(name, unitText, kcal, baseAmount, protein, baseAmount, carbs, baseAmount, fat, baseAmount, userId, id)
     ]);
 
-    return json({ food: foodToJson(foodResult.results[0]), updatedEntries });
+    return json({ food: foodToJson(foodResult.results[0]), updatedEntries: entriesResult.results.map(row => ({ ...entryToJson(row), date: row.date })) });
 }
 
-async function patchFoodActive({ db, body, params: [id] }) {
-    const row = await db.prepare('UPDATE foods SET active = ? WHERE id = ? RETURNING *')
-        .bind(body.active ? 1 : 0, id).first();
+async function patchFoodActive({ db, userId, body, params: [id] }) {
+    if (typeof body.active !== 'boolean') fail(400, 'invalid_entry');
+    const row = await db.prepare('UPDATE foods SET active = ? WHERE user_id = ? AND id = ? RETURNING *')
+        .bind(body.active ? 1 : 0, userId, id).first();
     if (!row) return json({ error: 'food not found' }, 404);
     return json(foodToJson(row));
 }
 
-async function deleteFood({ db, params: [id] }) {
-    await db.prepare('DELETE FROM foods WHERE id = ?').bind(id).run();
+async function deleteFood({ db, userId, params: [id] }) {
+    await db.prepare('DELETE FROM foods WHERE user_id = ? AND id = ?').bind(userId, id).run();
     return noContent();
 }
 
 // ── Diary entries ──
-async function postDiary({ db, body }) {
+async function postDiary({ db, userId, body }) {
+    validateEntry(body);
+    if (!validDate(body.date) || typeof body.isTemporary !== 'boolean') fail(400, 'invalid_entry');
     const { date, foodId, isTemporary, meal, name, rawAmount, displayAmount, kcal, protein, carbs, fat } = body;
-    const statements = [db.prepare(`
-        INSERT INTO diary_entries (date, food_id, is_temporary, meal, name, raw_amount, display_amount, kcal, protein, carbs, fat)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *
-    `).bind(date, foodId ?? null, isTemporary ? 1 : 0, meal, name, rawAmount, displayAmount, kcal, protein, carbs, fat)];
+    if (!isTemporary && !await db.prepare('SELECT 1 FROM foods WHERE user_id = ? AND id = ?').bind(userId, foodId ?? '').first()) fail(404, 'food_not_found');
+    const statements = [db.prepare('UPDATE accounts SET diary_sequence = diary_sequence + 1 WHERE id = ?').bind(userId), db.prepare(`
+        INSERT INTO diary_entries (user_id, id, date, food_id, is_temporary, meal, name, raw_amount, display_amount, kcal, protein, carbs, fat)
+        SELECT ?, diary_sequence, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? FROM accounts WHERE id = ? RETURNING *
+    `).bind(userId, date, foodId ?? null, isTemporary ? 1 : 0, meal, name, rawAmount, displayAmount, kcal, protein, carbs, fat, userId)];
     if (!isTemporary && foodId) {
-        statements.push(db.prepare('UPDATE foods SET last_amount = ? WHERE id = ?').bind(rawAmount, foodId));
+        statements.push(db.prepare('UPDATE foods SET last_amount = ? WHERE user_id = ? AND id = ?').bind(rawAmount, userId, foodId));
     }
-    const [inserted] = await db.batch(statements);
+    const [, inserted] = await db.batch(statements);
     return json(entryToJson(inserted.results[0]), 201);
 }
 
-async function putDiary({ db, body, params: [id] }) {
+async function putDiary({ db, userId, body, params: [id] }) {
+    validateEntry(body);
     const { meal, name, rawAmount, displayAmount, kcal, protein, carbs, fat } = body;
     const row = await db.prepare(`
         UPDATE diary_entries SET meal = ?, name = ?, raw_amount = ?, display_amount = ?, kcal = ?, protein = ?, carbs = ?, fat = ?
-        WHERE id = ? RETURNING *
-    `).bind(meal, name, rawAmount, displayAmount, kcal, protein, carbs, fat, id).first();
+        WHERE user_id = ? AND id = ? RETURNING *
+    `).bind(meal, name, rawAmount, displayAmount, kcal, protein, carbs, fat, userId, id).first();
     if (!row) return json({ error: 'entry not found' }, 404);
     return json(entryToJson(row));
 }
 
-async function deleteDiary({ db, params: [id] }) {
-    await db.prepare('DELETE FROM diary_entries WHERE id = ?').bind(id).run();
+async function deleteDiary({ db, userId, params: [id] }) {
+    await db.prepare('DELETE FROM diary_entries WHERE user_id = ? AND id = ?').bind(userId, id).run();
     return noContent();
 }
 
 // ── Weight log ──
 // The latest weigh-in drives the daily targets, so every change re-syncs user_settings.weight
-async function syncSettingsWeight(db) {
+async function syncSettingsWeight(db, userId) {
     const [, user] = await db.batch([
         db.prepare(`
-            UPDATE user_settings SET weight = (SELECT weight FROM weight_log ORDER BY date DESC LIMIT 1)
-            WHERE id = 1 AND EXISTS (SELECT 1 FROM weight_log)
-        `),
-        db.prepare('SELECT * FROM user_settings WHERE id = 1')
+            UPDATE user_settings SET weight = (SELECT weight FROM weight_log WHERE user_id = ? ORDER BY date DESC LIMIT 1)
+            WHERE user_id = ? AND EXISTS (SELECT 1 FROM weight_log WHERE user_id = ?)
+        `).bind(userId, userId, userId),
+        db.prepare('SELECT * FROM user_settings WHERE user_id = ?').bind(userId)
     ]);
     return userToJson(user.results[0]);
 }
 
-async function putWeight({ db, body, params: [date] }) {
+async function putWeight({ db, userId, body, params: [date] }) {
     const weight = Number(body.weight);
-    if (!DATE_RE.test(date) || !(weight >= 20 && weight <= 400)) {
+    if (!validDate(date) || !(weight >= 20 && weight <= 400)) {
         return json({ error: 'expected date YYYY-MM-DD and weight between 20 and 400' }, 400);
     }
     await db.prepare(`
-        INSERT INTO weight_log (date, weight) VALUES (?, ?)
-        ON CONFLICT(date) DO UPDATE SET weight = excluded.weight
-    `).bind(date, weight).run();
-    return json({ entry: { date, weight }, user: await syncSettingsWeight(db) });
+        INSERT INTO weight_log (user_id, date, weight) VALUES (?, ?, ?)
+        ON CONFLICT(user_id, date) DO UPDATE SET weight = excluded.weight
+    `).bind(userId, date, weight).run();
+    return json({ entry: { date, weight }, user: await syncSettingsWeight(db, userId) });
 }
 
-async function deleteWeight({ db, params: [date] }) {
-    await db.prepare('DELETE FROM weight_log WHERE date = ?').bind(date).run();
-    return json({ user: await syncSettingsWeight(db) });
+async function deleteWeight({ db, userId, params: [date] }) {
+    await db.prepare('DELETE FROM weight_log WHERE user_id = ? AND date = ?').bind(userId, date).run();
+    return json({ user: await syncSettingsWeight(db, userId) });
 }
 
 // ── Water log ──
-async function postWater({ db, body }) {
+async function postWater({ db, userId, body }) {
     const { date, time = null, customUnit = null } = body;
     const ml = Number(body.ml);
-    if (!DATE_RE.test(date ?? '') || !(ml > 0 && ml <= 5000) || (time !== null && !/^\d{2}:\d{2}$/.test(time))
+    if (!validDate(date) || !(ml > 0 && ml <= 5000) || (time !== null && !/^([01]\d|2[0-3]):[0-5]\d$/.test(time))
         || (customUnit !== null && !['ml', 'l'].includes(customUnit))) {
         return json({ error: 'expected date YYYY-MM-DD, ml between 0 and 5000, optional time HH:MM, optional customUnit ml or l' }, 400);
     }
     // A custom amount (customUnit set) is remembered for the next prefill; presets are not
-    const statements = [db.prepare('INSERT INTO water_log (date, time, ml) VALUES (?, ?, ?) RETURNING id, time, ml').bind(date, time, ml)];
+    const statements = [db.prepare('UPDATE accounts SET water_sequence = water_sequence + 1 WHERE id = ?').bind(userId), db.prepare('INSERT INTO water_log (user_id, id, date, time, ml) SELECT ?, water_sequence, ?, ?, ? FROM accounts WHERE id = ? RETURNING id, time, ml').bind(userId, date, time, ml, userId)];
     if (customUnit) {
-        statements.push(db.prepare('UPDATE user_settings SET last_water_ml = ?, last_water_unit = ? WHERE id = 1').bind(ml, customUnit));
+        statements.push(db.prepare('UPDATE user_settings SET last_water_ml = ?, last_water_unit = ? WHERE user_id = ?').bind(ml, customUnit, userId));
     }
-    const [inserted] = await db.batch(statements);
+    const [, inserted] = await db.batch(statements);
     return json(inserted.results[0], 201);
 }
 
-async function deleteWater({ db, params: [id] }) {
-    await db.prepare('DELETE FROM water_log WHERE id = ?').bind(id).run();
+async function deleteWater({ db, userId, params: [id] }) {
+    await db.prepare('DELETE FROM water_log WHERE user_id = ? AND id = ?').bind(userId, id).run();
     return noContent();
 }
 
 // ── Carb cycling ──
 // carbs / fat are gram offsets from the auto-calculated plan
-async function putDayTypes({ db, body }) {
+async function putDayTypes({ db, userId, body }) {
     const valid = DAY_TYPE_IDS.every(id => ['carbs', 'fat'].every(k => {
         const v = body[id]?.[k];
         return typeof v === 'number' && v >= -500 && v <= 500;
@@ -268,40 +272,40 @@ async function putDayTypes({ db, body }) {
     if (!valid) return json({ error: 'expected { high, medium, low } each with carbs, fat offsets between -500 and 500' }, 400);
 
     const upsert = db.prepare(`
-        INSERT INTO day_types (id, carbs_offset, fat_offset) VALUES (?, ?, ?)
-        ON CONFLICT(id) DO UPDATE SET carbs_offset = excluded.carbs_offset, fat_offset = excluded.fat_offset
+        INSERT INTO day_types (user_id, id, carbs_offset, fat_offset) VALUES (?, ?, ?, ?)
+        ON CONFLICT(user_id, id) DO UPDATE SET carbs_offset = excluded.carbs_offset, fat_offset = excluded.fat_offset
     `);
-    await db.batch(DAY_TYPE_IDS.map(id => upsert.bind(id, body[id].carbs, body[id].fat)));
+    await db.batch(DAY_TYPE_IDS.map(id => upsert.bind(userId, id, body[id].carbs, body[id].fat)));
     return noContent();
 }
 
-async function putDayPlan({ db, body, params: [date] }) {
-    if (!DATE_RE.test(date) || !DAY_TYPE_IDS.includes(body.type)) {
+async function putDayPlan({ db, userId, body, params: [date] }) {
+    if (!validDate(date) || !DAY_TYPE_IDS.includes(body.type)) {
         return json({ error: 'expected date YYYY-MM-DD and type high, medium or low' }, 400);
     }
     await db.prepare(`
-        INSERT INTO day_plan (date, type) VALUES (?, ?)
-        ON CONFLICT(date) DO UPDATE SET type = excluded.type
-    `).bind(date, body.type).run();
+        INSERT INTO day_plan (user_id, date, type) VALUES (?, ?, ?)
+        ON CONFLICT(user_id, date) DO UPDATE SET type = excluded.type
+    `).bind(userId, date, body.type).run();
     return noContent();
 }
 
-async function deleteDayPlan({ db, params: [date] }) {
-    await db.prepare('DELETE FROM day_plan WHERE date = ?').bind(date).run();
+async function deleteDayPlan({ db, userId, params: [date] }) {
+    await db.prepare('DELETE FROM day_plan WHERE user_id = ? AND date = ?').bind(userId, date).run();
     return noContent();
 }
 
 // ── Achievements ──
 // Idempotent: a tier that is already unlocked keeps its original date
-async function postAchievements({ db, body }) {
+async function postAchievements({ db, userId, body }) {
     const { unlocks } = body;
     const valid = Array.isArray(unlocks) && unlocks.every(u =>
-        typeof u?.id === 'string' && DATE_RE.test(u?.date ?? ''));
+        typeof u?.id === 'string' && /^[a-z_]+:\d+(\.\d+)?$/.test(u.id) && u.id.length < 100 && validDate(u.date));
     if (!valid) return json({ error: 'unlocks must be [{ id, date: "YYYY-MM-DD" }]' }, 400);
 
+    if (unlocks.length > 100) fail(400, 'too_many_records');
     if (unlocks.length) {
-        const insert = db.prepare('INSERT OR IGNORE INTO achievements (id, unlocked_at) VALUES (?, ?)');
-        await db.batch(unlocks.map(({ id, date }) => insert.bind(id, date)));
+        await db.prepare("INSERT OR IGNORE INTO achievements (user_id, id, unlocked_at) SELECT ?, json_extract(value, '$.id'), json_extract(value, '$.date') FROM json_each(?)").bind(userId, JSON.stringify(unlocks)).run();
     }
     return noContent();
 }
@@ -399,41 +403,34 @@ const ROUTES = [
     ['GET',    /^\/api\/quote$/,                getQuote]
 ];
 
-// Single shared key, set with `wrangler pages secret put API_KEY` (or .dev.vars locally)
-function isAuthorized(request, env) {
-    const encoder = new TextEncoder();
-    const given = encoder.encode(request.headers.get('Authorization') ?? '');
-    const expected = encoder.encode(`Bearer ${env.API_KEY}`);
-    // timingSafeEqual throws on unequal lengths, and the key length is not worth hiding
-    return given.byteLength === expected.byteLength && crypto.subtle.timingSafeEqual(given, expected);
-}
-
 export async function onRequest({ request, env }) {
     const { pathname } = new URL(request.url);
-    if (!env.API_KEY) {
-        console.error('[api] API_KEY secret is not configured; refusing all requests');
-        return json({ error: 'server not configured' }, 500);
-    }
-    if (!isAuthorized(request, env)) return json({ error: 'unauthorized' }, 401);
-
-    for (const [method, pattern, handler] of ROUTES) {
-        const match = pathname.match(pattern);
-        if (!match || request.method !== method) continue;
-
+    try {
+        if (pathname.startsWith('/api/auth/')) return await handleAuth(request, env);
+        if (pathname.startsWith('/api/admin/')) return await handleAdmin(request, env);
+        const session = await requireSession(request, env.DB);
+        const userId = session.id;
+        if (pathname === '/api/rules' && request.method === 'GET') return json(await getRules(env.DB));
         let body = {};
-        if (request.headers.get('content-type')?.includes('application/json')) {
-            try {
-                body = await request.json();
-            } catch {
-                return json({ error: 'invalid JSON body' }, 400);
-            }
+        if (!['GET', 'HEAD'].includes(request.method)) {
+            await rateLimit(env.DB, 'write', userId, 120, 60);
+            body = await readBody(request, pathname === '/api/import' ? 8 * 1024 * 1024 : 65536);
         }
-        try {
-            return await handler({ db: env.DB, env, body, params: match.slice(1).map(decodeURIComponent) });
-        } catch (err) {
-            console.error(`[api] ${method} ${pathname} failed: ${err.message}`, pathname === '/api/import' ? undefined : body);
-            return json({ error: 'internal error' }, 500);
+        if (pathname === '/api/profile' && request.method === 'PUT') return await saveProfile({ db: env.DB, body, session }, false);
+        if (pathname === '/api/profile/complete' && request.method === 'POST') return await saveProfile({ db: env.DB, body, session }, true);
+        if (!session.onboarded) fail(409, 'profile_required');
+        for (const [method, pattern, handler] of ROUTES) {
+            const match = pathname.match(pattern);
+            if (!match || request.method !== method) continue;
+            if (pathname === '/api/import') await rateLimit(env.DB, 'import', userId, 5, 3600);
+            const response = await handler({ db: env.DB, env, body, userId, params: match.slice(1).map(decodeURIComponent) });
+            response.headers.set('Cache-Control', 'no-store');
+            return response;
         }
+        return json({ error: 'not_found' }, 404);
+    } catch (error) {
+        if (error instanceof Response) return error;
+        console.error('[api] request failed', request.method, pathname);
+        return json({ error: 'internal_error' }, 500);
     }
-    return json({ error: 'not found' }, 404);
 }

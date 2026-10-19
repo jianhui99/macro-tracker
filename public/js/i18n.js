@@ -131,4 +131,6 @@ function startI18n() {
     document.documentElement.classList.add('i18n-ready');
 }
 
-export { lang, setLang, startI18n, lookup };
+const toggleLang = () => setLang(lang === 'en' ? 'zh' : 'en');
+
+export { lang, setLang, toggleLang, startI18n, lookup };

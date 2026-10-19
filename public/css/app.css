@@ -293,8 +293,8 @@ button { cursor: pointer; background: none; border: 0; }
 }
 .rail-item .ms { font-size: 22px; transition: transform .25s var(--ease-spring); }
 .rail-item { position: relative; }
-/* RPG menu cursor: a bobbing pointer beside the current page */
-.rail-item[aria-current="page"]::before {
+/* RPG menu cursor: a bobbing pointer beside the current page (also the login title menu) */
+.rail-item[aria-current="page"]::before, .title-menu [aria-pressed="true"]::before {
     content: "";
     position: absolute;
     left: -7px;
