@@ -5,6 +5,7 @@ import { showToast, showConfirm, replay } from './ui.js';
 import { api } from './api.js';
 import { renderFoodPicker } from './diary.js';
 import { syncAchievements } from './achievements.js';
+import { spriteKey, spriteSvg } from './sprites.js';
 
 let currentWarehouseEditId = null;
 
@@ -22,12 +23,17 @@ const sheetMq = matchMedia('(max-width: 1100px)');
 // Item rarity by how often a food was logged, reusing the badge tiers
 const RARITY = [[100, 'diamond', '传说'], [30, 'gold', '史诗'], [10, 'silver', '稀有'], [3, 'bronze', '优秀'], [0, '', '普通']];
 
-// Slot icon and tint follow the macro that supplies most of the item's energy
 const MACROS = [['protein', 4, 'egg_alt', '蛋白', 'g'], ['carbs', 4, 'rice_bowl', '碳水', 'g'], ['fat', 9, 'water_drop', '脂肪', 'g']];
 
+// The macro that supplies most of the item's energy tints the sprite's glow and picks it when no keyword matches
 function mainMacro(food) {
-    const [key, , icon] = MACROS.reduce((best, m) => food[m[0]] * m[1] > food[best[0]] * best[1] ? m : best);
-    return food[key] > 0 ? { key, icon } : { key: 'kcal', icon: 'bolt' };
+    const [key] = MACROS.reduce((best, m) => food[m[0]] * m[1] > food[best[0]] * best[1] ? m : best);
+    return food[key] > 0 ? key : 'kcal';
+}
+
+function slotIcon(food) {
+    const macro = mainMacro(food);
+    return `<span class="slot-icon" data-macro="${macro}" aria-hidden="true">${spriteSvg(spriteKey(food, macro))}</span>`;
 }
 
 function useCounts() {
@@ -38,13 +44,12 @@ function useCounts() {
 
 function slotHtml(food, uses, i) {
     const [, tier, label] = RARITY.find(([min]) => uses >= min);
-    const macro = mainMacro(food);
     const isActive = food.active !== false;
     const cls = `slot${tier ? ` r-${tier}` : ''}${isActive ? '' : ' is-off'}${food.id === newFoodId ? ' is-new' : ''}`;
     return `
         <button type="button" class="${cls}" data-food-id="${esc(food.id)}" aria-pressed="${food.id === selectedId}" style="--i:${Math.min(i, 24)}"
             aria-label="${esc(food.name)}，${label}，${esc(food.unit)}${isActive ? '' : '，已停用'}">
-            <span class="ms slot-icon" data-macro="${macro.key}" aria-hidden="true">${macro.icon}</span>
+            ${slotIcon(food)}
             <span class="slot-name">${esc(food.name)}</span>
             <span class="slot-qty">${esc(food.unit)}</span>
             <span class="ms slot-off" aria-hidden="true">ac_unit</span>
@@ -113,14 +118,13 @@ function renderItemCard(counts = useCounts()) {
 
     const uses = counts[food.id] || 0;
     const [, tier, label] = RARITY.find(([min]) => uses >= min);
-    const macro = mainMacro(food);
     const name = esc(food.name);
     const energy = MACROS.map(([key, k]) => food[key] * k);
     const total = energy.reduce((a, b) => a + b, 0);
     const pct = energy.map(e => total ? Math.round(e / total * 100) : 0);
     body.innerHTML = `
         <div class="item-head${tier ? ` r-${tier}` : ''}">
-            <span class="slot" aria-hidden="true"><span class="ms slot-icon" data-macro="${macro.key}">${macro.icon}</span></span>
+            <span class="slot" aria-hidden="true">${slotIcon(food)}</span>
             <div class="item-title">
                 <h2 class="item-name">${name}</h2>
                 <span class="item-rarity">${label} · 记录 ${uses} 次</span>

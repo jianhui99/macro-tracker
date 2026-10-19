@@ -406,3 +406,33 @@ test('level badge unlocks from replayed XP and its own tiers give no XP', async 
     assert.equal(xpTotals('2030-01-01').total, 0);
     assert.equal(levelFor(0).level, 1);
 });
+
+test('food sprites are complete 16x16 grids and keywords beat the macro fallback', async () => {
+    const { SPRITES, spriteKey, spriteSvg } = await (await loadApp()).get('sprites.js');
+    for (const [key, { pal, px }] of Object.entries(SPRITES)) {
+        assert.equal(px.length, 16, key);
+        for (const row of px) {
+            assert.equal(row.length, 16, `${key}: ${row}`);
+            for (const ch of row) assert.ok(ch === '.' || ch === 'k' || pal[ch], `${key}: unknown colour ${ch}`);
+        }
+        assert.match(spriteSvg(key), /^<svg viewBox="0 0 16 16"[^>]*>(<rect [^>]+\/>)+<\/svg>$/);
+    }
+    const cases = {
+        鸡胸肉: 'meat', 鸡蛋: 'egg', 牛奶: 'milk', 乳清蛋白粉: 'shake', 蛋糕: 'sweet', 饼干: 'sweet',
+        牛油果: 'fruit', 橄榄油: 'oil', 油条: 'bread', 土豆: 'potato', 豆腐: 'tofu', 四季豆: 'veg',
+        全麦面包: 'bread', 牛肉面: 'noodle', 米粉: 'noodle', 米饭: 'rice', 燕麦片: 'oats', 玉米: 'corn',
+        猪里脊: 'pork', 培根: 'pork', 牛排: 'meat',
+        酱油: 'sauce', 蚝油: 'sauce', 番茄酱: 'sauce', 蛋黄酱: 'sauce', 花生酱: 'sauce', 香醋: 'sauce', 酱牛肉: 'meat',
+        三文鱼: 'fish', 杏仁: 'nuts', 西兰花: 'veg', 黄瓜: 'veg', 西瓜: 'fruit', 美式咖啡: 'drink'
+    };
+    for (const [name, key] of Object.entries(cases)) assert.equal(spriteKey({ name, category: '' }, 'kcal'), key, name);
+    // The category wins over the name; a category with no keyword (蛋白质 is not an egg) defers to the name
+    assert.equal(spriteKey({ name: '里脊', category: '猪肉类' }, 'protein'), 'pork');
+    assert.equal(spriteKey({ name: '鸡蛋燕麦', category: '燕麦类' }, 'carbs'), 'oats');
+    assert.equal(spriteKey({ name: '鸡蛋', category: '蛋白质' }, 'protein'), 'egg');
+    assert.equal(spriteKey({ name: '芝麻油', category: '酱类' }, 'fat'), 'sauce');
+    assert.equal(spriteKey({ name: '神秘食物', category: '蛋白质' }, 'protein'), 'meat');
+    assert.equal(spriteKey({ name: '神秘食物', category: '其他' }, 'carbs'), 'rice');
+    assert.equal(spriteKey({ name: '神秘食物', category: '' }, 'fat'), 'oil');
+    assert.equal(spriteKey({ name: '神秘食物' }, 'kcal'), 'sweet');
+});
