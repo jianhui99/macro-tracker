@@ -10,6 +10,8 @@
         document.querySelector('meta[name="theme-color"]')?.setAttribute('content', light ? '#F1E8D8' : '#110E18');
     }
     apply();
+    // English pages stay hidden until i18n.js has translated the Chinese markup (it adds .i18n-ready)
+    try { if (localStorage.getItem('macro_tracker_lang') === 'en') document.documentElement.lang = 'en'; } catch { /* storage unavailable */ }
     system.addEventListener('change', apply);
     document.addEventListener('themechange', apply);
 })();

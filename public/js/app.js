@@ -11,6 +11,7 @@ import { initWater, fillCustomWater } from './water.js';
 import { initQuote, loadQuote } from './quote.js';
 import { initLevel } from './level.js';
 import { initBackup } from './backup.js';
+import { startI18n } from './i18n.js';
 
 // ── Navigation ──
 // The page lives in the URL hash so a reload stays on it
@@ -47,6 +48,8 @@ function navigateToDay(dateStr) {
     switchPage('diary');
 }
 
+// First, so every module renders into an already-translated page and the observer catches the rest
+startI18n();
 initApi();
 initDiary(() => switchPage('warehouse'));
 initWater();

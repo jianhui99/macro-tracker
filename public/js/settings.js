@@ -5,6 +5,7 @@ import { tweenNumber, withBusy, showToast, showConfirm } from './ui.js';
 import { api } from './api.js';
 import { syncAchievements } from './achievements.js';
 import { saveDayPlan } from './diary.js';
+import { lang, setLang } from './i18n.js';
 
 // ── Settings ──
 // Activity level read as a character class: [class, icon, plain activity]
@@ -417,8 +418,14 @@ function initThemePicker() {
     });
 }
 
+function initLangPicker() {
+    document.querySelector(`input[name="lang"][value="${lang}"]`).checked = true;
+    $('lang-seg').addEventListener('change', e => setLang(e.target.value));
+}
+
 function initSettings() {
     initThemePicker();
+    initLangPicker();
     // Redraw on size changes: the settings page starts hidden, and the panel reflows with the window and list
     new ResizeObserver(() => {
         const box = $('weight-chart');

@@ -180,6 +180,8 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 html { -webkit-text-size-adjust: 100%; }
+/* Set by theme.js before first paint; i18n.js adds .i18n-ready once the Chinese markup is translated */
+html[lang="en"]:not(.i18n-ready) body { visibility: hidden; }
 body {
     font-family: var(--font);
     font-size: 14px;
