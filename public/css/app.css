@@ -1242,9 +1242,27 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
 .water-unit .seg-opt { height: 26px; padding: 0 9px; border-radius: 7px; font-size: 12px; }
 .water-unit .seg-thumb { border-radius: 7px; }
 
-.water-log { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; }
+.water-log {
+    list-style: none;
+    display: flex;
+    gap: 6px;
+    /* One scrollable row instead of wrapping, so a long log doesn't stretch the card; padding keeps focus rings unclipped */
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
+    scroll-padding-inline: 3px;
+    padding: 3px;
+    margin: -3px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--line) transparent;
+}
 .water-log:empty { display: none; }
-.water-entry { display: inline-flex; align-items: center; gap: 3px; height: 28px; padding: 0 2px 0 10px; border-radius: 999px; background: var(--paper); font-size: 12px; color: var(--muted); }
+/* Touch swipes need no scrollbar */
+@media (pointer: coarse) {
+    .water-log { scrollbar-width: none; }
+    .water-log::-webkit-scrollbar { display: none; }
+}
+.water-entry { flex-shrink: 0; scroll-snap-align: end; display: inline-flex; align-items: center; gap: 3px; height: 28px; padding: 0 2px 0 10px; border-radius: 999px; background: var(--paper); font-size: 12px; color: var(--muted); }
 .water-entry b { font-size: 15px; color: var(--ink); }
 .water-entry small { margin-left: 4px; font-size: 11px; color: var(--subtle); }
 .water-entry .icon-btn { width: 24px; height: 24px; border-radius: 50%; }
@@ -2634,10 +2652,6 @@ dialog[open]::backdrop { animation: fade .2s ease; }
     .water-left { flex-basis: 100%; margin-left: 0; }
     .water-form { flex-basis: 100%; min-width: 0; margin-left: 0; }
     .water-form .input { flex: 1; width: auto; min-width: 0; }
-    /* One swipeable row instead of wrapping, so a long log doesn't stretch the page; padding keeps focus rings unclipped */
-    .water-log { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x proximity; scrollbar-width: none; padding: 3px; margin: -3px; scroll-padding-inline: 3px; }
-    .water-log::-webkit-scrollbar { display: none; }
-    .water-entry { flex-shrink: 0; scroll-snap-align: end; }
 }
 
 @media (prefers-reduced-motion: reduce) {

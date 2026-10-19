@@ -34,7 +34,7 @@ function renderWater(celebrate = false) {
             <b class="num">${fmt(w.ml)}</b>ml${w.time ? `<small>${w.time}</small>` : ''}
             <button type="button" class="icon-btn" data-water-id="${w.id}" aria-label="删除 ${fmt(w.ml)} ml 饮水"><span class="ms" aria-hidden="true">close</span></button>
         </li>`).join('');
-    // Bring a just-added entry into view when the log scrolls sideways (mobile)
+    // Bring a just-added entry into view at the end of the sideways-scrolling log
     if (lastWaterId) log.scrollTo({ left: log.scrollWidth, behavior: reduceMotion.matches ? 'auto' : 'smooth' });
     lastWaterId = null;
 }
