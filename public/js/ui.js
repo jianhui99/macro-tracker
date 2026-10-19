@@ -121,12 +121,16 @@ function initUi() {
 
     window.addEventListener('scroll', hideFloatTip, { passive: true });
 
-    const segThumbObserver = new ResizeObserver(entries => entries.forEach(e => moveSegThumb(e.target)));
+    // Options are watched too: they can resize while the control doesn't, e.g. when the icon font
+    // arrives and a ligature like "free_breakfast" collapses from text width to one glyph
+    const segThumbObserver = new ResizeObserver(entries =>
+        new Set(entries.map(e => e.target.closest('.seg'))).forEach(moveSegThumb));
 
     document.querySelectorAll('.seg').forEach(seg => {
         seg.insertAdjacentHTML('afterbegin', '<span class="seg-thumb" aria-hidden="true" hidden></span>');
         seg.addEventListener('change', () => moveSegThumb(seg));
         segThumbObserver.observe(seg);
+        seg.querySelectorAll('label').forEach(label => segThumbObserver.observe(label));
     });
 
     try {
