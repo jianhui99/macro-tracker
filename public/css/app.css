@@ -1,8 +1,8 @@
 /* Dark fantasy palette: night-stone surfaces, parchment text, brass rims, gold accent.
    Every text pair clears 4.5:1 (subtle 4:1, graphics 3:1) on --surface.
-   The light theme keeps a few "dark islands" (level card, toasts, tooltips, level-up)
+   The light theme keeps a few "dark islands" (toasts, tooltips, level-up)
    by giving them this same token set, so nothing inside them needs a light variant. */
-:root, :root[data-theme="light"] :is(.level-card, .toast, .chart-tip, .levelup) {
+:root, :root[data-theme="light"] :is(.toast, .chart-tip, .levelup) {
     color-scheme: dark;
     --accent: #E8B04B;
     --accent-deep: #B9832A;
@@ -59,6 +59,7 @@
     --hot: #FFB45C;
     --on-done: #1A1206;
     --star-locked: #3A3050;
+    --emblem-ink: #1A1206;
 
     /* Lane colors (validated for CVD + 3:1 contrast on dark surfaces) */
     --kcal: var(--ink);
@@ -165,6 +166,8 @@
     --hot: #C2570C;
     --on-done: #FFFFFF;
     --star-locked: #DCCDB3;
+    /* Light tier tints are darker, so emblem numbers flip to white */
+    --emblem-ink: #FFFFFF;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -1672,10 +1675,8 @@ button.cal-day:hover { transform: translateY(-2px); border-color: var(--accent);
     padding: 14px 18px;
     border: 1px solid var(--line);
     border-radius: 14px;
-    background:
-        radial-gradient(120% 160% at 100% 0%, rgba(110, 76, 200, .35), transparent 55%),
-        linear-gradient(160deg, #241B39, #15111F);
-    box-shadow: 0 0 0 1px var(--rim), inset 0 1px 0 var(--glint), 0 4px 0 var(--rim);
+    background: var(--board-bg);
+    box-shadow: 0 0 0 1px var(--rim), inset 0 1px 0 var(--glint), inset 0 0 40px var(--board-glow), 0 4px 0 var(--rim);
 }
 .lv-emblem {
     flex-shrink: 0;
@@ -1685,13 +1686,13 @@ button.cal-day:hover { transform: translateY(-2px); border-color: var(--accent);
     display: grid;
     place-items: center;
     font-size: 28px;
-    color: var(--on-accent);
+    color: var(--emblem-ink);
     background: radial-gradient(circle at 30% 25%, color-mix(in srgb, var(--lv, var(--accent)) 50%, #fff), var(--lv, var(--accent)) 55%, color-mix(in srgb, var(--lv, var(--accent)) 70%, #000));
-    box-shadow: 0 0 0 3px rgba(0, 0, 0, .45), 0 0 0 4px color-mix(in srgb, var(--lv, var(--accent)) 60%, transparent), 0 0 20px color-mix(in srgb, var(--lv, var(--accent)) 40%, transparent);
+    box-shadow: 0 0 0 3px var(--socket), 0 0 0 4px color-mix(in srgb, var(--lv, var(--accent)) 60%, transparent), 0 0 20px color-mix(in srgb, var(--lv, var(--accent)) 40%, transparent);
 }
 #page-settings.is-active .lv-emblem { animation: medalIn .7s var(--ease-spring) .1s backwards; }
 .level-card { transition: transform .2s var(--ease-out), box-shadow .2s; }
-.level-card:has(.level-open:hover) { transform: translateY(-2px); box-shadow: 0 0 0 1px var(--rim), inset 0 1px 0 var(--glint), 0 6px 0 var(--rim), 0 0 24px rgba(110, 76, 200, .35); }
+.level-card:has(.level-open:hover) { transform: translateY(-2px); box-shadow: 0 0 0 1px var(--rim), inset 0 1px 0 var(--glint), 0 6px 0 var(--rim), 0 0 24px var(--board-glow), inset 0 0 40px var(--board-glow); }
 .level-card:has(.level-open:active) { transform: scale(.98); transition-duration: .08s; }
 /* Above the XP bar notches, which sit at z-index 1 */
 .level-open { position: absolute; inset: 0; z-index: 2; border-radius: inherit; }
