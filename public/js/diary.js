@@ -46,8 +46,15 @@ const getMeal = (name = 'meal') => document.querySelector(`input[name="${name}"]
 function setMeal(meal, name = 'meal') {
     const input = document.querySelector(`input[name="${name}"][value="${meal}"]`);
     if (input) input.checked = true;
-    if (input) moveSegThumb(input.closest('.seg'));
+    if (input) { moveSegThumb(input.closest('.seg')); revealMeal(input.closest('.seg')); }
     if (name === 'meal') updateGoLabels();
+}
+
+// Meal rows scroll sideways when they don't fit; centre the chosen meal so it never hides off the edge
+function revealMeal(seg, smooth = true) {
+    const label = seg.querySelector('input:checked')?.parentElement;
+    if (!label || !seg.clientWidth) return;
+    seg.scrollTo({ left: label.offsetLeft - (seg.clientWidth - label.offsetWidth) / 2, behavior: smooth && !reduceMotion.matches ? 'smooth' : 'auto' });
 }
 
 function updateGoLabels() {
@@ -395,6 +402,7 @@ function openEditModal(index) {
         $('modal-food-amount').value        = entry.rawAmount || parseFloat(entry.displayAmount) || 100;
     }
     $('edit-dialog').showModal();
+    revealMeal($('modal-meal-seg'), false);
 }
 
 function closeModal() { $('edit-dialog').close(); }

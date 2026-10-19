@@ -467,7 +467,7 @@ select.input { padding-right: 8px; }
 }
 .seg input:checked + .seg-opt .ms { font-variation-settings: 'FILL' 1, 'wght' 600, 'opsz' 24; }
 .seg input:focus-visible + .seg-opt { outline: 2px solid var(--accent); outline-offset: 1px; }
-#meal-seg {
+#meal-seg, #modal-meal-seg {
     grid-template-columns: none;
     grid-auto-flow: column;
     grid-auto-columns: minmax(max-content, 1fr);
@@ -478,9 +478,9 @@ select.input { padding-right: 8px; }
     scrollbar-width: none;
     flex-shrink: 0;
 }
-#meal-seg::-webkit-scrollbar { display: none; }
-#meal-seg label { scroll-snap-align: start; }
-#meal-seg .seg-opt { padding: 0 14px; white-space: nowrap; }
+#meal-seg::-webkit-scrollbar, #modal-meal-seg::-webkit-scrollbar { display: none; }
+#meal-seg label, #modal-meal-seg label { scroll-snap-align: start; }
+#meal-seg .seg-opt, #modal-meal-seg .seg-opt { padding: 0 14px; white-space: nowrap; }
 /* Sliding thumb replaces the per-option checked background on every segmented control */
 .seg:has(.seg-thumb) { position: relative; }
 .seg:has(.seg-thumb) input:checked + .seg-opt { background: transparent; box-shadow: none; }
