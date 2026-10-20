@@ -24,13 +24,56 @@
 .class-option:focus-within { outline: 2px solid var(--ink); outline-offset: 3px; }
 .class-option input { position: absolute; opacity: 0; width: 1px; height: 1px; }
 .class-option .ms { color: var(--accent); font-size: 25px; }
-.class-option b, .class-option small { display: block; }
-.class-option small { color: var(--muted); font-size: 11px; margin-top: 4px; }
+.class-option .hint-info { flex-shrink: 0; margin-left: -6px; }
+.class-option .hint-info .ms { color: inherit; font-size: 18px; }
 #board .board-head { padding-right: 132px; min-height: 200px; }
 .home-avatar { position: absolute; right: 0; top: 28px; width: 120px; }
 .home-avatar .avatar-art { width: 96px; }
 .home-avatar .avatar-caption b { font-size: 12px; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .home-avatar .avatar-caption span { font-size: 10px; }
+/* Departure (character page) and arrival (home) share one golden light so the hand-off reads as one move */
+.departure { position: fixed; inset: 0; z-index: 9000; overflow: hidden; cursor: pointer;
+    background: radial-gradient(circle at 50% 38%, #FFF4D6 0, var(--accent) 16%, #6B4BB0 42%, var(--paper) 72%); }
+.departure::after, .is-arriving::after { content: ""; position: fixed; inset: 0; pointer-events: none;
+    background: radial-gradient(circle at 50% 38%, #FFFBEF 0, #FFE7AE 35%, var(--accent) 80%); }
+.departure::after { z-index: 5; opacity: 0; transition: opacity .55s ease-in .1s; }
+.departure.is-flash::after { opacity: 1; }
+.departure-rays { position: absolute; left: 50%; top: 38%; width: 220vmax; height: 220vmax; margin: -110vmax 0 0 -110vmax;
+    background: repeating-conic-gradient(#FFE7AE33 0 5deg, transparent 5deg 15deg);
+    mask: radial-gradient(circle, #000, transparent 40%); animation: raysSpin 18s linear infinite; }
+@keyframes raysSpin { to { rotate: 360deg; } }
+.departure-embers i { position: absolute; left: var(--x); bottom: -8px; width: 4px; height: 4px; background: #FFE7AE; box-shadow: 0 0 8px #FFC86B;
+    animation: emberRise var(--d) linear var(--delay) infinite; }
+@keyframes emberRise { 0% { opacity: 0; } 15% { opacity: 1; } 100% { opacity: 0; transform: translate(12px, -85vh); } }
+.departure-half { position: absolute; inset: 0; overflow: hidden; background: var(--paper); box-shadow: 0 0 40px #0008; }
+.departure-half main { position: absolute; margin: 0; }
+.departure-half * { animation: none !important; }
+.departure-half .avatar-art { visibility: hidden; }
+.departure-hero { position: absolute; z-index: 2; max-width: none; filter: drop-shadow(0 0 18px #FFE7AE); }
+.departure-hero :is(.avatar-breathe, .avatar-gear) { animation-duration: .3s; }
+/* Title card: the kicker's rules draw outwards, the title sharpens out of a blur, then the hero's line fades up */
+.chapter-card { position: absolute; z-index: 3; left: 16px; right: 16px; top: 59%; display: grid; justify-items: center; gap: 10px; text-align: center; color: #FFF8E8; pointer-events: none;
+    padding: 18px 0 24px; background: radial-gradient(closest-side, #0B0812B3, transparent); }
+.chapter-card > * { margin: 0; opacity: 0; transition: opacity .6s var(--ease-out), transform .8s var(--ease-out), filter .8s var(--ease-out), letter-spacing 1.2s var(--ease-out); }
+.chapter-kicker { display: flex; align-items: center; gap: 12px; font: 800 13px 'Cinzel', serif; letter-spacing: .7em; color: #FFE7AE; text-shadow: 0 1px 6px #000; }
+.chapter-kicker::before, .chapter-kicker::after { content: ""; width: 0; height: 1px; background: currentColor; transition: width .8s var(--ease-out) .3s; }
+.chapter-title { font-size: clamp(34px, 7vw, 60px); font-weight: 900; letter-spacing: .3em; transform: scale(1.15); filter: blur(8px);
+    text-shadow: 0 0 24px #FFB84D, 0 2px 0 #4A2F0A; }
+.chapter-sub { font-size: 15px; color: #FFF1D0; transform: translateY(8px); text-shadow: 0 1px 6px #000; }
+.chapter-sub b { color: #FFE7AE; }
+.is-titled .chapter-card > * { opacity: 1; transform: none; filter: none; }
+.is-titled .chapter-kicker { letter-spacing: .35em; }
+.is-titled .chapter-kicker::before, .is-titled .chapter-kicker::after { width: 48px; }
+.is-titled .chapter-title { transition-delay: .25s; }
+.is-titled .chapter-sub { transition-delay: .8s; }
+.departure-bar { position: absolute; z-index: 4; left: 0; right: 0; top: 0; height: 11vh; background: #000; animation: barIn .5s var(--ease-out) both; }
+.departure-bar.is-bottom { top: auto; bottom: 0; display: flex; align-items: center; justify-content: flex-end; padding: 0 24px; --from: 100%; }
+.departure-bar span { color: #fff8; font-size: 12px; letter-spacing: .2em; }
+@keyframes barIn { from { transform: translateY(var(--from, -100%)); } }
+.is-arriving::after { z-index: 9000; animation: arrivalLight .9s var(--ease-out) forwards; }
+.is-arriving .home-avatar { animation: avatarLand .6s var(--ease-spring) .35s both; }
+@keyframes arrivalLight { to { opacity: 0; transform: scale(1.3); } }
+@keyframes avatarLand { from { opacity: 0; transform: translateY(-36px) scale(.6); } }
 @media (max-width: 720px) {
     .character-page main { grid-template-columns: minmax(0, 1fr); gap: 16px; }
     .character-preview { position: static; grid-row: 1; }

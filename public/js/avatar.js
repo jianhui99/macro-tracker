@@ -1,10 +1,10 @@
 import { spriteRects } from './sprites.js';
 
 export const CLASSES = {
-    '1.2': ['学者', 'menu_book', '久坐不动'],
-    '1.375': ['旅人', 'hiking', '轻度活动'],
-    '1.55': ['冒险者', 'explore', '中度活动'],
-    '1.725': ['战士', 'swords', '重度活动']
+    '1.2': ['学者', 'menu_book', '久坐不动', '久坐不动（基本不运动）'],
+    '1.375': ['旅人', 'hiking', '轻度活动', '轻度活动（每周运动 1-3 天）'],
+    '1.55': ['冒险者', 'explore', '中度活动', '中度活动（每周运动 3-5 天）'],
+    '1.725': ['战士', 'swords', '重度活动', '重度活动（每周运动 6-7 天）']
 };
 
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));

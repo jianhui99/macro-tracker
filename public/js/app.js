@@ -4,7 +4,7 @@ import { renderWarehouse, initWarehouse } from './warehouse.js';
 import { renderSummary, initSummary } from './summary.js';
 import { renderAchievements, initAchievements, syncAchievements } from './achievements.js';
 import { fillSettingsForm, fillCycleForm, renderWeights, initSettings } from './settings.js';
-import { $, localDate } from './helpers.js';
+import { $, localDate, reduceMotion } from './helpers.js';
 import { loadState } from './state.js';
 import { api } from './api.js';
 import { loadSession, initSession, expireSession } from './session.js';
@@ -52,6 +52,17 @@ function navigateToDay(dateStr) {
     switchPage('diary');
 }
 
+// Continues the character page's departure: the hero's light fades and the home avatar lands
+function playArrival() {
+    try {
+        if (!sessionStorage.getItem('macro_tracker_arrival')) return;
+        sessionStorage.removeItem('macro_tracker_arrival');
+    } catch { return; }
+    if (reduceMotion.matches) return;
+    document.body.classList.add('is-arriving');
+    setTimeout(() => document.body.classList.remove('is-arriving'), 1400);
+}
+
 async function init() {
     const startPage = pageFromHash();
     // Only the DOM here: page renderers need the loaded state
@@ -60,6 +71,7 @@ async function init() {
     try {
         await loadState();
         document.body.removeAttribute('data-auth-loading');
+        playArrival();
         $('diary-date').value = localDate();
         fillSettingsForm();
         fillCustomWater();

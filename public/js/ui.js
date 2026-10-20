@@ -100,13 +100,7 @@ function setPanelCollapsed(panel, collapsed) {
     panel.querySelector('.panel-toggle').setAttribute('aria-expanded', String(!collapsed));
 }
 
-function initUi() {
-    // ── Dialogs ──
-    // Clicking the backdrop lands on the <dialog> itself (content lives in an inner form).
-    // The badge dialog animates its own close.
-    document.querySelectorAll('dialog:not(#badge-dialog):not(#import-dialog)').forEach(d =>
-        d.addEventListener('click', e => { if (e.target === d) d.close('cancel'); }));
-
+function initTips() {
     const tipScope = document.querySelector('main');
 
     tipScope.addEventListener('pointerover', e => {
@@ -121,9 +115,22 @@ function initUi() {
 
     tipScope.addEventListener('focusout', hideFloatTip);
 
-    document.querySelector('main').addEventListener('scroll', hideFloatTip, { passive: true });
+    // The icon can sit inside clickable headers or option labels; tapping it shows the tip without toggling them
+    tipScope.addEventListener('click', e => { if (e.target.closest('.hint-info')) e.preventDefault(); });
+
+    tipScope.addEventListener('scroll', hideFloatTip, { passive: true });
 
     window.addEventListener('scroll', hideFloatTip, { passive: true });
+}
+
+function initUi() {
+    // ── Dialogs ──
+    // Clicking the backdrop lands on the <dialog> itself (content lives in an inner form).
+    // The badge dialog animates its own close.
+    document.querySelectorAll('dialog:not(#badge-dialog):not(#import-dialog)').forEach(d =>
+        d.addEventListener('click', e => { if (e.target === d) d.close('cancel'); }));
+
+    initTips();
 
     // Options are watched too: they can resize while the control doesn't, e.g. when the icon font
     // arrives and a ligature like "free_breakfast" collapses from text width to one glyph
@@ -154,8 +161,7 @@ function initUi() {
     });
 
     document.addEventListener('click', e => {
-        // The icon sits inside clickable headers; tapping it shows the tip without collapsing anything
-        if (e.target.closest('.hint-info')) { e.preventDefault(); return; }
+        if (e.target.closest('.hint-info')) return;
         const head = e.target.closest('.panel > .panel-head');
         if (!head) return;
         const panel = head.parentElement;
@@ -168,4 +174,4 @@ function initUi() {
     });
 }
 
-export { showToast, replay, hideFloatTip, initUi, moveSegThumb, tweenNumber, withBusy, showConfirm, showFloatTipAt };
+export { showToast, replay, hideFloatTip, initUi, initTips, moveSegThumb, tweenNumber, withBusy, showConfirm, showFloatTipAt };
