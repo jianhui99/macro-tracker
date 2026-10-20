@@ -26,11 +26,18 @@
 .class-option .ms { color: var(--accent); font-size: 25px; }
 .class-option .hint-info { flex-shrink: 0; margin-left: -6px; }
 .class-option .hint-info .ms { color: inherit; font-size: 18px; }
-#board .board-head { padding-right: 132px; min-height: 200px; }
-.home-avatar { position: absolute; right: 0; top: 28px; width: 120px; }
-.home-avatar .avatar-art { width: 96px; }
-.home-avatar .avatar-caption b { font-size: 12px; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.home-avatar .avatar-caption span { font-size: 10px; }
+/* The hero leans over the board's top edge, centred above the stars: it shares the board's grid cell, the board
+   drops by the head's height, and the svg's last two rows (the hands) overlap the edge. --px is one sprite pixel. */
+.diary-grid { --px: 4px; --stars-w: 125px; --board-pad: 22px; }
+.home-avatar { grid-area: board; align-self: start; justify-self: end; position: relative; z-index: 2; display: block;
+    width: calc(32 * var(--px)); margin: -14px calc(var(--board-pad) + (var(--stars-w) - 32 * var(--px)) / 2) 0 0; cursor: help; }
+.home-avatar .avatar-art { width: 100%; }
+.home-avatar .avatar-caption { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+/* The right column drops by the same amount so its first card lines up with the board's top edge */
+.diary-grid > .board, .diary-side { margin-top: calc(19 * var(--px) - 14px); }
+@media (max-width: 1100px) { .diary-side { margin-top: 0; } }
+/* The date nav fills the board's drop on the left, level with the hero's face on the right */
+.diary-nav { grid-area: board; align-self: start; justify-self: start; z-index: 1; height: calc(19 * var(--px) - 14px); min-height: 0; margin: 0; flex-wrap: nowrap; }
 /* Departure (character page) and arrival (home) share one golden light so the hand-off reads as one move */
 .departure { position: fixed; inset: 0; z-index: 9000; overflow: hidden; cursor: pointer;
     background: radial-gradient(circle at 50% 38%, #FFF4D6 0, var(--accent) 16%, #6B4BB0 42%, var(--paper) 72%); }
@@ -82,12 +89,10 @@
     .character-preview .avatar-art { width: 128px; }
     .character-preview h2 { margin: 0; }
     .character-preview p { margin: 6px 0 0; }
-    #board .board-head { padding-right: 80px; min-height: 168px; gap: 10px; }
-    .home-avatar { width: 76px; top: 20px; }
-    .home-avatar .avatar-art { width: 64px; }
-    .home-avatar .avatar-caption b { max-width: 76px; font-size: 10px; }
-    #board .hero { flex-wrap: wrap; gap: 4px 8px; }
-    #board .hero-label { flex-basis: 100%; }
+    .diary-grid { --px: 3px; --stars-w: 82px; --board-pad: 16px; }
+    /* Too narrow to share the drop with the hero, so the date nav takes its own row above the board */
+    .diary-grid { grid-template-areas: "nav" "board" "side" "log"; }
+    .diary-nav { grid-area: nav; height: auto; flex-wrap: wrap; }
 }
 @media (prefers-reduced-motion: reduce) {
     .avatar-breathe, .avatar-eyes, .avatar-eyes-closed, .avatar-gear { animation: none; }

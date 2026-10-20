@@ -8,6 +8,7 @@ import { syncAchievements } from './achievements.js';
 
 // ── Water ──
 const GLASS_ML = 250;
+const FLASK_ROWS = 26;
 
 const waterTotal = date => (state.water[date] || []).reduce((sum, w) => sum + w.ml, 0);
 
@@ -25,7 +26,9 @@ function renderWater(celebrate = false) {
     }
     card.classList.toggle('is-full', full);
     card.classList.toggle('is-empty', !total);
-    card.style.setProperty('--level', `${Math.min(total / goal, 1) * 100}%`);
+    // The pixel flask fills in whole rows: any water shows at least one, and only a met goal fills the last
+    const rows = full ? FLASK_ROWS : Math.min(FLASK_ROWS - 1, Math.max(total ? 1 : 0, Math.round(total / goal * FLASK_ROWS)));
+    card.style.setProperty('--level', `${rows / FLASK_ROWS * 100}%`);
     tweenNumber($('water-num'), total);
     $('water-goal').textContent = fmt(goal);
     $('water-left').textContent = full ? '' : `还差 ${fmt(goal - total)} ml，约 ${Math.ceil((goal - total) / GLASS_ML)} 杯`;

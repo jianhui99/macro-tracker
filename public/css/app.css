@@ -359,7 +359,7 @@ main { overflow-y: auto; padding: 18px 22px 28px; }
     box-shadow: 0 0 0 1px var(--rim), inset 0 1px 0 var(--glint), 0 4px 0 var(--rim), 0 10px 24px var(--card-shadow);
 }
 /* Banner header: a faint brass wash and a diamond stud before the title */
-.panel-head, .quote-head {
+.panel-head {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -369,7 +369,7 @@ main { overflow-y: auto; padding: 18px 22px 28px; }
     background: linear-gradient(180deg, rgba(232, 176, 75, .09), rgba(232, 176, 75, .02));
     box-shadow: 0 1px 0 var(--rim);
 }
-.panel-head h2, .quote-head h2 {
+.panel-head h2, .quote-card h2 {
     font-size: 15px;
     font-weight: 700;
     letter-spacing: .06em;
@@ -380,7 +380,7 @@ main { overflow-y: auto; padding: 18px 22px 28px; }
     align-items: center;
     gap: 8px;
 }
-.panel-head h2::before, .quote-head h2::before {
+.panel-head h2::before, .quote-card h2::before {
     content: "";
     width: 7px;
     height: 7px;
@@ -389,7 +389,7 @@ main { overflow-y: auto; padding: 18px 22px 28px; }
     background: linear-gradient(135deg, #FFE3A0, var(--accent-deep));
     box-shadow: 0 0 6px rgba(232, 176, 75, .6);
 }
-.panel-head .hint, .quote-head .hint { font-size: 12px; color: var(--muted); }
+.panel-head .hint { font-size: 12px; color: var(--muted); }
 .panel > .panel-head { cursor: pointer; user-select: none; }
 .panel-head h2:has(+ .hint-info) { margin-right: 0; }
 .panel-head .hint-info { margin: -4px auto -4px 0; }
@@ -558,12 +558,11 @@ select.input { padding-right: 8px; }
 .diary-grid {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 368px;
-    grid-template-areas: "quote quick" "board quick" "water quick" "log quick";
-    grid-template-rows: auto auto auto 1fr;
+    grid-template-areas: "board side" "log side";
+    grid-template-rows: auto 1fr;
     gap: 14px;
     align-items: start;
 }
-.diary-grid:has(> .quote-card[hidden]) { grid-template-areas: "board quick" "water quick" "log quick"; grid-template-rows: auto auto 1fr; }
 
 /* ── Scoreboard ── */
 .board {
@@ -674,6 +673,21 @@ select.input { padding-right: 8px; }
     animation: var(--star-fx, none);
 }
 .board-stars .is-on { color: transparent; }
+/* Pixel stars: the glyph is hidden and a pixel-star mask paints the same fill on ::before (3px cells),
+   so the colour, sheen, glow and pop rules on .ms still drive it */
+.board-stars, .mini-stars {
+    --pixel-star: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 13 12' shape-rendering='crispEdges'%3E%3Cpath d='M6 0h1v1H6zM5 1h3v2H5zM4 3h5v1H4zM0 4h13v1H0zM1 5h11v1H1zM2 6h9v1H2zM3 7h7v2H3zM2 9h4v1H2zM7 9h4v1H7zM2 10h3v1H2zM8 10h3v1H8zM1 11h2v1H1zM10 11h2v1h-2z'/%3E%3C/svg%3E");
+}
+.board-stars .ms, .mini-stars .ms { position: relative; width: 39px; height: 36px; font-size: 0; }
+:is(.board-stars, .mini-stars) .ms::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: currentColor;
+    -webkit-mask: var(--pixel-star) center / 100% 100% no-repeat;
+    mask: var(--pixel-star) center / 100% 100% no-repeat;
+}
+:is(.board-stars, .mini-stars) .is-on::before { background: inherit; -webkit-background-clip: border-box; background-clip: border-box; }
 .board-stars[data-stars="1"] .is-on { filter: drop-shadow(0 2px 0 var(--rim)) brightness(.8); }
 .board-stars[data-stars="2"] .is-on { filter: drop-shadow(0 2px 0 var(--rim)) drop-shadow(0 0 7px rgba(245, 196, 81, .55)); }
 .board-stars[data-stars="3"] .is-on {
@@ -749,7 +763,9 @@ select.input { padding-right: 8px; }
 .star-spark:nth-of-type(5) { top: -6px; left: -8px; width: 9px; height: 9px; --d: .7s; }
 .star-spark:nth-of-type(6) { bottom: -8px; left: 50%; width: 8px; height: 8px; --d: 1.4s; }
 
-.board-meta { display: flex; gap: 8px; flex-wrap: wrap; }
+/* Always its own row: if the chips could sit beside the energy number, the layout would depend on text widths,
+   jumping between days and flickering while the number tweens */
+.board-meta { display: flex; gap: 8px; flex-wrap: wrap; flex-basis: 100%; }
 .chip {
     display: inline-flex;
     align-items: center;
@@ -941,6 +957,7 @@ select.input { padding-right: 8px; }
     transition: color .4s;
 }
 .mini-stars .is-on { color: transparent; }
+.mini-stars .ms { width: 26px; height: 24px; }
 .mini-stars .is-on.is-lighting { animation: starLight .7s var(--ease-spring); }
 .mini-lanes { flex: 1; min-width: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px 10px; }
 .mini-lane {
@@ -964,10 +981,12 @@ select.input { padding-right: 8px; }
 }
 
 /* ── Quote of the day ── */
-.quote-card { grid-area: quote; }
-.quote-close { margin: -6px -8px -6px 0; }
+/* A slim notice banner across the top of the diary: stud label, a divider, the quote, then the close button */
+.quote-card { margin-bottom: 14px; display: flex; align-items: center; gap: 12px; padding: 4px 4px 4px 14px; animation: panelIn .35s var(--ease-out); }
+.quote-card h2 { flex-shrink: 0; margin-right: 0; padding-right: 12px; border-right: 1px solid var(--line); font-size: 13px; }
 .quote-card.is-leaving { animation: entryOut .22s var(--ease-out) forwards; pointer-events: none; }
-.quote-text { position: relative; margin: 14px 16px 16px; font-weight: 500; line-height: 1.85; color: var(--ink); }
+.quote-text { position: relative; flex: 1; min-width: 0; margin: 4px 0; font-weight: 500; line-height: 1.6; color: var(--ink); }
+.quote-close { flex-shrink: 0; align-self: flex-start; }
 .quote-mark-line {
     background: linear-gradient(transparent 60%, rgba(232, 176, 75, .13) 60%) no-repeat 0 0 / 0% 100%;
     -webkit-box-decoration-break: clone;
@@ -976,9 +995,9 @@ select.input { padding-right: 8px; }
     animation-delay: var(--mark-delay);
 }
 .qw { display: inline-block; animation: wordIn .5s var(--ease-out) backwards; animation-delay: calc(var(--i) * 45ms + 120ms); }
-.quote-text.is-zh { font-size: 15px; letter-spacing: .03em; }
+.quote-text.is-zh { font-size: 14px; letter-spacing: .03em; }
 .quote-text.is-zh .qw { max-width: 100%; overflow-wrap: anywhere; }
-.quote-skel { display: block; height: 14px; margin: 7px 0; border-radius: 6px; background: linear-gradient(90deg, var(--line-soft), var(--surface-2), var(--line-soft)) 0 0 / 200% 100%; animation: skel 1.2s linear infinite; }
+.quote-skel { display: block; height: 12px; margin: 5px 0; border-radius: 6px; background: linear-gradient(90deg, var(--line-soft), var(--surface-2), var(--line-soft)) 0 0 / 200% 100%; animation: skel 1.2s linear infinite; }
 .quote-skel.is-short { width: 55%; }
 @keyframes boltPulse { 50% { transform: scale(1.18); filter: drop-shadow(0 0 4px rgba(245, 196, 81, .8)); } }
 @keyframes wordIn { from { opacity: 0; transform: translateY(6px); filter: blur(3px); } }
@@ -986,15 +1005,13 @@ select.input { padding-right: 8px; }
 @keyframes skel { to { background-position: -200% 0; } }
 
 /* ── Quick log panel ── */
-.quick {
-    grid-area: quick;
-    position: sticky;
-    top: 0;
-    display: flex;
-    flex-direction: column;
-    max-height: calc(100vh - 98px);
-    min-height: 0;
-}
+/* Right column: the quick-add panel above the water card. Not sticky: together they are taller than most
+   laptop screens, and capping the column would squeeze the quick panel's submit row out of view. */
+.diary-side { grid-area: side; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+/* In this flex column align-self is the horizontal axis, so the collapsed-panel rule (made for grid rows)
+   would shrink a folded panel to its title; keep it full width */
+.diary-side > .panel.is-collapsed { align-self: stretch; }
+.quick { display: flex; flex-direction: column; }
 .quick-body { display: flex; flex-direction: column; gap: 12px; padding: 12px 14px 14px; min-height: 0; flex: 1; overflow-y: auto; }
 .mode-tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--line-soft); margin: 0 -14px; padding: 0 14px; }
 .mode-tab {
@@ -1148,7 +1165,7 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
 .temp-grid .wide { grid-column: 1 / -1; }
 
 /* ── Water ── */
-.water { grid-area: water; }
+.water { flex-shrink: 0; }
 .water-body { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 18px; align-items: center; padding: 14px 16px 16px; }
 /* The glass is clipped to a tumbler; the drop and splash sit outside the clip so they can fall in from above */
 /* Potion flask: the glow outlines the clipped glass, which a border cannot follow */
@@ -1156,40 +1173,49 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
     position: relative;
     width: 76px;
     height: 104px;
-    filter: drop-shadow(0 0 1px rgba(142, 162, 255, .7)) drop-shadow(0 0 10px rgba(77, 139, 255, .22));
+    /* Four hard offsets trace a 2px pixel outline (corners stay notched) around the stepped flask */
+    --flask-outline: drop-shadow(2px 0 0 var(--flask-rim)) drop-shadow(-2px 0 0 var(--flask-rim)) drop-shadow(0 2px 0 var(--flask-rim)) drop-shadow(0 -2px 0 var(--flask-rim));
+    --flask-rim: rgba(142, 162, 255, .75);
+    filter: var(--flask-outline) drop-shadow(0 0 10px rgba(77, 139, 255, .22));
     transition: transform .3s var(--ease-spring);
 }
 .water-glass {
     position: absolute;
     inset: 0;
-    clip-path: path('M27 0H49V6H46V26Q76 34 76 66Q76 104 38 104Q0 104 0 66Q0 34 30 26V6H27Z');
-    background: radial-gradient(circle at 38px 68px, var(--glass-core), var(--water-soft) 70%);
+    /* Pixel potion flask on a 4px grid (19 x 26 cells): lip, neck, then a stepped round belly */
+    clip-path: polygon(24px 0, 52px 0, 52px 8px, 48px 8px, 48px 24px, 56px 24px, 56px 28px, 64px 28px, 64px 32px, 68px 32px, 68px 36px, 72px 36px, 72px 44px, 76px 44px,
+        76px 84px, 72px 84px, 72px 92px, 68px 92px, 68px 96px, 64px 96px, 64px 100px, 56px 100px, 56px 104px, 20px 104px, 20px 100px, 12px 100px, 12px 96px, 8px 96px,
+        8px 92px, 4px 92px, 4px 84px, 0 84px, 0 44px, 4px 44px, 4px 36px, 8px 36px, 8px 32px, 12px 32px, 12px 28px, 20px 28px, 20px 24px, 28px 24px, 28px 8px, 24px 8px);
+    background: var(--water-soft);
 }
 /* Gloss on the left and 25% graduations on the right, drawn over the water like marks on glass */
 .water-glass::before, .water-glass::after { content: ""; position: absolute; z-index: 1; pointer-events: none; }
-.water-glass::before { left: 11px; top: 46px; width: 16px; height: 38px; border-radius: 50%; border-left: 4px solid rgba(255, 255, 255, .28); }
-.water-glass::after { right: 13px; top: 34px; bottom: 8px; width: 8px; background: repeating-linear-gradient(0deg, transparent 0 calc(25% - 1.5px), rgba(232, 176, 75, .3) calc(25% - 1.5px) 25%); }
+.water-glass::before { left: 8px; top: 52px; width: 4px; height: 24px; background: rgba(255, 255, 255, .3); box-shadow: 4px -8px 0 rgba(255, 255, 255, .3); }
+.water-glass::after { right: 12px; top: 36px; bottom: 8px; width: 8px; background: repeating-linear-gradient(0deg, transparent 0 calc(25% - 2px), rgba(232, 176, 75, .35) calc(25% - 2px) 25%); }
 .water-level {
     position: absolute;
     inset: auto 0 0;
     height: var(--level, 0%);
-    background: linear-gradient(180deg, var(--water), var(--water-deep));
+    /* Hard colour bands instead of a smooth gradient, like a palette-limited sprite */
+    background: linear-gradient(180deg, var(--water) 0 12px, color-mix(in srgb, var(--water), var(--water-deep)) 12px 40px, var(--water-deep) 40px);
     transition: height 1s var(--ease-spring);
 }
 .water-vis.is-pouring .water-level { transition-delay: .32s; }
-.water-surface { position: absolute; left: 0; right: 0; bottom: calc(100% - 1px); height: 9px; transform-origin: bottom; }
+.water-surface { position: absolute; left: 0; right: 0; bottom: calc(100% - 1px); height: 8px; transform-origin: bottom; }
 /* Two periods wide; sliding by one period loops seamlessly */
 .water-wave { position: absolute; left: 0; bottom: 0; width: 200%; height: 100%; animation: waveDrift 2.6s linear infinite; transition: opacity .3s; }
 .water-wave path { fill: var(--water); }
 .water-wave.is-back { height: 130%; opacity: .4; animation-duration: 4.2s; animation-direction: reverse; animation-delay: -1.3s; }
-.bubble { position: absolute; bottom: 0; width: 5px; height: 5px; border-radius: 50%; background: rgba(255, 255, 255, .6); opacity: 0; animation: bubble 3.4s ease-in infinite; }
+.bubble { position: absolute; bottom: 0; width: 4px; height: 4px; background: rgba(255, 255, 255, .6); opacity: 0; animation: bubble 3.4s ease-in infinite; }
 .bubble:nth-child(2) { left: 30%; }
-.bubble:nth-child(3) { left: 52%; width: 4px; height: 4px; animation-delay: 1.2s; animation-duration: 2.8s; }
-.bubble:nth-child(4) { left: 64%; width: 6px; height: 6px; animation-delay: 2.1s; }
+.bubble:nth-child(3) { left: 52%; width: 2px; height: 2px; animation-delay: 1.2s; animation-duration: 2.8s; }
+.bubble:nth-child(4) { left: 64%; animation-delay: 2.1s; }
 .water.is-empty .water-wave { opacity: 0; animation-play-state: paused; }
 .water.is-empty .bubble { animation: none; }
-.water-drop { position: absolute; left: 50%; top: 0; margin-left: -9px; font-size: 18px; color: var(--water); font-variation-settings: 'FILL' 1, 'wght' 500, 'opsz' 20; opacity: 0; pointer-events: none; z-index: 2; }
-.water-splash { position: absolute; left: 50%; top: calc(var(--splash-y, 104px) - 5px); width: 44px; height: 10px; margin-left: -22px; border-radius: 50%; border: 2px solid var(--water); opacity: 0; pointer-events: none; z-index: 2; }
+/* Pixel droplet: the icon glyph is hidden and a stepped 6 x 8 cell shape is clipped from the fill */
+.water-drop { position: absolute; left: 50%; top: 0; width: 12px; height: 16px; margin-left: -6px; font-size: 0; background: var(--water); opacity: 0; pointer-events: none; z-index: 2;
+    clip-path: polygon(4px 0, 8px 0, 8px 4px, 10px 4px, 10px 8px, 12px 8px, 12px 14px, 10px 14px, 10px 16px, 2px 16px, 2px 14px, 0 14px, 0 8px, 2px 8px, 2px 4px, 4px 4px); }
+.water-splash { position: absolute; left: 50%; top: calc(var(--splash-y, 104px) - 4px); width: 44px; height: 8px; margin-left: -22px; border: 2px solid var(--water); opacity: 0; pointer-events: none; z-index: 2; }
 .water-vis.is-pouring .water-drop { animation: dropFall .38s cubic-bezier(.55, 0, 1, .45); }
 .water-vis.is-pouring .water-splash { animation: splash .6s var(--ease-out) .34s; }
 .water-vis.is-pouring .water-surface { animation: slosh .9s var(--ease-out) .32s; }
@@ -1214,7 +1240,7 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
 .water-left { margin-left: auto; font-size: 12px; color: var(--muted); }
 .water.is-celebrating .water-flag { animation: stamp .45s var(--ease-spring) .5s backwards; }
 .water.is-celebrating .water-vis { animation: glassGlow 1.4s var(--ease-out) .4s; }
-@keyframes glassGlow { 30% { filter: drop-shadow(0 0 1px rgba(142, 162, 255, .9)) drop-shadow(0 0 16px rgba(77, 139, 255, .7)); transform: scale(1.06); } }
+@keyframes glassGlow { 30% { filter: var(--flask-outline) drop-shadow(0 0 16px rgba(77, 139, 255, .7)); transform: scale(1.06); } }
 
 .water-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .water-add {
@@ -2554,9 +2580,8 @@ dialog[open]::backdrop { animation: fade .2s ease; }
 
 /* ── Responsive ── */
 @media (max-width: 1100px) {
-    .diary-grid { grid-template-columns: minmax(0, 1fr); grid-template-areas: "quote" "board" "quick" "water" "log"; }
-    .diary-grid:has(> .quote-card[hidden]) { grid-template-areas: "board" "quick" "water" "log"; grid-template-rows: auto; }
-    .quick { position: static; max-height: none; }
+    .diary-grid { grid-template-columns: minmax(0, 1fr); grid-template-areas: "board" "side" "log"; grid-template-rows: auto; }
+
     .hud-dock { display: block; position: sticky; top: 0; z-index: 90; height: 0; }
     .food-list { max-height: 240px; }
     .new-food-form { grid-template-columns: repeat(4, minmax(0, 1fr)); }
@@ -2591,6 +2616,10 @@ dialog[open]::backdrop { animation: fade .2s ease; }
     .wsum-stats { border-right: 0; border-bottom: 1px solid var(--line-soft); }
 }
 @media (max-width: 720px) {
+    .quote-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 8px; padding: 4px 4px 10px 14px; }
+    .quote-card h2 { padding-right: 0; border-right: 0; }
+    .quote-text { grid-column: 1 / -1; grid-row: 2; margin: 0 10px 0 0; }
+    .quote-close { grid-area: 1 / 2; align-self: center; }
     body { display: block; height: auto; min-height: 100vh; overflow: auto; }
     .rail {
         position: fixed;
@@ -2612,7 +2641,7 @@ dialog[open]::backdrop { animation: fade .2s ease; }
     .board { padding: 16px 16px 12px; border-radius: 16px; }
     .board-head { min-height: 0; }
     .board-stars { gap: 2px; }
-    .board-stars .ms { font-size: 26px; }
+    .board-stars .ms { width: 26px; height: 24px; }
     .board-stars.is-complete::after { width: 40px; height: 40px; margin: -20px 0 0 -20px; }
     .board-stars::before { width: 116px; height: 116px; margin: -58px 0 0 -58px; }
     .lane { grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "name val" "track track"; gap: 4px 10px; padding: 6px 0 8px; }

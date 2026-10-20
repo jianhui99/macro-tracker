@@ -209,7 +209,6 @@ export const EN = {
     '回到今天': 'Back to today',
     '冒险者公告': 'Adventurer\'s Notice',
     '关闭公告': 'Close notice',
-    '每日寄语': 'Words for the day',
     '今日进度': 'Today\'s progress',
     '剩余能量': 'Energy left',
     '能量溢出': 'Energy overflow',

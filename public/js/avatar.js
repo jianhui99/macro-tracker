@@ -1,4 +1,5 @@
 import { spriteRects } from './sprites.js';
+import { esc } from './helpers.js';
 
 export const CLASSES = {
     '1.2': ['学者', 'menu_book', '久坐不动', '久坐不动（基本不运动）'],
@@ -103,9 +104,12 @@ export const AVATAR_PARTS = {
     staff: ['..kkk..', '.klllk.', '.klwlk.', '.kllCk.', '..kgk..', '..kbk..', '..kbk..', '..kbk..', '..kbk..', '..kbk..', '..kbk..', '..kbk..', '..kbk..', '..kbk..', '..kkk..'],
     sword: ['...k...', '..kwk..', '..kwa..', '..kwa..', '..kwa..', '..kwa..', '..kak..', '..kak..', 'kkgggkk', '.kkgkk.', '..kbk..', '..kbk..', '..kgk..', '...k...'],
     shield: ['..kkkkk..', 'kkggaaakk', 'kggaaAAAk', 'kggagAAAk', 'kgagggAAk', 'kgaagAAAk', '.kaagAAk.', '.kaagAAk.', '..kaAAk..', '...kAk...', '....k....'],
+    hand: ['.kkkk.', 'kssssk', 'kSsSsk', '.kkkk.'],
     backpack: ['..kkkkkkkkkkkkkkkkkk..', '.kbblbbbbbbbbbbbbBBBk.', 'kbblbbbbbbbbbbbbBBBBBk', 'kbgggbbbbbbbbbbbbgggBk', 'kbgggbbbbbbbbbbbbgggBk', 'kbgggbbbbbbbbbbbbgggBk', 'kbgggbbbbbbbbbbbbgggBk', 'kbgggbbbbbbbbbbbbgggBk', '.kBBBbbbbbbbbbbBBBBBk.', '..kkkkkkkkkkkkkkkkkk..']
 };
 
+// A container with data-pose="peek" gets the hero leaning over a card's top edge: the svg ends just below the
+// chest line, the body is clipped there, and two hands overlap the edge (see .home-avatar in avatar.css)
 export function renderAvatar(container, profile, nickname = '') {
     const t = avatarTraits(profile);
     const signature = JSON.stringify([t, nickname]);
@@ -125,7 +129,27 @@ export function renderAvatar(container, profile, nickname = '') {
     const gear = t.job === '1.2' ? pixels(AVATAR_PARTS.book, 7, bodyY + 5, 'avatar-gear') + pixels(AVATAR_PARTS.staff, 19, bodyY - 5, 'avatar-gear')
         : t.job === '1.725' ? pixels(AVATAR_PARTS.shield, 6, bodyY + 4, 'avatar-gear') + pixels(AVATAR_PARTS.sword, 19, bodyY - 3, 'avatar-gear')
         : t.job === '1.55' ? pixels(AVATAR_PARTS.sword, 19, bodyY - 3, 'avatar-gear') : '';
-    container.innerHTML = `<svg class="avatar-art" viewBox="0 0 32 40" shape-rendering="crispEdges" aria-hidden="true" focusable="false">
+    const caption = `<div class="avatar-caption"><b translate="no"></b><span></span></div>`;
+    const face = `${pixels(AVATAR_PARTS.head, 8, headY)}
+            <g transform="translate(8 ${headY})">
+                <g class="avatar-eyes"><path d="M5 8h2v2H5zm5 0h2v2h-2z" fill="#2A1B14"/><path d="M5 8h1v1H5zm5 0h1v1h-1z" fill="#FFF1CF"/></g>
+                <path class="avatar-eyes-closed" d="M5 9h2v1H5zm5 0h2v1h-2z" fill="#2A1B14"/>
+                ${t.age === 'young' ? '<path d="M3 10h2v1H3zm9 0h2v1h-2z" fill="#DF968C"/>' : ''}
+            </g>
+            ${t.job === '1.2' ? pixels(AVATAR_PARTS.hat, 7, headY - 3) : ''}
+            ${t.job === '1.725' ? pixels(AVATAR_PARTS.helmet, 8, headY) : ''}`;
+    if (container.dataset.pose === 'peek') {
+        // The card edge sits two rows below the collar; one spare row above the hat leaves room to breathe
+        const edge = bodyY + 2, top = edge - 19;
+        container.innerHTML = `<svg class="avatar-art" viewBox="0 ${top} 32 21" shape-rendering="crispEdges" aria-hidden="true" focusable="false">
+        <g class="avatar-breathe">
+            <svg y="${top}" width="32" height="${edge - top}" viewBox="0 ${top} 32 ${edge - top}">${hair}${pixels(body, (32 - body[0].length) / 2, bodyY)}</svg>
+            ${face}
+        </g>
+        ${pixels(AVATAR_PARTS.hand, 7, edge - 2, 'avatar-hand')}${pixels(AVATAR_PARTS.hand, 19, edge - 2, 'avatar-hand')}
+    </svg>${caption}`;
+    } else {
+        container.innerHTML = `<svg class="avatar-art" viewBox="0 0 32 40" shape-rendering="crispEdges" aria-hidden="true" focusable="false">
         <path d="M8 35h16v1h4v2h-4v1H8v-1H4v-2h4z" fill="#B98D4A"/>
         <path d="M8 36h16v1h3v1H5v-1h3z" fill="#40354F"/>
         <g class="avatar-breathe">
@@ -133,17 +157,14 @@ export function renderAvatar(container, profile, nickname = '') {
             ${t.job === '1.375' ? pixels(AVATAR_PARTS.backpack, 5, bodyY + 1) : ''}
             ${hair}
             ${pixels(body, (32 - body[0].length) / 2, bodyY)}
-            ${pixels(AVATAR_PARTS.head, 8, headY)}
-            <g transform="translate(8 ${headY})">
-                <g class="avatar-eyes"><path d="M5 8h2v2H5zm5 0h2v2h-2z" fill="#2A1B14"/><path d="M5 8h1v1H5zm5 0h1v1h-1z" fill="#FFF1CF"/></g>
-                <path class="avatar-eyes-closed" d="M5 9h2v1H5zm5 0h2v1h-2z" fill="#2A1B14"/>
-                ${t.age === 'young' ? '<path d="M3 10h2v1H3zm9 0h2v1h-2z" fill="#DF968C"/>' : ''}
-            </g>
-            ${t.job === '1.2' ? pixels(AVATAR_PARTS.hat, 7, headY - 3) : ''}
-            ${t.job === '1.725' ? pixels(AVATAR_PARTS.helmet, 8, headY) : ''}
+            ${face}
             ${gear}
         </g>
-    </svg><div class="avatar-caption"><b translate="no"></b><span></span></div>`;
-    container.querySelector('b').textContent = nickname.trim() || '· · ·';
-    container.querySelector('.avatar-caption span').textContent = t.job ? CLASSES[t.job][0] : '等待选择职业';
+    </svg>${caption}`;
+    }
+    const name = nickname.trim() || '· · ·';
+    const job = t.job ? CLASSES[t.job][0] : '等待选择职业';
+    container.querySelector('b').textContent = name;
+    container.querySelector('.avatar-caption span').textContent = job;
+    if ('tip' in container.dataset) container.dataset.tip = esc(`${name} · ${job}`);
 }

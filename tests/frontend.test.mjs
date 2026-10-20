@@ -68,6 +68,23 @@ test('avatar traits are stable, bounded and ignore incomplete or invalid attribu
     for (const job of Object.keys(CLASSES)) assert.equal(avatarTraits({ activity: job }).job, job);
 });
 
+test('peeking home avatar is cropped at the card edge, grips it with both hands and escapes its tip', async () => {
+    const { renderAvatar } = await (await loadApp()).get('avatar.js');
+    const nodes = { b: {}, '.avatar-caption span': {} };
+    let html = '';
+    const container = { dataset: { pose: 'peek', tip: '' }, set innerHTML(value) { html = value; }, querySelector(selector) { return nodes[selector]; } };
+    for (const height of [150, 170, 200]) {
+        renderAvatar(container, { height, weight: 64, age: 27, gender: 'female', activity: '1.725' }, '<b>"Feiii"</b>');
+        const [, top, rows] = html.match(/viewBox="0 (\d+) 32 (\d+)"/).map(Number);
+        assert.equal(rows, 21);
+        const edge = top + 19;
+        assert.match(html, new RegExp(`height="${edge - top}" viewBox="0 ${top} 32 ${edge - top}"`));
+        assert.equal(html.match(new RegExp(`translate\\(\\d+ ${edge - 2}\\)" class="avatar-hand"`, 'g')).length, 2);
+        assert.doesNotMatch(html, /avatar-gear/);
+    }
+    assert.equal(container.dataset.tip, '&lt;b&gt;&quot;Feiii&quot;&lt;/b&gt; · 战士');
+});
+
 test('avatar updates safely and retains its animation DOM when appearance is unchanged', async () => {
     const { renderAvatar, CLASSES } = await (await loadApp()).get('avatar.js');
     const nodes = { b: {}, '.avatar-caption span': {} };

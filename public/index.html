@@ -57,27 +57,27 @@
                     </span>
                 </div>
             </div>
-            <div class="topbar">
-                <div class="date-nav">
-                    <button class="icon-btn" data-day-shift="-1" aria-label="前一天"><span class="ms" aria-hidden="true">chevron_left</span></button>
-                    <button class="date-label" aria-label="选择日期">
-                        <span id="date-main">-</span><small id="date-sub"></small>
-                    </button>
-                    <input type="date" id="diary-date" class="date-input" tabindex="-1" aria-hidden="true">
-                    <button class="icon-btn" data-day-shift="1" aria-label="后一天"><span class="ms" aria-hidden="true">chevron_right</span></button>
-                </div>
-                <button id="btn-today" class="btn btn-ghost btn-sm" hidden>回到今天</button>
-            </div>
+            <section class="quote-card" id="quote-card" aria-label="冒险者公告" aria-busy="true">
+                <h2>冒险者公告</h2>
+                <p class="quote-text is-zh" id="quote-text" lang="zh-CN"><span class="quote-skel"></span><span class="quote-skel is-short"></span></p>
+                <button type="button" class="icon-btn quote-close" aria-label="关闭公告"><span class="ms" aria-hidden="true">close</span></button>
+            </section>
 
             <div class="diary-grid">
-                <section class="quote-card" id="quote-card" aria-label="冒险者公告" aria-busy="true">
-                    <div class="quote-head"><h2>冒险者公告</h2><span class="hint">每日寄语</span><button type="button" class="icon-btn quote-close" aria-label="关闭公告"><span class="ms" aria-hidden="true">close</span></button></div>
-                    <p class="quote-text is-zh" id="quote-text" lang="zh-CN"><span class="quote-skel"></span><span class="quote-skel is-short"></span></p>
-                </section>
+                <div class="topbar diary-nav">
+                    <div class="date-nav">
+                        <button class="icon-btn" data-day-shift="-1" aria-label="前一天"><span class="ms" aria-hidden="true">chevron_left</span></button>
+                        <button class="date-label" aria-label="选择日期">
+                            <span id="date-main">-</span><small id="date-sub"></small>
+                        </button>
+                        <input type="date" id="diary-date" class="date-input" tabindex="-1" aria-hidden="true">
+                        <button class="icon-btn" data-day-shift="1" aria-label="后一天"><span class="ms" aria-hidden="true">chevron_right</span></button>
+                    </div>
+                    <button id="btn-today" class="btn btn-ghost btn-sm" hidden>回到今天</button>
+                </div>
 
                 <section id="board" class="board" aria-label="今日进度">
                     <div class="board-head">
-                        <div class="avatar-stage home-avatar" id="home-avatar" role="group" aria-label="我的角色"></div>
                         <div class="hero">
                             <span id="hero-label" class="hero-label">剩余能量</span>
                             <span id="hero-num" class="hero-num num">0</span>
@@ -128,87 +128,91 @@
                     </div>
                 </section>
 
-                <aside class="quick panel" aria-label="记一笔">
-                    <div class="panel-head"><h2>记一笔</h2><span class="hint" id="quick-hint"></span></div>
-                    <div class="quick-body">
-                        <fieldset class="seg" id="meal-seg" aria-label="餐次"></fieldset>
+                <div class="avatar-stage home-avatar" id="home-avatar" role="group" aria-label="我的角色" data-pose="peek" data-tip="" tabindex="0"></div>
 
-                        <div class="mode-tabs" role="tablist">
-                            <button class="mode-tab" role="tab" id="tab-food" aria-selected="true" aria-controls="form-food">背包食物</button>
-                            <button class="mode-tab" role="tab" id="tab-temp" aria-selected="false" aria-controls="form-temp">临时记录（不进背包）</button>
-                        </div>
+                <div class="diary-side">
+                    <aside class="quick panel" aria-label="记一笔">
+                        <div class="panel-head"><h2>记一笔</h2><span class="hint" id="quick-hint"></span></div>
+                        <div class="quick-body">
+                            <fieldset class="seg" id="meal-seg" aria-label="餐次"></fieldset>
 
-                        <form id="form-food" class="add-form" role="tabpanel">
-                            <div class="search">
-                                <span class="ms" aria-hidden="true">search</span>
-                                <input type="search" id="food-search" class="input" placeholder="搜索食物或分类" autocomplete="off">
+                            <div class="mode-tabs" role="tablist">
+                                <button class="mode-tab" role="tab" id="tab-food" aria-selected="true" aria-controls="form-food">背包食物</button>
+                                <button class="mode-tab" role="tab" id="tab-temp" aria-selected="false" aria-controls="form-temp">临时记录（不进背包）</button>
                             </div>
-                            <div id="food-list" class="food-list" role="radiogroup" aria-label="食物"></div>
-                            <div class="amount-row">
-                                <button type="button" class="step-btn" data-amount-step="-1" aria-label="减少分量"><span class="ms" aria-hidden="true">remove</span></button>
-                                <div class="amount-wrap">
-                                    <input type="number" id="food-amount" class="input" min="0" step="any" aria-label="分量">
-                                    <span id="amount-unit" class="amount-unit"></span>
+
+                            <form id="form-food" class="add-form" role="tabpanel">
+                                <div class="search">
+                                    <span class="ms" aria-hidden="true">search</span>
+                                    <input type="search" id="food-search" class="input" placeholder="搜索食物或分类" autocomplete="off">
                                 </div>
-                                <button type="button" class="step-btn" data-amount-step="1" aria-label="增加分量"><span class="ms" aria-hidden="true">add</span></button>
-                            </div>
-                            <div id="add-preview" class="preview" aria-live="polite"></div>
-                            <button type="submit" class="btn go-btn" id="go-food"><span class="ms" aria-hidden="true">add</span><span class="go-label">记录</span></button>
-                        </form>
-
-                        <form id="form-temp" class="add-form" role="tabpanel" hidden>
-                            <div class="temp-grid">
-                                <label class="field wide"><span>名称</span><input type="text" id="temp-food-name" class="input" placeholder="如：公司聚餐、奶茶"></label>
-                                <label class="field wide"><span>预估热量 kcal（必填）</span><input type="number" id="temp-food-kcal" class="input" min="0" step="any" required></label>
-                                <label class="field"><span>蛋白 g</span><input type="number" id="temp-food-protein" class="input" min="0" step="any" placeholder="选填"></label>
-                                <label class="field"><span>碳水 g</span><input type="number" id="temp-food-carbs" class="input" min="0" step="any" placeholder="选填"></label>
-                                <label class="field"><span>脂肪 g</span><input type="number" id="temp-food-fat" class="input" min="0" step="any" placeholder="选填"></label>
-                            </div>
-                            <button type="submit" class="btn go-btn" id="go-temp"><span class="ms" aria-hidden="true">add</span><span class="go-label">记录</span></button>
-                        </form>
-                    </div>
-                </aside>
-
-                <section class="water panel" id="water-card" aria-labelledby="water-title">
-                    <div class="panel-head"><h2 id="water-title">饮水</h2><span class="hint">目标可在「角色面板」设定，未设定时按体重 35 ml/kg 计算，喝到瓶口即达标</span></div>
-                    <div class="water-body">
-                        <div class="water-vis" id="water-vis" aria-hidden="true">
-                            <div class="water-glass">
-                                <div class="water-level">
-                                    <div class="water-surface" id="water-surface">
-                                        <svg class="water-wave is-back" viewBox="0 0 120 10" preserveAspectRatio="none"><path d="M0 5Q15 0 30 5T60 5T90 5T120 5V10H0Z"/></svg>
-                                        <svg class="water-wave" viewBox="0 0 120 10" preserveAspectRatio="none"><path d="M0 5Q15 0 30 5T60 5T90 5T120 5V10H0Z"/></svg>
+                                <div id="food-list" class="food-list" role="radiogroup" aria-label="食物"></div>
+                                <div class="amount-row">
+                                    <button type="button" class="step-btn" data-amount-step="-1" aria-label="减少分量"><span class="ms" aria-hidden="true">remove</span></button>
+                                    <div class="amount-wrap">
+                                        <input type="number" id="food-amount" class="input" min="0" step="any" aria-label="分量">
+                                        <span id="amount-unit" class="amount-unit"></span>
                                     </div>
-                                    <i class="bubble"></i><i class="bubble"></i><i class="bubble"></i>
+                                    <button type="button" class="step-btn" data-amount-step="1" aria-label="增加分量"><span class="ms" aria-hidden="true">add</span></button>
                                 </div>
-                            </div>
-                            <span class="ms water-drop">water_drop</span>
-                            <i class="water-splash"></i>
+                                <div id="add-preview" class="preview" aria-live="polite"></div>
+                                <button type="submit" class="btn go-btn" id="go-food"><span class="ms" aria-hidden="true">add</span><span class="go-label">记录</span></button>
+                            </form>
+
+                            <form id="form-temp" class="add-form" role="tabpanel" hidden>
+                                <div class="temp-grid">
+                                    <label class="field wide"><span>名称</span><input type="text" id="temp-food-name" class="input" placeholder="如：公司聚餐、奶茶"></label>
+                                    <label class="field wide"><span>预估热量 kcal（必填）</span><input type="number" id="temp-food-kcal" class="input" min="0" step="any" required></label>
+                                    <label class="field"><span>蛋白 g</span><input type="number" id="temp-food-protein" class="input" min="0" step="any" placeholder="选填"></label>
+                                    <label class="field"><span>碳水 g</span><input type="number" id="temp-food-carbs" class="input" min="0" step="any" placeholder="选填"></label>
+                                    <label class="field"><span>脂肪 g</span><input type="number" id="temp-food-fat" class="input" min="0" step="any" placeholder="选填"></label>
+                                </div>
+                                <button type="submit" class="btn go-btn" id="go-temp"><span class="ms" aria-hidden="true">add</span><span class="go-label">记录</span></button>
+                            </form>
                         </div>
-                        <div class="water-main">
-                            <div class="water-stat">
-                                <b class="num water-num" id="water-num">0</b>
-                                <span class="water-of">/ <span id="water-goal">0</span> ml</span>
-                                <span class="water-flag"><span class="ms" aria-hidden="true">check</span>达标</span>
-                                <span class="water-left" id="water-left"></span>
+                    </aside>
+
+                    <section class="water panel" id="water-card" aria-labelledby="water-title">
+                        <div class="panel-head"><h2 id="water-title">饮水</h2><span class="hint">目标可在「角色面板」设定，未设定时按体重 35 ml/kg 计算，喝到瓶口即达标</span></div>
+                        <div class="water-body">
+                            <div class="water-vis" id="water-vis" aria-hidden="true">
+                                <div class="water-glass">
+                                    <div class="water-level">
+                                        <div class="water-surface" id="water-surface">
+                                            <svg class="water-wave is-back" viewBox="0 0 120 10" preserveAspectRatio="none" shape-rendering="crispEdges"><path d="M0 10V5H10V3H20V2H30V3H40V5H50V7H60V5H70V3H80V2H90V3H100V5H110V7H120V10Z"/></svg>
+                                            <svg class="water-wave" viewBox="0 0 120 10" preserveAspectRatio="none" shape-rendering="crispEdges"><path d="M0 10V5H10V3H20V2H30V3H40V5H50V7H60V5H70V3H80V2H90V3H100V5H110V7H120V10Z"/></svg>
+                                        </div>
+                                        <i class="bubble"></i><i class="bubble"></i><i class="bubble"></i>
+                                    </div>
+                                </div>
+                                <span class="ms water-drop">water_drop</span>
+                                <i class="water-splash"></i>
                             </div>
-                            <div class="water-actions">
-                                <button type="button" class="water-add" data-water-ml="250"><span class="ms" aria-hidden="true">glass_cup</span>250 ml</button>
-                                <button type="button" class="water-add" data-water-ml="500"><span class="ms" aria-hidden="true">water_bottle</span>500 ml</button>
-                                <button type="button" class="water-add" data-water-ml="1000"><span class="ms" aria-hidden="true">water_bottle_large</span>1 L</button>
-                                <form class="water-form">
-                                    <input type="number" id="water-amount" class="input" min="0" step="any" inputmode="decimal" placeholder="自定义" aria-label="饮水量">
-                                    <fieldset class="seg water-unit" aria-label="单位">
-                                        <label><input type="radio" name="water-unit" value="ml" checked><span class="seg-opt">ml</span></label>
-                                        <label><input type="radio" name="water-unit" value="l"><span class="seg-opt">L</span></label>
-                                    </fieldset>
-                                    <button type="submit" class="btn btn-sm" id="water-go"><span class="ms" aria-hidden="true">add</span>记录</button>
-                                </form>
+                            <div class="water-main">
+                                <div class="water-stat">
+                                    <b class="num water-num" id="water-num">0</b>
+                                    <span class="water-of">/ <span id="water-goal">0</span> ml</span>
+                                    <span class="water-flag"><span class="ms" aria-hidden="true">check</span>达标</span>
+                                    <span class="water-left" id="water-left"></span>
+                                </div>
+                                <div class="water-actions">
+                                    <button type="button" class="water-add" data-water-ml="250"><span class="ms" aria-hidden="true">glass_cup</span>250 ml</button>
+                                    <button type="button" class="water-add" data-water-ml="500"><span class="ms" aria-hidden="true">water_bottle</span>500 ml</button>
+                                    <button type="button" class="water-add" data-water-ml="1000"><span class="ms" aria-hidden="true">water_bottle_large</span>1 L</button>
+                                    <form class="water-form">
+                                        <input type="number" id="water-amount" class="input" min="0" step="any" inputmode="decimal" placeholder="自定义" aria-label="饮水量">
+                                        <fieldset class="seg water-unit" aria-label="单位">
+                                            <label><input type="radio" name="water-unit" value="ml" checked><span class="seg-opt">ml</span></label>
+                                            <label><input type="radio" name="water-unit" value="l"><span class="seg-opt">L</span></label>
+                                        </fieldset>
+                                        <button type="submit" class="btn btn-sm" id="water-go"><span class="ms" aria-hidden="true">add</span>记录</button>
+                                    </form>
+                                </div>
+                                <ul class="water-log" id="water-log" aria-label="饮水记录"></ul>
                             </div>
-                            <ul class="water-log" id="water-log" aria-label="饮水记录"></ul>
                         </div>
-                    </div>
-                </section>
+                    </section>
+                </div>
 
                 <section class="log panel" aria-label="今日明细">
                     <div class="panel-head"><h2>今日明细</h2><span class="hint" id="log-count"></span></div>
