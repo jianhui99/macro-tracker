@@ -58,5 +58,5 @@ test('admin navigation selects one section, supports history and preserves unsav
         check(['#unknown', ''].includes(hash) ? 'users' : hash.slice(1));
     }
     assert.equal(element('rule-fields').value, 'unsaved');
-    for (const stage of ['gate', 'login']) assert.doesNotMatch(adminHtml(stage), /admin-shell|admin-nav/);
+    for (const stage of ['denied', 'login']) assert.doesNotMatch(adminHtml(stage), /admin-shell|admin-nav/);
 });

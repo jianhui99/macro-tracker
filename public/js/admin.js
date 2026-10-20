@@ -29,13 +29,7 @@ async function refresh() {
 }
 
 async function start() {
-    if (stage === 'gate') {
-        $('gate-form').addEventListener('submit', event => {
-            event.preventDefault();
-            withBusy(event.submitter, async () => { await api('/api/auth/gate', 'POST', { key: $('gate-key').value }); location.reload(); }).catch(() => {});
-        });
-        return;
-    }
+    if (stage === 'denied') return;
     if (stage === 'login') {
         $('admin-login').addEventListener('submit', event => {
             event.preventDefault();

@@ -1,6 +1,8 @@
 // English for every Chinese UI string, keyed by the Chinese source text. `{n}` keys are patterns: each capture is
 // translated on its own (a meal name, a unit, a weekday), and food names or other user text pass through as written.
 export const EN = {
+    "请使用管理员账号登录。": "Please sign in with an administrator account.",
+    "当前账号没有管理员权限。": "This account does not have administrator access.",
     "首次称重已达标的档位不重复奖励": "Tiers already met at your first weigh-in do not earn rewards",
     "身体属性": "Physical attributes",
     "角色预览": "Character preview",

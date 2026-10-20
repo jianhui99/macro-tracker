@@ -23,7 +23,7 @@ const ZH = /[\u4e00-\u9fff]/;
 
 test('every Chinese string in application, login, character and admin pages has English', async () => {
     const pages = await Promise.all(['index.html', 'login.html', 'character.html'].map(name => readFile(new URL(`../public/${name}`, import.meta.url), 'utf8')));
-    pages.push(...['gate', 'login', 'panel'].map(adminHtml));
+    pages.push(...['denied', 'login', 'panel'].map(adminHtml));
     const html = pages.join('\n')
         .replace(/<!--[\s\S]*?-->/g, '')
         .replace(/<div[^>]*translate="no"[\s\S]*?<\/div>/g, '')

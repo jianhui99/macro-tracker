@@ -140,27 +140,27 @@ test('sessions require origin and CSRF on writes and reject legacy keys, expiry 
 });
 
 async function admin(app) {
-    await app.session('owner', true);
-    const response = await app.raw('/api/auth/gate', { method: 'POST', headers: { Origin: 'https://example.test', 'Content-Type': 'application/json' }, body: JSON.stringify({ key: app.env.ADMIN_ACCESS_KEY }) });
-    assert.equal(response.status, 200);
-    const gate = response.headers.get('set-cookie').split(';')[0];
-    return { Cookie: `__Host-macro-session=${app.tokens.get('owner')}; ${gate}` };
+    return { Cookie: `__Host-macro-session=${app.tokens.get('owner')}` };
 }
 
-test('admin pages and APIs require both gate and fresh admin authentication', async t => {
+test('admin pages and APIs use the logged-in account role and reject logged-out sessions', async t => {
     const app = await backend(t);
     await app.addUser('friend');
     const page = cookie => adminPage(new Request('https://example.test/admin', { headers: { Cookie: cookie || '' } }), app.env);
-    assert.match(await (await page()).text(), /id="gate-form"/);
-    assert.equal((await app.request('admin/state')).status, 403);
+    assert.match(await (await page()).text(), /id="admin-login"/);
+    assert.equal((await app.raw('/api/admin/state')).status, 401);
     const headers = await admin(app);
     assert.match(await (await page(headers.Cookie)).text(), /id="user-list"/);
-    assert.doesNotMatch(await (await page()).text(), /id="user-list"/);
-    assert.equal((await app.request('admin/state', undefined, 'owner', 'GET', headers)).status, 200);
-    assert.equal((await app.request('admin/state', undefined, 'friend', 'GET', { Cookie: headers.Cookie.replace(app.tokens.get('owner'), app.tokens.get('friend')) })).status, 403);
-    app.sqlite.exec('UPDATE sessions SET admin_until = 0');
+    assert.equal((await app.request('admin/state')).status, 200);
+    const friend = `__Host-macro-session=${app.tokens.get('friend')}`;
+    assert.equal((await page(friend)).status, 403);
+    assert.equal((await app.request('admin/state', undefined, 'friend')).status, 403);
+    assert.equal((await app.request('admin/invites', { maxUses: 1 }, 'friend')).status, 403);
+    assert.equal((await app.request('admin/invites', { maxUses: 1 }, 'owner', 'POST', { 'X-CSRF-Token': 'wrong' })).status, 403);
+    assert.equal((await app.request('auth/logout', {})).status, 200);
     assert.match(await (await page(headers.Cookie)).text(), /id="admin-login"/);
-    assert.equal((await app.request('admin/state', undefined, 'owner', 'GET', headers)).status, 403);
+    assert.equal((await app.request('admin/state')).status, 401);
+    assert.equal((await app.request('admin/invites', { maxUses: 1 })).status, 401);
 });
 
 test('admin invitations, disable/restore and rules are audited without exposing secrets', async t => {

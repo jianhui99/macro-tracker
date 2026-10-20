@@ -70,18 +70,19 @@ test('the admin key claims the legacy owner account exactly once', async t => {
     assert.equal(app.sqlite.prepare("SELECT username FROM accounts WHERE id = 'owner'").get().username, 'feiii');
 });
 
-test('admin login needs the gate and the admin role, then grants a 30 minute admin session', async t => {
+test('normal admin login grants backend access without a gate; admin login rejects members', async t => {
     const app = await backend(t);
     await app.addUser('friend');
     await post(app, 'register', { username: 'admin', password: 'admin', invite: app.env.ADMIN_ACCESS_KEY });
-    const asAdmin = { username: 'admin', password: 'admin', admin: true };
-    assert.equal((await post(app, 'login', asAdmin)).status, 403);
-    const gate = (await post(app, 'gate', { key: app.env.ADMIN_ACCESS_KEY })).headers.get('set-cookie').split(';')[0];
-    assert.equal((await post(app, 'login', { username: 'friend', password: 'password-friend', admin: true }, { Cookie: gate })).status, 403);
-    const response = await post(app, 'login', asAdmin, { Cookie: gate });
-    assert.equal(response.status, 200);
-    const row = app.sqlite.prepare('SELECT admin_until FROM sessions WHERE token_hash = ?').get(await digest(sessionCookie(response)));
-    assert.ok(row.admin_until > now() + 1700);
+    assert.equal((await post(app, 'login', { username: 'friend', password: 'password-friend', admin: true })).status, 403);
+    for (const extra of [{}, { admin: true }]) {
+        const response = await post(app, 'login', { username: 'admin', password: 'admin', ...extra });
+        assert.equal(response.status, 200);
+        const Cookie = `__Host-macro-session=${sessionCookie(response)}`;
+        assert.equal((await app.raw('/api/admin/state', { headers: { Cookie } })).status, 200);
+        app.sqlite.exec('UPDATE sessions SET expires_at = 0');
+        assert.equal((await app.raw('/api/admin/state', { headers: { Cookie } })).status, 401);
+    }
 });
 
 test('changing the password needs the current one and signs out other sessions only', async t => {

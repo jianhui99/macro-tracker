@@ -8,7 +8,7 @@ const ERRORS = {
     account_disabled: '账号已停用', invalid_profile: '请检查角色属性的填写范围',
     invalid_nickname: '角色昵称需要 1 到 40 个字符', invalid_entry: '请检查记录内容',
     rate_limited: '操作太频繁，请稍后再试', invalid_key: '密钥不对，请重新输入',
-    admin_required: '请重新验证管理入口和管理员身份', rules_changed: '规则已被修改，请刷新后再试',
+    admin_required: '请使用管理员账号登录。', rules_changed: '规则已被修改，请刷新后再试',
     request_too_large: '请求内容过大，请缩小后再试', too_many_records: '记录数量超过限制', login_failed: '登录失败，请重新开始'
 };
 const errorMessage = code => ERRORS[code] || '操作失败，请稍后再试';
