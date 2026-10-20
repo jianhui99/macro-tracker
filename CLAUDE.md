@@ -61,6 +61,7 @@ Run `npm run db:migrate` once before the first `npm start`, and after adding a m
   - Easing tokens `--ease-out` (entrances/exits) and `--ease-spring` (pops, bars, thumbs).
   - Existing keyframes such as `pageIn`, `panelIn`, `chipIn` / `chipOut`, `wordIn`, `bump`.
   - JS helpers `replay(el, cls)` to restart a CSS animation and `tweenNumber(el, to)` for changing numbers.
+    A tweened number changes width every frame (display digits are proportional), so a wrapping row that holds one must not let its wrap depend on the number: give the neighbours a fixed row (`flex-basis: 100%`) or decide by container width, as `.board-meta` and `.water-left` do, or the row flickers between layouts while it counts.
   - Exits follow the `is-leaving` pattern: add the class, wait for the animation, then update `state` and re-render (see `deleteWater`).
   - Respect reduced motion: the global `prefers-reduced-motion` CSS block covers CSS animations, but JS-driven motion and animation waits must check `reduceMotion.matches` and skip.
 - **UI work must be checked in mobile view and across the responsive breakpoints.** After finishing any UI change, check the affected page at phone width (390px) and on both sides of the `max-width: 1100px` and `max-width: 720px` breakpoints in `app.css`.
