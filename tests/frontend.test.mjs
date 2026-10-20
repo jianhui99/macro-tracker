@@ -126,18 +126,20 @@ test('avatar pixel parts use rectangular grids with complete palette keys', asyn
         assert.ok(rows.length > 0, name);
         for (const row of rows) {
             assert.equal(row.length, rows[0].length, name);
-            assert.match(row, /^[.khHsSwcClgGbBpPaAr]+$/, name);
+            assert.match(row, /^[.khHsSwcClgGbBpPaAryY]+$/, name);
         }
     }
 });
 
-test('saved profile refreshes the home avatar from current state including weight changes', async () => {
+test('saved profile refreshes the home and character-sheet avatars from current state including weight changes', async () => {
     const app = await loadApp({ cancelAnimationFrame() {} });
     const store = await app.get('state.js');
     const session = await app.get('session.js');
     session.setSession({ account: { id: 'hero', nickname: 'Hero' } });
     const home = app.element('home-avatar');
+    const sheet = app.element('char-avatar');
     home.dataset = {};
+    sheet.dataset = {};
     app.element('char-panel').classList.remove = () => {};
     for (const id of ['plan-bmr', 'plan-tdee', 'plan-kcal', 'plan-deficit']) app.element(id).dataset = {};
     app.element('pool-bar').style = { setProperty() {} };
@@ -151,9 +153,11 @@ test('saved profile refreshes the home avatar from current state including weigh
     fillSettingsForm();
     assert.notEqual(home.innerHTML, first);
     assert.equal(home.querySelector('.avatar-caption span').textContent, '战士');
+    assert.equal(sheet.querySelector('.avatar-caption span').textContent, '战士');
     store.state.user = { ...store.state.user, weight: 64, activity: 1.2 };
     fillSettingsForm();
     assert.equal(home.innerHTML, first);
+    assert.equal(sheet.querySelector('.avatar-caption span').textContent, '学者');
 });
 
 test('nickname changes reach the avatar only after a successful save', async () => {
@@ -162,12 +166,14 @@ test('nickname changes reach the avatar only after a successful save', async () 
         const session = await app.get('session.js');
         session.setSession({ account: { id: 'hero', nickname: 'Before', username: 'hero', role: 'user' } });
         app.element('home-avatar').dataset = {};
+        app.element('char-avatar').dataset = {};
         (await app.get('account.js')).initAccount();
         app.element('account-nickname').value = '  After  ';
         app.element('account-form').listeners.submit[0]({ preventDefault() {} });
         await new Promise(resolve => setImmediate(resolve));
         assert.equal(session.account.nickname, ok ? 'After' : 'Before');
         assert.equal(app.element('home-avatar').querySelector('b').textContent, ok ? 'After' : undefined);
+        assert.equal(app.element('char-avatar').querySelector('b').textContent, ok ? 'After' : undefined);
         assert.equal(app.element('save-nickname').disabled, false);
     }
 });

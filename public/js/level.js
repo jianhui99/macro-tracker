@@ -72,15 +72,16 @@ function levelFor(xp) {
     return { level, into: xp - levelStart(level), need, title: titleOf(level), metal: rankOf(level)[1] };
 }
 
+// Pops over whichever level readout is on screen: the board's Lv chip, or today's XP on the character sheet
 function floatXp(gain) {
-    const chip = $('chip-level');
-    if (reduceMotion.matches || chip.offsetParent === null) return;
+    const host = [$('chip-level'), $('lv-today').parentElement].find(el => el.offsetParent !== null);
+    if (reduceMotion.matches || !host) return;
     const el = document.createElement('span');
     el.className = 'float-gain is-xp num';
     el.setAttribute('aria-hidden', 'true');
     el.innerHTML = `+${fmt(gain)}<small>XP</small>`;
     el.addEventListener('animationend', () => el.remove(), { once: true });
-    chip.append(el);
+    host.append(el);
 }
 
 function celebrateLevelUp({ level, title }) {
@@ -100,7 +101,7 @@ function openLevelDialog() {
     $('ld-num').textContent = lv.level;
     $('ld-num').className = `lv-emblem num${lv.metal ? ` lv-${lv.metal}` : ''}`;
     $('ld-title').textContent = `Lv ${lv.level} · ${lv.title}`;
-    $('ld-sub').textContent = `累计 ${fmt(total)} XP，距 Lv ${lv.level + 1} 还差 ${fmt(lv.need - lv.into)}`;
+    $('ld-sub').textContent = `累计 ${fmt(total)} XP，突破至 Lv ${lv.level + 1} 需 ${fmt(lv.need - lv.into)} XP`;
 
     let html = '', rank = null;
     const levels = [...new Set([...LEVEL_TITLES.map((_, i) => i + 1), lv.level])].sort((a, b) => a - b);
@@ -159,7 +160,7 @@ function renderLevel() {
     $('lv-track').setAttribute('aria-valuenow', lv.into);
     $('lv-bar').style.setProperty('--p', progress);
     $('lv-xp').textContent = `${fmt(lv.into)} / ${fmt(lv.need)} XP`;
-    $('lv-next').textContent = `距 Lv ${lv.level + 1} 还差 ${fmt(lv.need - lv.into)}`;
+    $('lv-next').textContent = `突破至 Lv ${lv.level + 1} 需 ${fmt(lv.need - lv.into)} XP`;
 
     if (lastXp !== null && xp.total > lastXp) floatXp(xp.total - lastXp);
     lastXp = xp.total;

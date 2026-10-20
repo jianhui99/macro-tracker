@@ -13,6 +13,7 @@ import { soundPref, setSoundPref } from './sound.js';
 // ── Settings ──
 function renderCharStats(user) {
     renderAvatar($('home-avatar'), user, account?.nickname || '');
+    renderAvatar($('char-avatar'), user, account?.nickname || '');
     const [job, jobIcon, activity] = CLASSES[String(user.activity)] || CLASSES['1.55'];
     const target = user.targetWeight;
     const tiles = [
@@ -21,10 +22,11 @@ function renderCharStats(user) {
         ['cake', '年龄', String(user.age), '岁'],
         ['person', '性别', user.gender === 'female' ? '女' : '男'],
         [jobIcon, '职业', job, '', activity],
-        ['flag', '终极目标', target ? fmtKg(target) : '未设定', target ? 'kg' : '']
+        ['flag', '终极目标', target ? fmtKg(target) : '未设定', target ? 'kg' : ''],
+        ['water_drop', '药水补给', fmt(user.waterTarget || autoWaterTarget(user.weight)), 'ml', user.waterTarget ? '' : '按体重自动计算', 'is-wide']
     ];
-    $('char-stats').innerHTML = tiles.map(([icon, label, value, unit, note], i) => `
-        <div class="stat-tile" style="--i:${i}">
+    $('char-stats').innerHTML = tiles.map(([icon, label, value, unit, note, cls], i) => `
+        <div class="stat-tile${cls ? ` ${cls}` : ''}" style="--i:${i}">
             <span class="ms" aria-hidden="true">${icon}</span>
             <dt>${label}</dt>
             <dd><b${/\d/.test(value) ? ' class="num"' : ''}>${value}</b>${unit ? `<small>${unit}</small>` : ''}${note ? `<em>${note}</em>` : ''}</dd>
@@ -72,6 +74,8 @@ function onSettingsInput() {
         || draft.waterTarget !== (state.user.waterTarget ?? null);
     $('dirty-note').hidden = !dirty;
     $('save-settings').disabled = !dirty;
+    // The portrait previews the edited build like the plan does; cancel or save re-renders it from state
+    renderAvatar($('char-avatar'), draft, account?.nickname || '');
     renderPlan(draft);
 }
 

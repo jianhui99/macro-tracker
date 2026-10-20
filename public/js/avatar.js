@@ -30,7 +30,7 @@ export function avatarTraits(profile) {
 
 const PALETTE = { h: '#594139', H: '#8A6250', s: '#F4C59A', S: '#D89468', w: '#FFF1CF',
     c: '#8173C5', C: '#504482', l: '#B6A1E8', g: '#E8B04B', G: '#99632E', b: '#73503C', B: '#43302C',
-    p: '#45415D', P: '#2D293D', a: '#C2D4DC', A: '#738FA2', r: '#AB657F' };
+    p: '#45415D', P: '#2D293D', a: '#C2D4DC', A: '#738FA2', r: '#AB657F', y: '#FFE38A', Y: '#FF9A3C' };
 const COATS = { '1.2': ['#8173C5', '#504482', '#B6A1E8'], '1.375': ['#6C9B65', '#3B6246', '#ADD58A'],
     '1.55': ['#B78452', '#765036', '#E3B780'], '1.725': ['#9CB6C8', '#536D8A', '#D4E6EC'], '': ['#89839B', '#55506A', '#B9B1CB'] };
 
@@ -105,9 +105,13 @@ export const AVATAR_PARTS = {
     sword: ['...k...', '..kwk..', '..kwa..', '..kwa..', '..kwa..', '..kwa..', '..kak..', '..kak..', 'kkgggkk', '.kkgkk.', '..kbk..', '..kbk..', '..kgk..', '...k...'],
     shield: ['..kkkkk..', 'kkggaaakk', 'kggaaAAAk', 'kggagAAAk', 'kgagggAAk', 'kgaagAAAk', '.kaagAAk.', '.kaagAAk.', '..kaAAk..', '...kAk...', '....k....'],
     hand: ['.kkkk.', 'kssssk', 'kSsSsk', '.kkkk.'],
+    lantern: ['..kkk..', '.k...k.', 'kkgggkk', 'kYyyyYk', 'kyyYyyk', 'kYyyyYk', 'kkgggkk', '.kkkkk.'],
+    coins: ['...kkk...', '..kgggk..', '.kgGgGgk.', 'kgggggggk', 'kGgGgGgGk', 'kkkkkkkkk'],
+    scroll: ['.kkkkkkk.', 'kwwwrwwwk', 'kGwwrwwGk', '.kkkkkkk.'],
     backpack: ['..kkkkkkkkkkkkkkkkkk..', '.kbblbbbbbbbbbbbbBBBk.', 'kbblbbbbbbbbbbbbBBBBBk', 'kbgggbbbbbbbbbbbbgggBk', 'kbgggbbbbbbbbbbbbgggBk', 'kbgggbbbbbbbbbbbbgggBk', 'kbgggbbbbbbbbbbbbgggBk', 'kbgggbbbbbbbbbbbbgggBk', '.kBBBbbbbbbbbbbBBBBBk.', '..kkkkkkkkkkkkkkkkkk..']
 };
 
+// data-pose="sheet" widens the stage onto a stone floor with a lantern, a coin stack and a scroll (角色面板).
 // A container with data-pose="peek" gets the hero leaning over a card's top edge: the svg ends just below the
 // chest line, the body is clipped there, and two hands overlap the edge (see .home-avatar in avatar.css)
 export function renderAvatar(container, profile, nickname = '') {
@@ -149,9 +153,13 @@ export function renderAvatar(container, profile, nickname = '') {
         ${pixels(AVATAR_PARTS.hand, 7, edge - 2, 'avatar-hand')}${pixels(AVATAR_PARTS.hand, 19, edge - 2, 'avatar-hand')}
     </svg>${caption}`;
     } else {
-        container.innerHTML = `<svg class="avatar-art" viewBox="0 0 32 40" shape-rendering="crispEdges" aria-hidden="true" focusable="false">
+        const sheet = container.dataset.pose === 'sheet';
+        const props = sheet ? `<path d="M-6 37h44v2H-6z" fill="#2D293D"/><path d="M-6 37h44v1H-6z" fill="#45415D"/>
+        ${pixels(AVATAR_PARTS.lantern, -6, 29, 'avatar-lantern')}${pixels(AVATAR_PARTS.coins, 28, 31)}${pixels(AVATAR_PARTS.scroll, 30, 34)}` : '';
+        container.innerHTML = `<svg class="avatar-art" viewBox="${sheet ? '-6 0 44 40' : '0 0 32 40'}" shape-rendering="crispEdges" aria-hidden="true" focusable="false">
         <path d="M8 35h16v1h4v2h-4v1H8v-1H4v-2h4z" fill="#B98D4A"/>
         <path d="M8 36h16v1h3v1H5v-1h3z" fill="#40354F"/>
+        ${props}
         <g class="avatar-breathe">
             ${t.job === '1.55' ? pixels(AVATAR_PARTS.cape, 7, bodyY + 1, 'avatar-gear') : ''}
             ${t.job === '1.375' ? pixels(AVATAR_PARTS.backpack, 5, bodyY + 1) : ''}

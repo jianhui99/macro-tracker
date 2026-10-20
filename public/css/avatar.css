@@ -26,6 +26,13 @@
 .class-option .ms { color: var(--accent); font-size: 25px; }
 .class-option .hint-info { flex-shrink: 0; margin-left: -6px; }
 .class-option .hint-info .ms { color: inherit; font-size: 18px; }
+/* Character sheet portrait (角色面板): beside the stat plaques, above them on phones */
+.char-avatar { padding: 14px 0 6px; animation: badgeIn .4s var(--ease-out) backwards; }
+.char-avatar .avatar-art { width: 176px; border-radius: 12px; background: radial-gradient(closest-side at 50% 60%, rgba(128, 102, 188, .3), transparent); }
+.char-avatar .avatar-lantern { filter: drop-shadow(0 0 2px #FFC86B); animation: lanternFlicker 2.6s steps(1, end) infinite; }
+@keyframes lanternFlicker { 40% { filter: drop-shadow(0 0 1px #FFC86B); } 70% { filter: drop-shadow(0 0 3px #FFC86B); } }
+.char-avatar .avatar-caption b { font-size: 15px; }
+.char-avatar .avatar-caption span { font-size: 12px; }
 /* The hero leans over the board's top edge, centred above the stars: it shares the board's grid cell, the board
    drops by the head's height, and the svg's last two rows (the hands) overlap the edge. --px is one sprite pixel. */
 .diary-grid { --px: 4px; --stars-w: 125px; --board-pad: 22px; }
@@ -90,10 +97,13 @@
     .character-preview h2 { margin: 0; }
     .character-preview p { margin: 6px 0 0; }
     .diary-grid { --px: 3px; --stars-w: 82px; --board-pad: 16px; }
+    .char-avatar { grid-template-columns: 132px minmax(0, 1fr); align-items: center; justify-items: start; gap: 14px; padding: 14px 16px 0; }
+    .char-avatar .avatar-art { width: 132px; }
+    .char-avatar .avatar-caption { text-align: left; }
     /* Too narrow to share the drop with the hero, so the date nav takes its own row above the board */
     .diary-grid { grid-template-areas: "nav" "board" "side" "log"; }
     .diary-nav { grid-area: nav; height: auto; flex-wrap: wrap; }
 }
 @media (prefers-reduced-motion: reduce) {
-    .avatar-breathe, .avatar-eyes, .avatar-eyes-closed, .avatar-gear { animation: none; }
+    .avatar-breathe, .avatar-eyes, .avatar-eyes-closed, .avatar-gear, .char-avatar .avatar-lantern { animation: none; }
 }

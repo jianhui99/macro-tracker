@@ -796,6 +796,8 @@ select.input { padding-right: 8px; }
 .level-chip .xp-track i, .level-card .xp-track i { animation: none; transition: width .8s var(--ease-spring); }
 .float-gain.is-xp { left: calc(50% - 26px); top: -8px; font-size: 18px; color: var(--float-xp); text-shadow: 0 2px 0 var(--rim), 0 0 12px rgba(142, 162, 255, .9); }
 .float-gain.is-xp small { font-size: 11px; }
+/* On the character sheet it rises from just above 今日 XP instead of covering it */
+.lv-head .float-gain.is-xp { left: auto; right: 0; top: -16px; }
 /* Combo: three or more days in a row sets the chip alight */
 .chip.is-hot { box-shadow: inset 0 0 0 1px rgba(255, 180, 92, .65), 0 0 14px rgba(255, 140, 60, .3); }
 .chip.is-hot b { color: var(--hot); }
@@ -1679,10 +1681,20 @@ button.cal-day:hover { transform: translateY(-2px); border-color: var(--accent);
 
 /* ── Settings ── */
 .settings-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 14px; }
-.settings-form { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; padding: 16px; }
+/* Bottom-aligned so a label that wraps at a narrow width doesn't push its input out of line */
+.settings-form { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: end; gap: 12px; padding: 16px; }
 .settings-form .span-3 { grid-column: span 3; }
+.settings-form .span-2 { grid-column: span 2; }
+/* Field notes sit behind an (i) so every label keeps one line and the inputs stay level */
+.settings-form .field .hint-info { width: 20px; height: 20px; margin: -4px 0 -4px 2px; vertical-align: middle; }
+.settings-form .field .hint-info .ms { font-size: 15px; }
+/* 药水补给 closes the sheet as a full-width supply plaque */
+.stat-tile.is-wide { grid-column: 1 / -1; }
 /* Character status sheet: the level card heads it, attributes read as stat plaques until 编辑属性 */
 .char-panel .level-card { margin: 14px 16px 0; }
+/* Portrait on the left, stat plaques (or the edit form) beside it */
+.char-sheet { display: grid; grid-template-columns: 192px minmax(0, 1fr); align-items: start; padding-left: 16px; }
+.char-sheet > :is(.char-stats, .settings-form) { grid-column: 2; grid-row: 1; }
 .char-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding: 14px 16px 6px; }
 .stat-tile {
     display: grid;
@@ -1709,6 +1721,9 @@ button.cal-day:hover { transform: translateY(-2px); border-color: var(--accent);
     background: var(--accent-soft);
     box-shadow: inset 0 0 0 1px rgba(232, 176, 75, .4);
 }
+/* Plaques rise and catch a gold rim on hover, like the level card above them */
+.stat-tile { transition: transform .2s var(--ease-out), box-shadow .2s; }
+.stat-tile:hover { transform: translateY(-2px); box-shadow: inset 0 0 0 1px var(--accent-deep), inset 0 2px 4px var(--well-shadow), 0 0 14px rgba(232, 176, 75, .22); }
 .stat-tile dt { font-size: 12px; color: var(--muted); }
 .stat-tile dd { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0 3px; min-width: 0; }
 .stat-tile dd b { font-size: 19px; line-height: 1.25; white-space: nowrap; }
@@ -1974,8 +1989,6 @@ button.cal-day:hover { transform: translateY(-2px); border-color: var(--accent);
 .gem-socket b { font-size: 22px; line-height: 1.15; }
 .gem-socket b small { font-size: 12px; color: var(--muted); }
 .gem-socket > small { font-size: 11px; color: var(--subtle); white-space: nowrap; }
-.plan-water { padding-top: 14px; border-top: 1px solid var(--line-soft); }
-.plan-water .input { max-width: 220px; }
 .formula { font-size: 12px; color: var(--muted); line-height: 1.7; border-top: 1px solid var(--line-soft); padding-top: 12px; }
 .formula code { font-family: inherit; color: var(--ink); background: var(--paper); padding: 1px 5px; border-radius: 4px; }
 .system-panel { margin-top: 14px; }
@@ -2083,7 +2096,7 @@ button.cal-day:hover { transform: translateY(-2px); border-color: var(--accent);
 .lv-body { display: flex; flex-direction: column; gap: 7px; flex: 1; min-width: 0; }
 .lv-head { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
 .lv-head > b { font-size: 17px; letter-spacing: .04em; color: var(--lv, var(--accent)); white-space: nowrap; }
-.lv-head > span { margin-left: auto; font-size: 12px; color: var(--muted); white-space: nowrap; }
+.lv-head > span { position: relative; margin-left: auto; font-size: 12px; color: var(--muted); white-space: nowrap; }
 .lv-head > span b { font-size: 15px; color: var(--accent); }
 .lv-foot { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--muted); }
 
@@ -2687,6 +2700,8 @@ dialog[open]::backdrop { animation: fade .2s ease; }
     .settings-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .settings-form .span-3 { grid-column: 1 / -1; }
     .char-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .char-sheet { grid-template-columns: minmax(0, 1fr); padding-left: 0; }
+    .char-sheet > :is(.char-stats, .settings-form) { grid-column: 1; grid-row: auto; }
     .char-panel .level-card { margin: 12px 12px 0; padding: 12px 14px; gap: 12px; }
     .cycle-rows { grid-template-columns: minmax(0, 1fr); }
     .temp-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }

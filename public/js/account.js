@@ -16,6 +16,7 @@ function initAccount() {
             await api('/api/profile', 'PUT', { nickname });
             account.nickname = nickname;
             renderAvatar($('home-avatar'), state.user, nickname);
+            renderAvatar($('char-avatar'), state.user, nickname);
             showToast('角色昵称已保存');
         }).catch(() => {});
     });
