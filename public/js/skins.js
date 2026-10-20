@@ -25,9 +25,11 @@ function renderHeroes(level = currentLevel()) {
     for (const id of HEROES) renderAvatar($(id), dressed(state.user, level), account?.nickname || '');
 }
 
+// The server keeps the current level for the guild list and the highest one for skin unlocks
 function syncHeroLevel(level) {
-    if (level > (state.user.maxLevel ?? 1)) {
-        state.user.maxLevel = level;
+    if (level !== (state.user.level ?? 1) || level > (state.user.maxLevel ?? 1)) {
+        state.user.level = level;
+        state.user.maxLevel = Math.max(level, state.user.maxLevel ?? 1);
         api('/api/level', 'POST', { level }).catch(() => {});
     }
     renderHeroes(level);

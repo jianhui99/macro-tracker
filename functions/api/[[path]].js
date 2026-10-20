@@ -1,4 +1,5 @@
 import { validateBackup } from '../../public/js/backup-format.js';
+import { avatarTraits, SKIN_COUNT } from '../../public/js/avatar-traits.js';
 import { handleAuth, requireSession } from '../../lib/auth.js';
 import { fail, json, rateLimit, readBody } from '../../lib/http.js';
 import { saveProfile, validateProfile, validateEntry, validDate } from '../../lib/account.js';
@@ -21,7 +22,7 @@ function entryToJson(row) {
 }
 function userToJson(u) {
     return { height: u.height, weight: u.weight, age: u.age, gender: u.gender, activity: u.activity, targetWeight: u.target_weight, waterTarget: u.water_target,
-        lastWater: u.last_water_ml == null ? null : { ml: u.last_water_ml, unit: u.last_water_unit }, skin: u.skin, maxLevel: u.max_level };
+        lastWater: u.last_water_ml == null ? null : { ml: u.last_water_ml, unit: u.last_water_unit }, skin: u.skin, maxLevel: u.max_level, level: u.level };
 }
 
 const noContent = () => new Response(null, { status: 204 });
@@ -64,8 +65,8 @@ async function importState({ db, userId, body }) {
     try { validateBackup(body); } catch (err) { return json({ error: err.message }, 400); }
     const { user: u, foods, diary, achievements, weights, dayTypes, dayPlan, water } = body;
     const tables = [
-        ['user_settings', 'height,weight,age,gender,activity,target_weight,water_target,last_water_ml,last_water_unit,skin,max_level',
-            [[u.height, u.weight, u.age, u.gender, u.activity, u.targetWeight ?? null, u.waterTarget ?? null, u.lastWater?.ml ?? null, u.lastWater?.unit ?? null, u.skin ?? null, u.maxLevel ?? 1]]],
+        ['user_settings', 'height,weight,age,gender,activity,target_weight,water_target,last_water_ml,last_water_unit,skin,max_level,level',
+            [[u.height, u.weight, u.age, u.gender, u.activity, u.targetWeight ?? null, u.waterTarget ?? null, u.lastWater?.ml ?? null, u.lastWater?.unit ?? null, u.skin ?? null, u.maxLevel ?? 1, u.level ?? 1]]],
         ['foods', 'id,category,name,unit,kcal,protein,carbs,fat,active,last_amount',
             foods.map(f => [f.id, f.category, f.name, f.unit, f.kcal, f.protein, f.carbs, f.fat, Number(f.active), f.lastAmount ?? null])],
         ['diary_entries', 'id,date,food_id,is_temporary,meal,name,raw_amount,display_amount,kcal,protein,carbs,fat',
@@ -142,8 +143,60 @@ async function putSkin({ db, userId, body }) {
 async function postLevel({ db, userId, body }) {
     const { level } = body;
     if (!Number.isInteger(level) || level < 1 || level > 1_000_000) return json({ error: 'level must be a positive integer' }, 400);
-    await db.prepare('UPDATE user_settings SET max_level = MAX(max_level, ?) WHERE user_id = ?').bind(level, userId).run();
+    await db.prepare('UPDATE user_settings SET level = ?, max_level = MAX(max_level, ?) WHERE user_id = ?').bind(level, level, userId).run();
     return noContent();
+}
+
+// ── Guild ──
+// Every invited account belongs to the owner's guild. Members see each other's nickname, level, join date, streak
+// and medal count; the admin (guild leader) also gets login names, last activity and weight progress. The split happens here, so private fields never reach
+// a member's browser.
+function recordStreak(dates, today) {
+    const has = new Set(dates);
+    const day = new Date(`${today}T00:00:00Z`);
+    const step = () => day.setUTCDate(day.getUTCDate() - 1);
+    const key = () => day.toISOString().slice(0, 10);
+    if (!has.has(key())) step();
+    let streak = 0;
+    while (has.has(key())) { streak++; step(); }
+    return streak;
+}
+
+async function getGuild({ db, env, userId, role }) {
+    const [members, dates, medals] = await db.batch([
+        db.prepare(`SELECT a.id, a.username, a.nickname, a.role, a.created_at, s.level, s.target_weight,
+                s.height, s.weight, s.age, s.gender, s.activity, s.skin
+            FROM accounts a JOIN user_settings s ON s.user_id = a.id WHERE a.onboarded = 1 AND a.disabled = 0
+            ORDER BY s.level DESC, a.created_at`),
+        db.prepare('SELECT DISTINCT user_id, date FROM diary_entries'),
+        db.prepare('SELECT user_id, COUNT(*) AS n FROM achievements GROUP BY user_id')
+    ]);
+    const today = new Date().toLocaleDateString('sv', { timeZone: env.TIME_ZONE });
+    const byUser = (rows, pick) => Object.fromEntries(rows.results.map(r => [r.user_id, pick(r)]));
+    const diaryDates = {};
+    for (const r of dates.results) (diaryDates[r.user_id] ||= []).push(r.date);
+    const medalCount = byUser(medals, r => r.n);
+    const shared = members.results.map(m => ({
+        nickname: m.nickname, level: m.level, leader: m.role === 'admin', me: m.id === userId, joinedAt: m.created_at,
+        streak: recordStreak(diaryDates[m.id] || [], today), medals: medalCount[m.id] ?? 0,
+        // Coarse appearance only: the hero is drawn without the member's measurements leaving the server
+        avatar: avatarTraits({ ...m, skin: m.skin ?? Math.min(m.level, SKIN_COUNT) })
+    }));
+    if (role !== 'admin') return json({ members: shared });
+
+    const [active, weights] = await db.batch([
+        db.prepare(`SELECT user_id, MAX(date) AS date FROM (SELECT user_id, date FROM diary_entries UNION ALL
+            SELECT user_id, date FROM water_log UNION ALL SELECT user_id, date FROM weight_log) GROUP BY user_id`),
+        db.prepare(`SELECT user_id,
+            (SELECT weight FROM weight_log f WHERE f.user_id = w.user_id ORDER BY date LIMIT 1) AS first,
+            (SELECT weight FROM weight_log l WHERE l.user_id = w.user_id ORDER BY date DESC LIMIT 1) AS latest
+            FROM weight_log w GROUP BY user_id`)
+    ]);
+    const lastActive = byUser(active, r => r.date), weight = byUser(weights, r => r);
+    return json({ members: members.results.map((m, i) => ({
+        ...shared[i], username: m.username, lastActive: lastActive[m.id] ?? null,
+        weight: { first: weight[m.id]?.first ?? null, latest: weight[m.id]?.latest ?? null, target: m.target_weight }
+    })) });
 }
 
 // ── Foods (warehouse) ──
@@ -421,6 +474,7 @@ const ROUTES = [
     ['POST',   /^\/api\/achievements$/,         postAchievements],
     ['PUT',    /^\/api\/skin$/,                 putSkin],
     ['POST',   /^\/api\/level$/,                postLevel],
+    ['GET',    /^\/api\/guild$/,                getGuild],
     ['GET',    /^\/api\/quote$/,                getQuote]
 ];
 
@@ -444,7 +498,7 @@ export async function onRequest({ request, env }) {
             const match = pathname.match(pattern);
             if (!match || request.method !== method) continue;
             if (pathname === '/api/import') await rateLimit(env.DB, 'import', userId, 5, 3600);
-            const response = await handler({ db: env.DB, env, body, userId, params: match.slice(1).map(decodeURIComponent) });
+            const response = await handler({ db: env.DB, env, body, userId, role: session.role, params: match.slice(1).map(decodeURIComponent) });
             response.headers.set('Cache-Control', 'no-store');
             return response;
         }

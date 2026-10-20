@@ -1764,7 +1764,26 @@ button.cal-day:hover { transform: translateY(-2px); border-color: var(--accent);
 .dirty-note .ms { font-size: 16px; }
 
 /* ── Weight log ── */
-.cycle-panel, .weight-panel { margin-top: 14px; }
+.cycle-panel, .weight-panel, .guild-panel { margin-top: 14px; }
+/* Guild roster: a level coin, the nickname and title, and (leader only) a wrap of progress details */
+.guild-list { list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 10px; padding: 14px 16px 16px; }
+.guild-member { display: flex; align-items: flex-start; gap: 12px; min-width: 0; padding: 12px; background: var(--well);
+    box-shadow: inset 0 0 0 1px var(--well-line), 0 -2px 0 var(--rim), 0 2px 0 var(--rim), -2px 0 0 var(--rim), 2px 0 0 var(--rim);
+    animation: badgeIn .35s var(--ease-out) backwards; animation-delay: calc(var(--i) * 30ms); }
+.guild-member.is-me { background: var(--accent-soft); box-shadow: inset 0 0 0 1px var(--accent-deep), 0 -2px 0 var(--rim), 0 2px 0 var(--rim), -2px 0 0 var(--rim), 2px 0 0 var(--rim); }
+/* Each member's hero, drawn from coarse traits the server sends (no measurements); the level sits in the text */
+.guild-avatar { flex-shrink: 0; width: 48px; }
+.guild-avatar .avatar-art { width: 48px; }
+.guild-avatar .avatar-caption { display: none; }
+.gm-body { display: grid; gap: 2px; min-width: 0; flex: 1; }
+.gm-name { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.gm-name b { font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gm-tag { flex-shrink: 0; padding: 0 6px; font-size: 11px; font-weight: 700; line-height: 18px; color: var(--on-accent); background: var(--accent); }
+.gm-tag.is-me { color: var(--accent); background: transparent; box-shadow: inset 0 0 0 1px var(--accent-deep); }
+.gm-body > small { font-size: 12px; color: var(--muted); }
+.gm-meta { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 6px; font-size: 12px; color: var(--muted); }
+.gm-meta > span { display: inline-flex; align-items: center; gap: 4px; min-width: 0; }
+.gm-meta .ms { font-size: 15px; color: var(--accent-deep); }
 .cycle-rows { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; padding: 16px 16px 14px; }
 /* Element form cards: tinted by their element, the one set for today glows with a turning rune ring */
 .el-fire  { --el: var(--el-fire); }

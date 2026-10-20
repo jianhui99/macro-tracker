@@ -14,6 +14,7 @@ import { initWater, fillCustomWater } from './water.js';
 import { initQuote, loadQuote } from './quote.js';
 import { initLevel } from './level.js';
 import { initSkins } from './skins.js';
+import { loadGuild } from './guild.js';
 import { initBackup } from './backup.js';
 import { startI18n } from './i18n.js';
 import { startPixelIcons } from './pixel-icons.js';
@@ -43,7 +44,7 @@ function switchPage(pageId) {
     if (pageId === 'warehouse') renderWarehouse(true);
     if (pageId === 'summary')   renderSummary(true);
     if (pageId === 'achievements') renderAchievements();
-    if (pageId === 'settings')  { fillSettingsForm(); fillCycleForm(); renderWeights(); }
+    if (pageId === 'settings')  { fillSettingsForm(); fillCycleForm(); renderWeights(); loadGuild(); }
     // Wide layouts scroll inside <main>; at phone width <main> is overflow: visible and the document scrolls
     document.querySelector('main').scrollTop = 0;
     window.scrollTo(0, 0);

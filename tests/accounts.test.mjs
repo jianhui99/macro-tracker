@@ -35,8 +35,8 @@ test('migration preserves every legacy business row and assigns it only to owner
         })]));
     });
     for (const table of businessTables) {
-        // skin and max_level arrive in a later migration with their defaults
-        const rows = app.sqlite.prepare(`SELECT * FROM ${table}`).all().map(({ user_id, skin, max_level, ...row }) => { assert.equal(user_id, 'owner'); return row; });
+        // skin, max_level and level arrive in later migrations with their defaults
+        const rows = app.sqlite.prepare(`SELECT * FROM ${table}`).all().map(({ user_id, skin, max_level, level, ...row }) => { assert.equal(user_id, 'owner'); return row; });
         assert.deepEqual(rows, before[table]);
     }
     await app.addUser('friend', false);
@@ -217,4 +217,35 @@ test('skins unlock with the highest level reached, which never drops', async t =
     assert.equal((await app.request('skin', { skin: 6 }, 'test', 'PUT')).status, 403);
     assert.equal((await app.request('skin', { skin: null }, 'test', 'PUT')).status, 204);
     assert.equal((await user()).skin, null);
+});
+
+test('guild members see levels, join dates, streaks and medals; only the leader sees accounts, activity and weight', async t => {
+    const app = await backend(t);
+    app.env.TIME_ZONE = 'UTC';
+    for (const id of ['friend', 'pending']) await app.addUser(id, false);
+    assert.equal((await app.request('profile/complete', { ...fixture.user, nickname: 'Ranger' }, 'friend')).status, 200);
+    assert.equal((await app.request('level', { level: 7 })).status, 204);
+    assert.equal((await app.request('level', { level: 3 }, 'friend')).status, 204);
+    assert.equal((await app.request('level', { level: 2 }, 'friend')).status, 204);
+    const day = offset => new Date(Date.now() - offset * 86400000).toISOString().slice(0, 10);
+    for (const offset of [1, 2, 4]) {
+        app.sqlite.prepare("INSERT INTO diary_entries (user_id, id, date, name, raw_amount, display_amount, kcal, protein, carbs, fat) VALUES ('friend', ?, ?, 'x', 1, '1', 1, 1, 1, 1)").run(offset, day(offset));
+    }
+    app.sqlite.prepare("INSERT INTO weight_log (user_id, date, weight) VALUES ('friend', ?, 80), ('friend', ?, 78)").run(day(9), day(2));
+
+    const memberView = (await (await app.request('guild', undefined, 'friend')).json()).members;
+    for (const { avatar } of memberView) assert.deepEqual(Object.keys(avatar).sort(), ['age', 'build', 'gender', 'height', 'job', 'skin']);
+    assert.equal(memberView[1].avatar.skin, 2, 'with no skin picked the hero wears its current level');
+    assert.deepEqual(memberView.map(({ joinedAt, avatar, ...m }) => (assert.ok(Number.isInteger(joinedAt)), m)), [
+        { nickname: '冒险者', level: 7, leader: true, me: false, streak: 0, medals: 0 },
+        { nickname: 'Ranger', level: 2, leader: false, me: true, streak: 2, medals: 0 }
+    ]);
+    const leaderView = (await (await app.request('guild')).json()).members;
+    const ranger = leaderView.find(m => m.nickname === 'Ranger');
+    assert.equal(ranger.username, 'friend');
+    assert.equal(ranger.streak, 2);
+    assert.equal(ranger.lastActive, day(1));
+    assert.deepEqual(ranger.weight, { first: 80, latest: 78, target: fixture.user.targetWeight });
+    assert.equal(leaderView.length, 2, 'accounts that have not finished onboarding are not members yet');
+    assert.equal((await (await app.request('state', undefined, 'friend')).json()).user.maxLevel, 3);
 });

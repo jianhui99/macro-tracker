@@ -26,7 +26,7 @@ Run `npm run db:migrate` once before the first `npm start`, and after adding a m
 - **Backend** (`functions/api/[[path]].js`): one catch-all Pages Function with a regex `ROUTES` table.
   Business requests need a D1-backed HttpOnly session. Mutations require same-origin, CSRF and account-id checks.
   `lib/auth.js` owns authentication; `lib/account.js` owns onboarding; `lib/admin.js` owns admin APIs. `functions/admin/[[path]].js` guards the admin page.
-  Handlers receive `{ db, env, body, userId, params }`; snake_case rows are mapped to the camelCase JSON the frontend uses by `foodToJson` / `entryToJson` / `userToJson`.
+  Handlers receive `{ db, env, body, userId, role, params }`; snake_case rows are mapped to the camelCase JSON the frontend uses by `foodToJson` / `entryToJson` / `userToJson`.
   Multi-statement writes use `db.batch` because a D1 batch is one transaction.
 - **Frontend**: `public/index.html` holds the markup, `public/css/app.css` holds styles, and `public/js/app.js` loads native ES modules with no build step. Feature modules own their event listeners; dynamic lists use event delegation, with no inline handlers or global function bridge.
   Pages (`page-diary`, `page-warehouse`, `page-summary`, `page-achievements`, `page-settings`) are toggled by `switchPage` in `app.js`. Shared helpers, nutrition calculations, food utilities, API access and UI controls live in their corresponding modules; settings also owns the weight log.
@@ -45,14 +45,15 @@ Run `npm run db:migrate` once before the first `npm start`, and after adding a m
 - **Unit parsing is duplicated** between server (`putFood`) and client (`unitBase` / `unitText`): `"100g"` means base amount 100, unit text `g`.
   Keep both in sync.
 - **Dates are local `YYYY-MM-DD`.** Use `localDate()` on the client, never `toISOString()` (UTC shifts the day in UTC+8).
-  The server uses `env.TIME_ZONE` (`wrangler.toml`) for the quote-of-the-day rollover.
+  The server uses `env.TIME_ZONE` (`wrangler.toml`) for the quote-of-the-day rollover and the guild's recording streaks.
 - **Global rewards** come from `public/js/rules.js` defaults and the versioned D1 `game_rules` row. Defaults keep compliance at `[-300, +50]` kcal; protein threshold affects stars and achievements without changing nutrition targets. Admin edits recalculate historical rewards and preserve unlocked medals. Open pages prompt to refresh.
 - **Achievements are evaluated client-side** by `evaluateAchievements`, which replays history day by day.
   Newly reached tiers are POSTed as `series:threshold` ids and stored with `INSERT OR IGNORE`; unlocked badges are never revoked even if the stats later drop.
   Adding a series means adding it to `ACHIEVEMENTS` plus an image at `public/badges/<id>.webp` (crop/size notes in `public/badges/CREDITS.txt`), pixelated with `scripts/pixelate-badge.py` to match the pixel-art UI.
   Every new series must also get a `<id> | <subject>` line in the subject list of `docs/generate-badge.md`, matching the existing RPG-mascot style, so the owner can generate its artwork.
 - **Level and XP are derived, never stored.** `level.js` replays history (calendar stars, water goals, weigh-ins, unlocked medal tiers) on every `syncAchievements`, so deleting records can lower the level; only the last-seen level sits in `localStorage`, keyed by account and rules version, to replay a missed level-up.
-  The one stored exception is `user_settings.max_level`, the highest level ever reached, which only rises: it keeps hero skins (`skins.js`, one per level title) unlocked after the level drops.
+  The client reports levels to `user_settings` (`skins.js` `syncHeroLevel`): `level` is the current one, shown in the guild list, and `max_level` is the highest ever reached, which only rises and keeps hero skins (one per level title) unlocked after the level drops.
+- **The guild is everyone the owner invited.** `GET /api/guild` decides per viewer on the server: members get nickname, level, join date, streak and medal count; the admin also gets login names, last activity and weight. Never send private fields to the client and hide them there.
 - **Every icon, image and ornament is pixel art**, buttons included; never add a smooth vector icon, photo or illustration.
   - Icons: keep writing `<span class="ms">name</span>`; `pixel-icons.js` swaps it for a 12×12 one-colour drawing in `currentColor`. A new icon name needs a drawing in `ICONS` and its name in the pages' Material Symbols `icon_names` lists, which a test checks against `ICONS`.
   - Pictures: sprites and avatars are palette grids drawn with `spriteRects` (`sprites.js`, `avatar.js`, hero skins in `SKINS`); badge artwork goes through `scripts/pixelate-badge.py`.
