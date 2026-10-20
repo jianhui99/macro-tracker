@@ -186,7 +186,8 @@ test('admin invitations, disable/restore and rules are audited without exposing 
     assert.deepEqual(await (await app.request('rules')).json(), { version: 1, rules });
     const state = await (await app.request('admin/state', undefined, 'owner', 'GET', headers)).json();
     assert.equal(state.logs.filter(log => log.action === 'rules_updated').length, 1);
-    assert.ok(!JSON.stringify(state).includes(code));
+    assert.equal(state.invites.find(invite => invite.code_hash === hash).code, code);
+    assert.ok(!JSON.stringify(state.logs).includes(code));
     assert.equal(state.users[0].draft, undefined);
     assert.ok(!JSON.stringify(state).includes('password_hash'));
 });

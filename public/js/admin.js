@@ -11,14 +11,14 @@ startPixelIcons();
 $('lang-toggle').addEventListener('click', toggleLang);
 const stage = document.body.dataset.adminStage;
 let current;
-const actions = { invite_created: '生成邀请链接', invite_disabled: '停用邀请码', user_disabled: '停用用户', user_enabled: '恢复用户', password_reset_requested: '请求密码重置', rules_updated: '修改奖励规则' };
+const actions = { invite_created: '生成邀请码', invite_disabled: '停用邀请码', user_disabled: '停用用户', user_enabled: '恢复用户', password_reset_requested: '请求密码重置', rules_updated: '修改奖励规则' };
 
 async function refresh() {
     current = await api('/api/admin/state');
     $('user-list').innerHTML = current.users.map(user => `<div class="admin-row"><b translate="no">${esc(user.nickname || user.username || user.id)}</b> <span>${user.role === 'admin' ? '管理员' : user.disabled ? '已停用' : '正常'}</span>
         <small translate="no">${esc(user.username || '-')} · ${esc(user.id)}</small><div class="auth-actions">${user.role === 'admin' ? '' : `<button class="btn btn-ghost" data-user="${esc(user.id)}" data-disabled="${!user.disabled}">${user.disabled ? '恢复用户' : '停用用户'}</button>`}
         ${user.id === account.id ? '' : `<button class="btn btn-ghost" data-reset="${esc(user.id)}">重置为临时密码</button>`}</div></div>`).join('');
-    $('invite-list').innerHTML = current.invites.map(invite => `<div class="admin-row"><small translate="no">${esc(invite.code_hash.slice(0, 12))}</small> <span>已使用 ${invite.uses} / ${invite.max_uses}</span>
+    $('invite-list').innerHTML = current.invites.map(invite => `<div class="admin-row">${invite.code ? `<b translate="no">${esc(invite.code)}</b><button class="btn btn-ghost" type="button" data-copy-code="${esc(invite.code)}">复制邀请码</button>` : '<span>旧邀请码，请使用原链接</span>'} <span>已使用 ${invite.uses} / ${invite.max_uses}</span>
         ${invite.disabled ? '<span>已停用</span>' : `<button class="btn btn-ghost" data-invite="${esc(invite.code_hash)}">停用邀请码</button>`}</div>`).join('');
     $('rule-fields').innerHTML = Object.entries(RULE_LABELS).map(([key, label]) => {
         const [min, max] = ruleBounds(key);
@@ -57,13 +57,19 @@ async function start() {
         event.preventDefault();
         withBusy(event.submitter, async () => {
             const { code } = await api('/api/admin/invites', 'POST', { maxUses: Number(new FormData(event.target).get('maxUses')) });
-            $('invite-output').textContent = `${location.origin}/login?invite=${code}`;
+            $('invite-output').textContent = code;
             $('invite-share').hidden = false;
             await refresh();
         }).catch(() => {});
     });
     $('invite-copy').addEventListener('click', () => navigator.clipboard.writeText($('invite-output').textContent)
-        .then(() => showToast('邀请链接已复制'), () => showToast('复制失败，请手动选择链接', 'error')));
+        .then(() => showToast('邀请码已复制'), () => showToast('复制失败，请手动复制邀请码', 'error')));
+    $('invite-list').addEventListener('click', event => {
+        const button = event.target.closest('[data-copy-code]');
+        if (!button) return;
+        navigator.clipboard.writeText(button.dataset.copyCode)
+            .then(() => showToast('邀请码已复制'), () => showToast('复制失败，请手动复制邀请码', 'error'));
+    });
     $('rules-form').addEventListener('submit', event => {
         event.preventDefault();
         const rules = Object.fromEntries([...new FormData(event.target)].map(([key, value]) => [key, Number(value)]));

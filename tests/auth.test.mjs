@@ -43,6 +43,30 @@ test('registration consumes an invitation once and rejects bad input without spe
     assert.equal((await post(app, 'register', { username: 'Rogue', password: 'secret3', invite: 'join-us' })).status, 400, 'exhausted');
 });
 
+test('admin codes remain visible, work for registration and enforce limits and disabling', async t => {
+    const app = await backend(t);
+    const { code } = await (await app.request('admin/invites', { maxUses: 2 })).json();
+    assert.match(code, /^[a-z0-9]{16}$/);
+    const listed = await (await app.request('admin/state')).json();
+    assert.equal(listed.invites[0].code, code);
+    assert.ok(!JSON.stringify(listed.logs).includes(code));
+    const register = (username, inviteCode = code) => post(app, 'register', { username, password: 'test-pass', invite: inviteCode });
+    assert.equal((await register('first')).status, 200);
+    assert.equal((await register('second')).status, 200);
+    assert.equal((await register('third')).status, 400);
+    assert.equal((await app.raw('/api/admin/state')).status, 401);
+    await app.addUser('member');
+    assert.equal((await app.request('admin/state', undefined, 'member')).status, 403);
+    const disabled = await (await app.request('admin/invites', { maxUses: 100 })).json();
+    assert.equal((await app.request(`admin/invites/${await digest(disabled.code)}/disable`, {})).status, 200);
+    assert.equal((await register('fourth', disabled.code)).status, 400);
+    await invite(app, 'legacy-link', 1);
+    const legacyHash = await digest('legacy-link');
+    const old = (await (await app.request('admin/state')).json()).invites.find(row => row.code_hash === legacyHash);
+    assert.equal(old.code, null);
+    assert.equal((await register('legacy', 'legacy-link')).status, 200);
+});
+
 test('login checks the password, ignores username case, refuses disabled accounts and limits guessing', async t => {
     const app = await backend(t);
     await app.addUser('friend');

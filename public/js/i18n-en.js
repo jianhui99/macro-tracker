@@ -1,6 +1,12 @@
 // English for every Chinese UI string, keyed by the Chinese source text. `{n}` keys are patterns: each capture is
 // translated on its own (a meal name, a unit, a weekday), and food names or other user text pass through as written.
 export const EN = {
+    "生成邀请码": "Generate invitation code",
+    "复制邀请码": "Copy invitation code",
+    "邀请码已复制": "Invitation code copied",
+    "复制失败，请手动复制邀请码": "Copy failed. Please copy the invitation code manually",
+    "旧邀请码，请使用原链接": "Legacy invitation. Please use the original link",
+    "复制邀请码发给朋友，注册时填入即可。生成后可随时在这里查看和复制。": "Share the code with friends to enter during registration. You can view and copy it here anytime.",
     "请使用管理员账号登录。": "Please sign in with an administrator account.",
     "当前账号没有管理员权限。": "This account does not have administrator access.",
     "首次称重已达标的档位不重复奖励": "Tiers already met at your first weigh-in do not earn rewards",
