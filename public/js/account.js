@@ -1,5 +1,4 @@
-import { renderAvatar } from './avatar.js';
-import { state } from './state.js';
+import { renderHeroes } from './skins.js';
 import { api } from './api.js';
 import { account, expireSession } from './session.js';
 import { showToast, withBusy } from './ui.js';
@@ -15,8 +14,7 @@ function initAccount() {
             const nickname = $('account-nickname').value.trim();
             await api('/api/profile', 'PUT', { nickname });
             account.nickname = nickname;
-            renderAvatar($('home-avatar'), state.user, nickname);
-            renderAvatar($('char-avatar'), state.user, nickname);
+            renderHeroes();
             showToast('角色昵称已保存');
         }).catch(() => {});
     });

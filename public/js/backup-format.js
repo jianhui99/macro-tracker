@@ -31,6 +31,8 @@ function validateBackup(data) {
         && nullable(u.targetWeight, v => number(v, 20, 400))
         && nullable(u.waterTarget, v => number(v, 500, 10000)), '个人设置');
     check(nullable(u.lastWater, v => record(v) && positive(v.ml) && v.ml <= 5000 && ['ml', 'l'].includes(v.unit)), '上次饮水量');
+    check(nullable(u.skin, v => Number.isInteger(v) && v >= 1 && v <= 30)
+        && nullable(u.maxLevel, v => Number.isInteger(v) && v >= 1), '角色皮肤');
 
     check(Array.isArray(data.foods), '食物仓库');
     for (const f of data.foods) {

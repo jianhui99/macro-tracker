@@ -55,7 +55,9 @@ test('avatar traits are stable, bounded and ignore incomplete or invalid attribu
     const { avatarTraits, CLASSES } = await (await loadApp()).get('avatar.js');
     const profile = { height: '170', weight: '64', age: '27', gender: 'female', activity: '1.55' };
     assert.deepEqual(plain(avatarTraits(profile)), plain(avatarTraits({ ...profile, height: 170, weight: 64, age: 27, activity: 1.55 })));
-    assert.deepEqual(plain(avatarTraits({})), { height: 1, width: 1, age: 'neutral', gender: 'neutral', job: '' });
+    assert.deepEqual(plain(avatarTraits({})), { height: 1, width: 1, age: 'neutral', gender: 'neutral', job: '', skin: 0 });
+    for (const skin of [0, 31, 2.5, '3', null]) assert.equal(avatarTraits({ skin }).skin, 0);
+    for (const skin of [1, 30]) assert.equal(avatarTraits({ skin }).skin, skin);
     assert.deepEqual(plain(avatarTraits({ height: '', weight: Infinity, age: 25.5, gender: 'invalid', activity: '__proto__' })), plain(avatarTraits({})));
     assert.equal(avatarTraits({ height: 100, weight: 400 }).width, 1.25);
     assert.equal(avatarTraits({ height: 250, weight: 20 }).width, .85);
@@ -126,7 +128,7 @@ test('avatar pixel parts use rectangular grids with complete palette keys', asyn
         assert.ok(rows.length > 0, name);
         for (const row of rows) {
             assert.equal(row.length, rows[0].length, name);
-            assert.match(row, /^[.khHsSwcClgGbBpPaAryY]+$/, name);
+            assert.match(row, /^[.khHsSwcClgGbBpPaAryYdDez]+$/, name);
         }
     }
 });

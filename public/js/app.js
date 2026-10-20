@@ -13,6 +13,7 @@ import { setRules, rulesVersion, rules } from './rules.js';
 import { initWater, fillCustomWater } from './water.js';
 import { initQuote, loadQuote } from './quote.js';
 import { initLevel } from './level.js';
+import { initSkins } from './skins.js';
 import { initBackup } from './backup.js';
 import { startI18n } from './i18n.js';
 import { initSound } from './sound.js';
@@ -109,6 +110,7 @@ async function start() {
     initSettings();
     initQuote();
     initLevel();
+    initSkins();
     initUi();
     initSound();
     document.querySelectorAll('.rail-item').forEach(btn =>

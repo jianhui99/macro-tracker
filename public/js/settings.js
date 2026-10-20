@@ -1,4 +1,5 @@
 import { CLASSES, renderAvatar } from './avatar.js';
+import { renderHeroes, dressed } from './skins.js';
 import { account } from './session.js';
 import { $, fmt, fmtKg, localDate, fmtMonthDay, WEEKDAYS, parseLocalDate, reduceMotion } from './helpers.js';
 import { state } from './state.js';
@@ -12,8 +13,7 @@ import { soundPref, setSoundPref } from './sound.js';
 
 // ── Settings ──
 function renderCharStats(user) {
-    renderAvatar($('home-avatar'), user, account?.nickname || '');
-    renderAvatar($('char-avatar'), user, account?.nickname || '');
+    renderHeroes();
     const [job, jobIcon, activity] = CLASSES[String(user.activity)] || CLASSES['1.55'];
     const target = user.targetWeight;
     const tiles = [
@@ -75,7 +75,7 @@ function onSettingsInput() {
     $('dirty-note').hidden = !dirty;
     $('save-settings').disabled = !dirty;
     // The portrait previews the edited build like the plan does; cancel or save re-renders it from state
-    renderAvatar($('char-avatar'), draft, account?.nickname || '');
+    renderAvatar($('char-avatar'), dressed(draft), account?.nickname || '');
     renderPlan(draft);
 }
 

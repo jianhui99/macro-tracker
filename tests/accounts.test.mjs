@@ -35,7 +35,8 @@ test('migration preserves every legacy business row and assigns it only to owner
         })]));
     });
     for (const table of businessTables) {
-        const rows = app.sqlite.prepare(`SELECT * FROM ${table}`).all().map(({ user_id, ...row }) => { assert.equal(user_id, 'owner'); return row; });
+        // skin and max_level arrive in a later migration with their defaults
+        const rows = app.sqlite.prepare(`SELECT * FROM ${table}`).all().map(({ user_id, skin, max_level, ...row }) => { assert.equal(user_id, 'owner'); return row; });
         assert.deepEqual(rows, before[table]);
     }
     await app.addUser('friend', false);
@@ -201,4 +202,19 @@ test('gate rate limit and request size validation reject abusive writes', async 
     assert.equal(response.status, 200);
     assert.match(response.headers.get('set-cookie'), /HttpOnly; Secure; SameSite=Lax; Max-Age=0/);
     assert.equal((await app.request('state')).status, 401);
+});
+
+test('skins unlock with the highest level reached, which never drops', async t => {
+    const app = await backend(t);
+    const user = async () => (await (await app.request('state')).json()).user;
+    assert.equal((await app.request('skin', { skin: 3 }, 'test', 'PUT')).status, 403);
+    assert.equal((await app.request('level', { level: 5 })).status, 204);
+    assert.equal((await app.request('skin', { skin: 3 }, 'test', 'PUT')).status, 204);
+    assert.equal((await app.request('level', { level: 2 })).status, 204);
+    assert.deepEqual(await user().then(u => [u.skin, u.maxLevel]), [3, 5]);
+    for (const skin of [0, 31, 2.5, '4']) assert.equal((await app.request('skin', { skin }, 'test', 'PUT')).status, 400);
+    for (const level of [0, -1, 1.5, '9']) assert.equal((await app.request('level', { level })).status, 400);
+    assert.equal((await app.request('skin', { skin: 6 }, 'test', 'PUT')).status, 403);
+    assert.equal((await app.request('skin', { skin: null }, 'test', 'PUT')).status, 204);
+    assert.equal((await user()).skin, null);
 });

@@ -7,7 +7,9 @@
     "gender": "male",
     "targetWeight": 85,
     "waterTarget": null,
-    "lastWater": {"ml": 750, "unit": "l"}
+    "lastWater": {"ml": 750, "unit": "l"},
+    "skin": 3,
+    "maxLevel": 5
   },
   "foods": [{"id": "chicken", "name": "鸡胸肉", "category": "蛋白质", "unit": "100g", "kcal": 165, "protein": 31, "carbs": 0, "fat": 3.6, "active": true, "lastAmount": 150}, {"id": "rice", "name": "米饭", "category": "主食", "unit": "100g", "kcal": 130, "protein": 2.7, "carbs": 28, "fat": 0.3, "active": false}],
   "diary": {

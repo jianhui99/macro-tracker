@@ -21,7 +21,7 @@ function entryToJson(row) {
 }
 function userToJson(u) {
     return { height: u.height, weight: u.weight, age: u.age, gender: u.gender, activity: u.activity, targetWeight: u.target_weight, waterTarget: u.water_target,
-        lastWater: u.last_water_ml == null ? null : { ml: u.last_water_ml, unit: u.last_water_unit } };
+        lastWater: u.last_water_ml == null ? null : { ml: u.last_water_ml, unit: u.last_water_unit }, skin: u.skin, maxLevel: u.max_level };
 }
 
 const noContent = () => new Response(null, { status: 204 });
@@ -64,8 +64,8 @@ async function importState({ db, userId, body }) {
     try { validateBackup(body); } catch (err) { return json({ error: err.message }, 400); }
     const { user: u, foods, diary, achievements, weights, dayTypes, dayPlan, water } = body;
     const tables = [
-        ['user_settings', 'height,weight,age,gender,activity,target_weight,water_target,last_water_ml,last_water_unit',
-            [[u.height, u.weight, u.age, u.gender, u.activity, u.targetWeight ?? null, u.waterTarget ?? null, u.lastWater?.ml ?? null, u.lastWater?.unit ?? null]]],
+        ['user_settings', 'height,weight,age,gender,activity,target_weight,water_target,last_water_ml,last_water_unit,skin,max_level',
+            [[u.height, u.weight, u.age, u.gender, u.activity, u.targetWeight ?? null, u.waterTarget ?? null, u.lastWater?.ml ?? null, u.lastWater?.unit ?? null, u.skin ?? null, u.maxLevel ?? 1]]],
         ['foods', 'id,category,name,unit,kcal,protein,carbs,fat,active,last_amount',
             foods.map(f => [f.id, f.category, f.name, f.unit, f.kcal, f.protein, f.carbs, f.fat, Number(f.active), f.lastAmount ?? null])],
         ['diary_entries', 'id,date,food_id,is_temporary,meal,name,raw_amount,display_amount,kcal,protein,carbs,fat',
@@ -125,6 +125,25 @@ async function putUser({ db, userId, body }) {
     `).bind(userId, height, weight, age, gender, activity, targetWeight, waterTarget).run();
     // The weight log is the source of truth for weight whenever it has entries
     return json(await syncSettingsWeight(db, userId));
+}
+
+// ── Hero skins ──
+// Levels are computed on the client, so like medals the highest level reached is reported and only ever rises;
+// a skin can be worn once that record covers it.
+async function putSkin({ db, userId, body }) {
+    const { skin } = body;
+    if (skin !== null && !(Number.isInteger(skin) && skin >= 1 && skin <= 30)) return json({ error: 'skin must be null or an integer from 1 to 30' }, 400);
+    const result = await db.prepare('UPDATE user_settings SET skin = ? WHERE user_id = ? AND (? IS NULL OR ? <= max_level)')
+        .bind(skin, userId, skin, skin).run();
+    if (!result.meta.changes) return json({ error: 'skin_locked' }, 403);
+    return noContent();
+}
+
+async function postLevel({ db, userId, body }) {
+    const { level } = body;
+    if (!Number.isInteger(level) || level < 1 || level > 1_000_000) return json({ error: 'level must be a positive integer' }, 400);
+    await db.prepare('UPDATE user_settings SET max_level = MAX(max_level, ?) WHERE user_id = ?').bind(level, userId).run();
+    return noContent();
 }
 
 // ── Foods (warehouse) ──
@@ -400,6 +419,8 @@ const ROUTES = [
     ['PUT',    /^\/api\/day-plan\/([^/]+)$/,     putDayPlan],
     ['DELETE', /^\/api\/day-plan\/([^/]+)$/,     deleteDayPlan],
     ['POST',   /^\/api\/achievements$/,         postAchievements],
+    ['PUT',    /^\/api\/skin$/,                 putSkin],
+    ['POST',   /^\/api\/level$/,                postLevel],
     ['GET',    /^\/api\/quote$/,                getQuote]
 ];
 

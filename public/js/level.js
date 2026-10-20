@@ -5,6 +5,7 @@ import { dayStars, targetsFor } from './nutrition.js';
 import { state } from './state.js';
 import { showToast, tweenNumber } from './ui.js';
 import { ACHIEVEMENTS, tierMetal } from './achievements.js';
+import { syncHeroLevel } from './skins.js';
 
 // ── Level ──
 // XP is replayed from history on every render rather than stored, so the level always matches the
@@ -162,6 +163,7 @@ function renderLevel() {
     $('lv-xp').textContent = `${fmt(lv.into)} / ${fmt(lv.need)} XP`;
     $('lv-next').textContent = `突破至 Lv ${lv.level + 1} 需 ${fmt(lv.need - lv.into)} XP`;
 
+    syncHeroLevel(lv.level);
     if (lastXp !== null && xp.total > lastXp) floatXp(xp.total - lastXp);
     lastXp = xp.total;
 
@@ -172,4 +174,4 @@ function renderLevel() {
     if (seen !== lv.level) try { localStorage.setItem(seenKey(), String(lv.level)); } catch { /* storage unavailable */ }
 }
 
-export { renderLevel, initLevel, levelFor, xpTotals, levelStart, XP };
+export { renderLevel, initLevel, levelFor, xpTotals, levelStart, titleOf, XP };

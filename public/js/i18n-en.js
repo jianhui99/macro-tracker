@@ -478,6 +478,9 @@ export const EN = {
     '等级 {0}': 'Level {0}',
     '突破至 Lv {0} 需 {1} XP': '{1} XP to break through to Lv {0}',
     '全部等级': 'All levels',
+    '衣柜': 'Wardrobe', '全部皮肤': 'All skins', '打开衣柜': 'Open wardrobe',
+    '跟随等级': 'Follow level', '升级时自动换装': 'Changes with each level-up',
+    '已解锁 {0} / {1} 套': '{0} / {1} unlocked', 'Lv {0} 解锁': 'Unlocks at Lv {0}',
     '升级进度': 'Level progress',
 
     // ── Character sheet ──

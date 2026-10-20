@@ -13,7 +13,8 @@ document.getElementById('lang-toggle').addEventListener('click', toggleLang);
 const form = document.getElementById('character-form');
 document.getElementById('class-options').innerHTML = Object.entries(CLASSES).map(([value, [name, icon, , hint]]) =>
     `<label class="class-option"><input type="radio" name="activity" value="${value}" required><span class="ms" aria-hidden="true">${icon}</span><b>${name}</b><span class="hint-info" role="img" data-tip="${esc(hint)}" aria-label="${esc(hint)}"><span class="ms" aria-hidden="true">info</span></span></label>`).join('');
-function preview() { const profile = draft(); renderAvatar(document.getElementById('character-preview'), profile, profile.nickname); }
+// A new hero starts in the Lv 1 rags, the same skin the home page shows until the first level-up
+function preview() { const profile = draft(); renderAvatar(document.getElementById('character-preview'), { ...profile, skin: 1 }, profile.nickname); }
 let timer, saving = Promise.resolve();
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 
