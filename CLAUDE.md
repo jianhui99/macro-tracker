@@ -57,6 +57,7 @@ Run `npm run db:migrate` once before the first `npm start`, and after adding a m
   - Icons: keep writing `<span class="ms">name</span>`; `pixel-icons.js` swaps it for a 12×12 one-colour drawing in `currentColor`. A new icon name needs a drawing in `ICONS` and its name in the pages' Material Symbols `icon_names` lists, which a test checks against `ICONS`.
   - Pictures: sprites and avatars are palette grids drawn with `spriteRects` (`sprites.js`, `avatar.js`, hero skins in `SKINS`); badge artwork goes through `scripts/pixelate-badge.py`.
   - Small ornaments use the stepped `--px-*` clip-path shapes in `app.css` (diamond, sparkle, cursors), not rotated squares or smooth polygons; pixel art is never rotated by angles that are not multiples of 90°.
+  - Chrome (buttons, inputs, chips, cards, dialogs) has square corners: no `border-radius` except true circles (medals, emblems, light effects). Its outer rim is four 2px hard shadows, one per side (`0 -2px 0 var(--rim), 0 2px 0 …, -2px 0 0 …, 2px 0 0 …`), which leaves notched pixel corners; never a spread ring like `0 0 0 1px`. Copy the pattern from `.btn` or `.panel`.
 - **New UI must ship with matching animation.** Every element that appears, changes, or disappears gets motion consistent with the rest of the app, reusing what already exists before adding new keyframes:
   - Easing tokens `--ease-out` (entrances/exits) and `--ease-spring` (pops, bars, thumbs).
   - Existing keyframes such as `pageIn`, `panelIn`, `chipIn` / `chipOut`, `wordIn`, `bump`.
