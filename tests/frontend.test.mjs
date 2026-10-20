@@ -519,6 +519,23 @@ test('star achievements count finished days, and today only earns its recording 
     assert.equal(p.star_total.value, 12);
 });
 
+test('BMI medals require a drop from the first weigh-in across each threshold', async () => {
+    const app = await loadApp();
+    const { evaluateAchievements } = await app.get('achievements.js');
+    const evaluate = values => evaluateAchievements({}, values.map((bmi, i) => ({
+        date: `2030-01-0${i + 1}`, weight: bmi * 4
+    })), {}, { height: 200 }, [], () => ({ kcal: 2000, protein: 150, carbs: 200, fat: 60, water: 2000 }), '2030-01-08');
+    assert.deepEqual(plain(evaluate([22]).bmi.reached), []);
+    assert.deepEqual(plain(evaluate([26]).bmi.reached), []);
+    assert.deepEqual(plain(evaluate([22, 29, 23]).bmi.reached), []);
+    assert.deepEqual(plain(evaluate([28, 28, 27.9, 24, 23.9]).bmi.reached), ['2030-01-03', '2030-01-05']);
+    assert.deepEqual(plain(evaluate([30, 23]).bmi.reached), ['2030-01-02', '2030-01-02']);
+    const secondOnly = evaluate([26, 23]);
+    assert.equal(secondOnly.bmi.reached[0], undefined);
+    assert.equal(secondOnly.bmi.reached[1], '2030-01-02');
+    assert.equal(evaluate([22]).level_rank.value, 1);
+});
+
 test('weight goal progress counts toward loss or gain goals and clamps', async () => {
     const app = await loadApp();
     const { weightProgress } = await app.get('settings.js');
@@ -528,6 +545,43 @@ test('weight goal progress counts toward loss or gain goals and clamps', async (
     assert.equal(weightProgress(85, 87, 75), 0);
     assert.equal(weightProgress(85, 80, null), null);
     assert.equal(weightProgress(80, 80, 80), null);
+});
+
+test('BMI display supports the second tier alone and preserves existing medal XP', async () => {
+    const app = await loadApp({
+        document: {
+            getElementById: id => app.element(id),
+            querySelector: () => ({ value: 'all' }),
+            querySelectorAll: () => []
+        }
+    });
+    const store = await app.get('state.js');
+    await store.loadState();
+    const { state } = store;
+    Object.assign(state, {
+        diary: {}, water: {}, foods: [], user: { ...fixture.user, height: 200 },
+        weights: [{ date: '2020-01-01', weight: 104 }, { date: '2020-01-02', weight: 92 }],
+        achievements: { 'bmi:24': '2020-01-02' }
+    });
+    const { renderAchievements, evaluateAchievements, ACHIEVEMENTS } = await app.get('achievements.js');
+    app.element('badge-grid').classList.remove = () => {};
+    renderAchievements();
+    const bmiCard = app.element('badge-grid').innerHTML.match(/<li class="badge m-diamond[^>]*data-id="bmi">[\s\S]*?<\/li>/);
+    assert.ok(bmiCard);
+    assert.match(bmiCard[0], /首次称重已达标的档位不重复奖励/);
+    assert.doesNotMatch(bmiCard[0], /已满级/);
+    const { targetsFor } = await app.get('nutrition.js');
+    const p = evaluateAchievements({}, state.weights, {}, state.user, [], targetsFor, '2020-01-02');
+    const bmi = ACHIEVEMENTS.find(a => a.id === 'bmi');
+    const unlocks = [bmi].flatMap(a => p[a.id].reached.map((date, i) => ({ id: `${a.id}:${a.tiers[i]}`, date })));
+    assert.deepEqual(plain(unlocks), [{ id: 'bmi:24', date: '2020-01-02' }]);
+    state.weights = [{ date: '2020-01-01', weight: 88 }];
+    state.achievements = { 'bmi:28': '2020-01-01', 'bmi:24': '2020-01-01' };
+    const { xpTotals, XP } = await app.get('level.js');
+    const before = plain(state.achievements);
+    renderAchievements();
+    assert.deepEqual(plain(state.achievements), before);
+    assert.equal(xpTotals().total, XP.weigh + XP.medal.bronze + XP.medal.diamond);
 });
 
 test('level curve: Lv L to L+1 costs 100 + 25 x (L - 1) XP', async () => {

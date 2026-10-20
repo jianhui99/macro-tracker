@@ -34,6 +34,8 @@ body[data-auth-loading] > :is(main, nav) { visibility: hidden; }
 .auth-page .admin-row small { display: block; color: var(--muted); }
 .auth-page pre { white-space: pre-wrap; overflow-wrap: anywhere; }
 .auth-page dialog { max-width: min(600px, calc(100vw - 32px)); }
+.auth-page .dialog-body { display: flex; gap: 14px; margin: 0; }
+.auth-page .dialog-body .auth-output { margin: 0; }
 .rules-update { position: fixed; z-index: 100; top: 12px; left: 50%; transform: translateX(-50%); max-width: calc(100vw - 24px); width: max-content; padding: 12px 18px; background: var(--surface); border: 1px solid var(--accent); border-radius: 0; box-shadow: 0 8px 32px #0005; }
 .rules-update[hidden] { display: none; }
 .auth-page :is(#login-form, #register-form):not([hidden]) { animation: pageIn .25s var(--ease-out); }

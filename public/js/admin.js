@@ -44,6 +44,18 @@ async function start() {
         });
         return;
     }
+    const sections = [...document.querySelectorAll('.admin-section')];
+    const links = [...document.querySelectorAll('.admin-nav a')];
+    function navigate() {
+        const active = sections.find(section => `#${section.id}` === location.hash)?.id || 'users';
+        sections.forEach(section => { section.hidden = section.id !== active; });
+        links.forEach(link => {
+            if (link.getAttribute('href') === `#${active}`) link.setAttribute('aria-current', 'page');
+            else link.removeAttribute('aria-current');
+        });
+    }
+    window.addEventListener('hashchange', navigate);
+    navigate();
     await loadSession();
     initSession();
     await refresh();

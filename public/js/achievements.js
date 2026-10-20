@@ -73,7 +73,7 @@ const tierMetal = (i, count) => count === 1 ? 'gold' : MEDALS[Math.round(i * 3 /
 
 const tierName = (a, tier) => a.tiers.length > 1 ? `${a.name} · ${tier} ${a.unit}` : a.name;
 
-// `lower` series improve downward: a tier unlocks once the value drops strictly below it.
+// `lower` tiers require the first weigh-in to be at or above the threshold before dropping below it.
 // Replays history day by day. Target-based checks only count finished days (today can
 // still go over), and an unfinished today never breaks a streak. Streak values are the
 // current run, so progress toward the next tier reads "current / next".
@@ -191,11 +191,12 @@ function evaluateAchievements(diary, weights, water, user, foodList, dayTargets,
             const p = progress[a.id];
             p.value = values[a.id];
             if (a.lower && p.base === undefined && p.value !== null) p.base = p.value;
-            const hit = tier => a.lower ? p.value !== null && p.value < tier : p.value >= tier;
-            while (p.reached.length < a.tiers.length && hit(a.tiers[p.reached.length])) {
-                p.reached.push(ds);
-                if (a.xp !== false) xp += XP.medal[tierMetal(p.reached.length - 1, a.tiers.length)];
-            }
+            const hit = tier => a.lower ? p.value !== null && p.base >= tier && p.value < tier : p.value >= tier;
+            a.tiers.forEach((tier, i) => {
+                if (p.reached[i] || !hit(tier)) return;
+                p.reached[i] = ds;
+                if (a.xp !== false) xp += XP.medal[tierMetal(i, a.tiers.length)];
+            });
         }
 
         // The level XP from level.js, replayed: medals count on the day this replay reaches them and,
@@ -255,18 +256,18 @@ function renderAchievements() {
         unlockedCount += level;
         tierCount += a.tiers.length;
 
-        const next = a.tiers[level];
         const p = progress[a.id];
+        const next = a.tiers.find((tier, i) => !dates[i] && (!a.lower || p.base === undefined || p.base >= tier));
         const value = p.value;
         const f = a.format || fmt;
-        const metal = level ? tierMetal(level - 1, a.tiers.length) : 'locked';
+        const metal = level ? tierMetal(dates.findLastIndex(Boolean), a.tiers.length) : 'locked';
         const latest = dates.filter(Boolean).sort().at(-1);
         const isNew = ids.some((id, t) => dates[t] && !seenBadges.has(id));
         const tiers = a.tiers.length > 1
             ? `<div class="tier-row">${a.tiers.map((tier, i) => `<span class="tier num${dates[i] ? ' is-on' : ''}"${dates[i] ? ` title="${fmtMonthDay(dates[i])}解锁"` : ''}>${tier}</span>`).join('')}</div>`
             : '';
         let prog;
-        if (next === undefined) prog = `<div class="badge-prog">${a.tiers.length > 1 ? '已满级' : '已获得'}</div>`;
+        if (next === undefined) prog = `<div class="badge-prog">${a.lower && level < a.tiers.length ? '首次称重已达标的档位不重复奖励' : a.tiers.length > 1 ? '已满级' : '已获得'}</div>`;
         else if (p.unavailable) prog = `<div class="badge-prog">${p.unavailable}</div>`;
         else {
             // A `lower` bar fills from the first recorded value down to the next threshold

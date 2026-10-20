@@ -98,7 +98,7 @@
     "weigh_weeks": {"value": 1, "reached": []},
     "new_lows": {"value": 2, "reached": ["2026-10-01"]},
     "goal_weight": {"value": 42, "reached": ["2026-10-18"]},
-    "bmi": {"value": 26.5, "reached": ["2026-09-30"], "base": 27.4},
+    "bmi": {"value": 26.5, "reached": [], "base": 27.4},
     "water_streak": {"value": 0, "reached": []},
     "water_days": {"value": 1, "reached": []},
     "water_total": {"value": 4, "reached": []},
