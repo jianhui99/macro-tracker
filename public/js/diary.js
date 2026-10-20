@@ -21,6 +21,19 @@ let lanePct = {};
 
 let shownDiaryDate = null;
 
+// Meals folded in the diary log, kept across days and reloads like the collapsed panels
+const MEAL_STORAGE = 'macro_tracker_collapsed_meals';
+let collapsedMeals = new Set();
+try { collapsedMeals = new Set(JSON.parse(localStorage.getItem(MEAL_STORAGE) || '[]')); } catch { /* storage unavailable */ }
+
+function toggleMeal(section) {
+    const collapsed = !section.classList.contains('is-collapsed');
+    section.classList.toggle('is-collapsed', collapsed);
+    section.querySelector('.meal-toggle').setAttribute('aria-expanded', String(!collapsed));
+    collapsed ? collapsedMeals.add(section.dataset.meal) : collapsedMeals.delete(section.dataset.meal);
+    try { localStorage.setItem(MEAL_STORAGE, JSON.stringify([...collapsedMeals])); } catch { /* storage unavailable */ }
+}
+
 function shiftDay(n) {
     const d = parseLocalDate(diaryDate());
     d.setDate(d.getDate() + n);
@@ -217,10 +230,13 @@ function renderDiary({ celebrate = false } = {}) {
 function mealHtml(meal, items) {
     const { label, icon } = MEALS[meal];
     const sum = sumEntries(items.map(i => i.e));
+    // A just-added or edited entry unfolds its meal so the change is visible
+    if (items.some(({ e }) => e.id === lastAddedId || e.id === changedEntryId)) collapsedMeals.delete(meal);
+    const collapsed = collapsedMeals.has(meal);
     const addBtn = `<button class="icon-btn" type="button" data-action="quick-add" data-meal="${meal}" aria-label="记一笔到${label}"><span class="ms" aria-hidden="true">add</span></button>`;
     const head = items.length
         ? `<div class="meal-head">
-                <div class="meal-title"><span class="ms" aria-hidden="true">${icon}</span><h3>${label}</h3></div>
+                <div class="meal-title"><span class="ms" aria-hidden="true">${icon}</span><h3><button type="button" class="meal-toggle" data-action="toggle-meal" aria-expanded="${!collapsed}" aria-controls="meal-${meal}">${label}<span class="ms" aria-hidden="true">chevron_right</span></button></h3></div>
                 <span class="meal-sum num">${fmt(sum.kcal)}</span>
                 <span class="entry-m">${fmt1(sum.protein)}</span>
                 <span class="entry-m c-carbs">${fmt1(sum.carbs)}</span>
@@ -256,7 +272,7 @@ function mealHtml(meal, items) {
                 </div>
             </li>`;
     }).join('');
-    return `<section class="meal">${head}<ul class="entries">${rows}</ul></section>`;
+    return `<section class="meal${collapsed ? ' is-collapsed' : ''}" data-meal="${meal}">${head}<div class="meal-body" id="meal-${meal}"><ul class="entries">${rows}</ul></div></section>`;
 }
 
 function renderScoreboard(totals, celebrate) {
@@ -578,6 +594,9 @@ function initDiary(openWarehouse) {
     });
     $('diary-log').addEventListener('click', e => {
         const btn = e.target.closest('button[data-action]');
+        // The whole head of a meal with entries folds it, not just its title button
+        const foldable = e.target.closest('.meal:not(.is-empty) > .meal-head');
+        if ((!btn && foldable) || btn?.dataset.action === 'toggle-meal') { toggleMeal(e.target.closest('.meal')); return; }
         if (!btn) return;
         if (btn.dataset.action === 'quick-add') { focusQuickAdd(btn.dataset.meal); return; }
         const index = Number(btn.closest('.entry').dataset.idx);

@@ -1310,6 +1310,19 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
 .meal-sum.sm { font-size: 14px; color: var(--muted); }
 .meal-actions { display: flex; justify-content: flex-end; }
 .meal.is-empty .meal-title .ms { background: var(--line-soft); color: var(--subtle); }
+/* Foldable meals: the head toggles, the chevron turns, and the entries close by animating the grid row to 0fr */
+.meal:not(.is-empty) > .meal-head { cursor: pointer; }
+.meal-toggle { display: inline-flex; align-items: center; gap: 2px; font: inherit; color: inherit; border-radius: 6px; }
+.meal-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.meal-title .meal-toggle .ms { width: auto; height: auto; font-size: 18px; background: none; box-shadow: none; color: var(--subtle); transform: rotate(90deg); transition: transform .25s var(--ease-spring); }
+.meal.is-collapsed .meal-toggle .ms { transform: none; }
+.meal-body { display: grid; grid-template-rows: 1fr; transition: grid-template-rows .3s var(--ease-out); }
+/* The list's bottom padding moves onto its last entry, since padding would keep a 0fr row from closing fully */
+.meal-body > .entries { min-height: 0; overflow: hidden; padding-bottom: 0; transition: visibility 0s; }
+.meal-body > .entries > :last-child { margin-bottom: 6px; }
+.meal.is-collapsed .meal-body { grid-template-rows: 0fr; }
+/* Hidden once folded so the entry buttons leave the tab order; the delay lets the fold play first */
+.meal.is-collapsed .meal-body > .entries { visibility: hidden; transition: visibility 0s .3s; }
 
 /* Battle log: a dashed thread drops from the meal icon (centred 30px in) with a rune on each entry */
 .entries { position: relative; list-style: none; padding-bottom: 6px; }
