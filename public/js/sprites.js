@@ -463,7 +463,7 @@ function spriteKey(food, macroKey) {
     return MACRO_FALLBACK[macroKey] || 'sweet';
 }
 
-function renderSprite({ pal, px }) {
+function spriteRects({ pal, px }) {
     const colors = { k: OUTLINE, ...pal };
     let rects = '';
     px.forEach((row, y) => {
@@ -475,7 +475,11 @@ function renderSprite({ pal, px }) {
             x = end;
         }
     });
-    return `<svg viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">${rects}</svg>`;
+    return rects;
+}
+
+function renderSprite(sprite) {
+    return `<svg viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">${spriteRects(sprite)}</svg>`;
 }
 
 const cache = {};
@@ -483,4 +487,4 @@ function spriteSvg(key) {
     return cache[key] ||= renderSprite(SPRITES[key]);
 }
 
-export { SPRITES, spriteKey, spriteSvg };
+export { SPRITES, spriteKey, spriteSvg, spriteRects };

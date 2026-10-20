@@ -51,6 +51,110 @@ async function loadApp(overrides = {}) {
     return { get, element };
 }
 
+test('avatar traits are stable, bounded and ignore incomplete or invalid attributes', async () => {
+    const { avatarTraits, CLASSES } = await (await loadApp()).get('avatar.js');
+    const profile = { height: '170', weight: '64', age: '27', gender: 'female', activity: '1.55' };
+    assert.deepEqual(plain(avatarTraits(profile)), plain(avatarTraits({ ...profile, height: 170, weight: 64, age: 27, activity: 1.55 })));
+    assert.deepEqual(plain(avatarTraits({})), { height: 1, width: 1, age: 'neutral', gender: 'neutral', job: '' });
+    assert.deepEqual(plain(avatarTraits({ height: '', weight: Infinity, age: 25.5, gender: 'invalid', activity: '__proto__' })), plain(avatarTraits({})));
+    assert.equal(avatarTraits({ height: 100, weight: 400 }).width, 1.25);
+    assert.equal(avatarTraits({ height: 250, weight: 20 }).width, .85);
+    assert.equal(avatarTraits({ height: 250 }).height, 1.15);
+    assert.equal(avatarTraits({ height: 100 }).height, .85);
+    assert.equal(avatarTraits({ height: 99, weight: 64 }).width, 1);
+    assert.equal(avatarTraits({ age: 17 }).age, 'young');
+    assert.equal(avatarTraits({ age: 18 }).age, 'adult');
+    assert.equal(avatarTraits({ age: 50 }).age, 'mature');
+    for (const job of Object.keys(CLASSES)) assert.equal(avatarTraits({ activity: job }).job, job);
+});
+
+test('avatar updates safely and retains its animation DOM when appearance is unchanged', async () => {
+    const { renderAvatar, CLASSES } = await (await loadApp()).get('avatar.js');
+    const nodes = { b: {}, '.avatar-caption span': {} };
+    let html = '', writes = 0;
+    const container = {
+        dataset: {},
+        set innerHTML(value) { html = value; writes++; },
+        querySelector(selector) { return nodes[selector]; }
+    };
+    const profile = { height: 170, weight: 64, age: 27, gender: 'male', activity: 1.55 };
+    const nickname = '<img src=x onerror=alert(1)>';
+    renderAvatar(container, profile, nickname);
+    assert.equal(nodes.b.textContent, nickname);
+    assert.ok(!html.includes(nickname));
+    renderAvatar(container, { ...profile }, nickname);
+    assert.equal(writes, 1);
+    const original = html;
+    renderAvatar(container, { ...profile, weight: 90 }, nickname);
+    assert.notEqual(html, original);
+    renderAvatar(container, { ...profile, gender: 'female' }, nickname);
+    assert.notEqual(html, original);
+    const variants = [];
+    for (const activity of Object.keys(CLASSES)) {
+        renderAvatar(container, { ...profile, activity }, nickname);
+        assert.equal(nodes['.avatar-caption span'].textContent, CLASSES[activity][0]);
+        assert.ok(!html.includes('undefined'));
+        assert.match(html, /shape-rendering="crispEdges"/);
+        assert.doesNotMatch(html, /<(?:circle|ellipse)\b/);
+        variants.push(html);
+    }
+    assert.equal(new Set(variants).size, 4);
+    renderAvatar(container, profile, 'Updated');
+    assert.equal(nodes.b.textContent, 'Updated');
+});
+
+test('avatar pixel parts use rectangular grids with complete palette keys', async () => {
+    const { AVATAR_PARTS } = await (await loadApp()).get('avatar.js');
+    for (const [name, rows] of Object.entries(AVATAR_PARTS)) {
+        assert.ok(rows.length > 0, name);
+        for (const row of rows) {
+            assert.equal(row.length, rows[0].length, name);
+            assert.match(row, /^[.khHsSwcClgGbBpPaAr]+$/, name);
+        }
+    }
+});
+
+test('saved profile refreshes the home avatar from current state including weight changes', async () => {
+    const app = await loadApp({ cancelAnimationFrame() {} });
+    const store = await app.get('state.js');
+    const session = await app.get('session.js');
+    session.setSession({ account: { id: 'hero', nickname: 'Hero' } });
+    const home = app.element('home-avatar');
+    home.dataset = {};
+    app.element('char-panel').classList.remove = () => {};
+    for (const id of ['plan-bmr', 'plan-tdee', 'plan-kcal', 'plan-deficit']) app.element(id).dataset = {};
+    app.element('pool-bar').style = { setProperty() {} };
+    app.element('split-bar').querySelectorAll = () => [];
+    const { fillSettingsForm } = await app.get('settings.js');
+    store.state.user = { height: 170, weight: 64, age: 27, gender: 'male', activity: 1.2 };
+    fillSettingsForm();
+    const first = home.innerHTML;
+    assert.equal(home.querySelector('.avatar-caption span').textContent, '学者');
+    store.state.user = { ...store.state.user, weight: 100, activity: 1.725 };
+    fillSettingsForm();
+    assert.notEqual(home.innerHTML, first);
+    assert.equal(home.querySelector('.avatar-caption span').textContent, '战士');
+    store.state.user = { ...store.state.user, weight: 64, activity: 1.2 };
+    fillSettingsForm();
+    assert.equal(home.innerHTML, first);
+});
+
+test('nickname changes reach the avatar only after a successful save', async () => {
+    for (const ok of [true, false]) {
+        const app = await loadApp({ fetch: async () => ({ ok, status: ok ? 200 : 500, json: async () => ({ ok }) }) });
+        const session = await app.get('session.js');
+        session.setSession({ account: { id: 'hero', nickname: 'Before', username: 'hero', role: 'user' } });
+        app.element('home-avatar').dataset = {};
+        (await app.get('account.js')).initAccount();
+        app.element('account-nickname').value = '  After  ';
+        app.element('account-form').listeners.submit[0]({ preventDefault() {} });
+        await new Promise(resolve => setImmediate(resolve));
+        assert.equal(session.account.nickname, ok ? 'After' : 'Before');
+        assert.equal(app.element('home-avatar').querySelector('b').textContent, ok ? 'After' : undefined);
+        assert.equal(app.element('save-nickname').disabled, false);
+    }
+});
+
 test('export fetches fresh complete data and prevents duplicate downloads', async () => {
     let resolveFetch, blob, requests = 0;
     const app = await loadApp({

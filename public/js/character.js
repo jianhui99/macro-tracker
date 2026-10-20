@@ -1,3 +1,4 @@
+import { CLASSES, renderAvatar } from './avatar.js';
 import { api } from './api.js';
 import { loadSession, initSession, expireSession } from './session.js';
 import { startI18n, toggleLang } from './i18n.js';
@@ -6,6 +7,9 @@ import { withBusy } from './ui.js';
 startI18n();
 document.getElementById('lang-toggle').addEventListener('click', toggleLang);
 const form = document.getElementById('character-form');
+document.getElementById('class-options').innerHTML = Object.entries(CLASSES).map(([value, [name, icon, activity]]) =>
+    `<label class="class-option"><input type="radio" name="activity" value="${value}" required><span class="ms" aria-hidden="true">${icon}</span><span><b>${name}</b><small>${activity}</small></span></label>`).join('');
+function preview() { const profile = draft(); renderAvatar(document.getElementById('character-preview'), profile, profile.nickname); }
 let timer, saving = Promise.resolve();
 function draft() { return Object.fromEntries(new FormData(form)); }
 function saveDraft() {
@@ -23,8 +27,10 @@ async function start() {
     if (data.account.onboarded) return location.replace('/');
     initSession();
     for (const [key, value] of Object.entries(data.draft)) if (form.elements.namedItem(key)) form.elements.namedItem(key).value = value ?? '';
+    preview();
     document.body.removeAttribute('data-auth-loading');
     form.addEventListener('input', () => {
+        preview();
         clearTimeout(timer);
         document.getElementById('draft-status').textContent = '正在保存草稿';
         timer = setTimeout(() => saveDraft().catch(() => { document.getElementById('draft-status').textContent = '草稿未保存，请检查网络'; }), 800);

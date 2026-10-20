@@ -1,6 +1,12 @@
 // English for every Chinese UI string, keyed by the Chinese source text. `{n}` keys are patterns: each capture is
 // translated on its own (a meal name, a unit, a weekday), and food names or other user text pass through as written.
 export const EN = {
+    "身体属性": "Physical attributes",
+    "角色预览": "Character preview",
+    "冒险者档案": "Adventurer dossier",
+    "外观随属性变化，开启你的专属冒险。": "Your hero takes shape as you fill in your attributes.",
+    "我的角色": "My hero",
+    "等待选择职业": "Choose a class",
     "公会账号": "Guild account",
     "角色昵称": "Hero nickname",
     "保存昵称": "Save nickname",

@@ -1,3 +1,5 @@
+import { CLASSES, renderAvatar } from './avatar.js';
+import { account } from './session.js';
 import { $, fmt, fmtKg, localDate, fmtMonthDay, WEEKDAYS, parseLocalDate, reduceMotion } from './helpers.js';
 import { state } from './state.js';
 import { computePlan, autoWaterTarget, DAY_TYPES, MACRO_META, applyOffset } from './nutrition.js';
@@ -9,15 +11,8 @@ import { lang, setLang } from './i18n.js';
 import { soundPref, setSoundPref } from './sound.js';
 
 // ── Settings ──
-// Activity level read as a character class: [class, icon, plain activity]
-const CLASSES = {
-    '1.2':   ['学者', 'menu_book', '久坐不动'],
-    '1.375': ['旅人', 'hiking', '轻度活动'],
-    '1.55':  ['冒险者', 'explore', '中度活动'],
-    '1.725': ['战士', 'swords', '重度活动']
-};
-
 function renderCharStats(user) {
+    renderAvatar($('home-avatar'), user, account?.nickname || '');
     const [job, jobIcon, activity] = CLASSES[String(user.activity)] || CLASSES['1.55'];
     const target = user.targetWeight;
     const tiles = [
