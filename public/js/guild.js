@@ -6,6 +6,19 @@ import { $, esc, fmt, fmtKg, fmtMonthDay, localDate } from './helpers.js';
 // ── Guild ──
 // Every invited adventurer is a member of the owner's guild. The server decides what each viewer may see:
 // everyone gets level, join date, streak and medals; the leader (admin) also gets login names, activity and weight.
+// Showcase adventurers, shown to every viewer and never stored. They carry only what any member may see,
+// so the leader view shows no account, activity or weight rows for them.
+const day = date => Date.parse(`${date}T12:00:00+08:00`) / 1000;
+const hero = (job, gender, build, height, age, skin) => ({ job, gender, build, height, age, skin });
+const DEMO_MEMBERS = [
+    { nickname: '燕麦战神', level: 12, joinedAt: day('2026-09-02'), streak: 41, medals: 26, avatar: hero('1.725', 'male', 'broad', 'tall', 'adult', 12) },
+    { nickname: '夜跑的猫', level: 10, joinedAt: day('2026-09-08'), streak: 19, medals: 21, avatar: hero('1.55', 'female', 'slim', 'normal', 'adult', 10) },
+    { nickname: '鸡胸肉大师', level: 9, joinedAt: day('2026-09-15'), streak: 12, medals: 17, avatar: hero('1.725', 'male', 'normal', 'normal', 'adult', 9) },
+    { nickname: '奶茶戒断中', level: 7, joinedAt: day('2026-09-21'), streak: 8, medals: 12, avatar: hero('1.2', 'female', 'normal', 'short', 'young', 7) },
+    { nickname: '深蹲小王子', level: 6, joinedAt: day('2026-09-29'), streak: 5, medals: 9, avatar: hero('1.375', 'male', 'slim', 'tall', 'young', 6) },
+    { nickname: '低碳游侠', level: 5, joinedAt: day('2026-10-06'), streak: 3, medals: 6, avatar: hero('1.375', 'female', 'normal', 'normal', 'mature', 5) }
+].map(m => ({ ...m, leader: false, me: false }));
+
 function detailsHtml(m) {
     const item = (icon, text) => `<span><span class="ms" aria-hidden="true">${icon}</span>${text}</span>`;
     const leaderOnly = () => {
@@ -36,7 +49,7 @@ function memberHtml(m, i) {
 
 async function loadGuild() {
     try {
-        const { members } = await api('/api/guild');
+        const members = [...(await api('/api/guild')).members, ...DEMO_MEMBERS].sort((a, b) => b.level - a.level);
         $('guild-count').textContent = `${members.length} 名冒险者`;
         $('guild-list').innerHTML = members.map(memberHtml).join('');
         $('guild-list').querySelectorAll('.guild-avatar').forEach((stage, i) => renderAvatarTraits(stage, members[i].avatar, members[i].nickname));
