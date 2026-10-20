@@ -37,11 +37,13 @@ function detailsHtml(m) {
 }
 
 function memberHtml(m, i) {
+    // Another user's stored data: the server only accepts integer levels, but the markup never trusts that
+    const level = Number.isInteger(m.level) && m.level >= 1 ? m.level : 1;
     return `<li class="guild-member${m.me ? ' is-me' : ''}" style="--i:${Math.min(i, 14)}">
         <span class="avatar-stage guild-avatar" aria-hidden="true"></span>
         <div class="gm-body">
             <div class="gm-name"><b translate="no">${esc(m.nickname || '· · ·')}</b>${m.leader ? '<span class="gm-tag">会长</span>' : ''}${m.me ? '<span class="gm-tag is-me">我</span>' : ''}</div>
-            <small>Lv ${m.level} · ${titleOf(m.level)}</small>
+            <small>Lv ${level} · ${esc(titleOf(level))}</small>
             ${detailsHtml(m)}
         </div>
     </li>`;
