@@ -1,11 +1,13 @@
 import { api, errorMessage } from './api.js';
 import { loadSession, initSession, account } from './session.js';
 import { startI18n, toggleLang, lookup, lang } from './i18n.js';
+import { startPixelIcons } from './pixel-icons.js';
 import { showConfirm, showToast, withBusy } from './ui.js';
 import { $, esc } from './helpers.js';
 import { RULE_LABELS, ruleBounds } from './rules.js';
 
 startI18n();
+startPixelIcons();
 $('lang-toggle').addEventListener('click', toggleLang);
 const stage = document.body.dataset.adminStage;
 let current;

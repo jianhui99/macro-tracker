@@ -1,3 +1,17 @@
+/* Pixel shapes for small ornaments, stepped on a 7-cell grid (cursors on 3-5 steps) so no edge is drawn diagonal */
+:root {
+    --px-diamond: polygon(42.86% 0, 57.14% 0, 57.14% 14.29%, 71.43% 14.29%, 71.43% 28.57%, 85.71% 28.57%, 85.71% 42.86%, 100% 42.86%,
+        100% 57.14%, 85.71% 57.14%, 85.71% 71.43%, 71.43% 71.43%, 71.43% 85.71%, 57.14% 85.71%, 57.14% 100%, 42.86% 100%,
+        42.86% 85.71%, 28.57% 85.71%, 28.57% 71.43%, 14.29% 71.43%, 14.29% 57.14%, 0 57.14%, 0 42.86%, 14.29% 42.86%,
+        14.29% 28.57%, 28.57% 28.57%, 28.57% 14.29%, 42.86% 14.29%);
+    --px-sparkle: polygon(42.86% 0, 57.14% 0, 57.14% 28.57%, 71.43% 28.57%, 71.43% 42.86%, 100% 42.86%, 100% 57.14%, 71.43% 57.14%,
+        71.43% 71.43%, 57.14% 71.43%, 57.14% 100%, 42.86% 100%, 42.86% 71.43%, 28.57% 71.43%, 28.57% 57.14%, 0 57.14%,
+        0 42.86%, 28.57% 42.86%, 28.57% 28.57%, 42.86% 28.57%);
+    --px-cursor-right: polygon(0 0, 33.3% 0, 33.3% 20%, 66.7% 20%, 66.7% 40%, 100% 40%, 100% 60%, 66.7% 60%, 66.7% 80%, 33.3% 80%, 33.3% 100%, 0 100%);
+    --px-cursor-down: polygon(0 0, 100% 0, 100% 25%, 85% 25%, 85% 50%, 70% 50%, 70% 75%, 60% 75%, 60% 100%, 40% 100%,
+        40% 75%, 30% 75%, 30% 50%, 15% 50%, 15% 25%, 0 25%);
+}
+
 /* Dark fantasy palette: night-stone surfaces, parchment text, brass rims, gold accent.
    Every text pair clears 4.5:1 (subtle 4:1, graphics 3:1) on --surface.
    The light theme keeps a few "dark islands" (toasts, tooltips, level-up)
@@ -218,6 +232,8 @@ button { cursor: pointer; background: none; border: 0; }
     user-select: none;
     flex-shrink: 0;
 }
+/* pixel-icons.js swaps the glyph for a pixel drawing sized like it */
+.ms > .px-icon { display: block; width: 1em; height: 1em; }
 
 /* Jersey numerals: condensed oblique heavy with tabular figures */
 .num {
@@ -303,7 +319,7 @@ button { cursor: pointer; background: none; border: 0; }
     height: 10px;
     margin-top: -5px;
     background: var(--accent);
-    clip-path: polygon(0 0, 100% 50%, 0 100%);
+    clip-path: var(--px-cursor-right);
     filter: drop-shadow(0 0 4px rgba(232, 176, 75, .8));
     animation: chipIn .3s var(--ease-spring), cursorBob 1s ease-in-out .3s infinite;
 }
@@ -385,9 +401,8 @@ main { overflow-y: auto; padding: 18px 22px 28px; }
     width: 7px;
     height: 7px;
     flex-shrink: 0;
-    transform: rotate(45deg);
+    clip-path: var(--px-diamond);
     background: linear-gradient(135deg, #FFE3A0, var(--accent-deep));
-    box-shadow: 0 0 6px rgba(232, 176, 75, .6);
 }
 .panel-head .hint { font-size: 12px; color: var(--muted); }
 .panel > .panel-head { cursor: pointer; user-select: none; }
@@ -752,7 +767,7 @@ select.input { padding-right: 8px; }
     width: 12px;
     height: 12px;
     background: #FFF1C9;
-    clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
+    clip-path: var(--px-sparkle);
     filter: drop-shadow(0 0 4px rgba(255, 214, 120, .9));
     opacity: 0;
     pointer-events: none;
@@ -1361,15 +1376,15 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
     position: absolute;
     left: 20px;
     top: 50%;
-    width: 8px;
-    height: 8px;
-    margin-top: -4px;
-    transform: rotate(45deg);
-    background: var(--surface);
-    box-shadow: inset 0 0 0 2px var(--accent-deep);
-    transition: background-color .15s, box-shadow .15s;
+    width: 7px;
+    height: 7px;
+    margin-top: -3.5px;
+    /* Hollow pixel diamond (evenodd ring); it fills in solid on hover */
+    clip-path: path(evenodd, 'M3 0H4V1H5V2H6V3H7V4H6V5H5V6H4V7H3V6H2V5H1V4H0V3H1V2H2V1H3Z M3 2H4V3H5V4H4V5H3V4H2V3H3Z');
+    background: var(--accent-deep);
+    transition: background-color .15s;
 }
-.entry:hover::before, .entry:focus-within::before { background: var(--accent); box-shadow: 0 0 8px rgba(232, 176, 75, .7); }
+.entry:hover::before, .entry:focus-within::before { background: var(--accent); clip-path: var(--px-diamond); }
 .entry:hover, .entry:focus-within { background: var(--surface-2); }
 .entry-main { display: flex; align-items: baseline; gap: 8px; min-width: 0; padding-left: 36px; }
 .entry-name { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -1425,8 +1440,10 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
     display: grid;
     place-items: center;
 }
-.nf-icon .ms { font-size: 18px; transition: transform .3s var(--ease-spring); }
-.new-food[open] .nf-icon .ms { transform: rotate(45deg); }
+.nf-icon .ms { grid-area: 1 / 1; font-size: 18px; transition: transform .3s var(--ease-spring), opacity .2s; }
+/* A rotated pixel icon would blur, so the plus turns away as a pixel close icon turns in */
+.nf-icon .ms + .ms, .new-food[open] .nf-icon .ms:first-child { opacity: 0; transform: rotate(-90deg); }
+.new-food[open] .nf-icon .ms + .ms { opacity: 1; transform: none; }
 .new-food-form {
     display: grid;
     grid-template-columns: 1.1fr 1.6fr 1fr repeat(4, minmax(70px, .7fr)) auto;
@@ -1541,7 +1558,7 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
     height: 7px;
     margin-left: -5px;
     background: var(--accent);
-    clip-path: polygon(0 0, 100% 0, 50% 100%);
+    clip-path: var(--px-cursor-down);
     filter: drop-shadow(0 0 4px rgba(232, 176, 75, .8));
     animation: chipIn .3s var(--ease-spring), promptBob 1s ease-in-out .3s infinite;
 }
@@ -1560,7 +1577,7 @@ input[type=number] { -moz-appearance: textfield; appearance: textfield; }
 .item-title { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .item-name { font-size: 18px; font-weight: 800; line-height: 1.3; overflow-wrap: anywhere; }
 .item-rarity { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 700; color: color-mix(in srgb, var(--gem, var(--muted)) 80%, var(--ink)); }
-.item-rarity::before { content: ""; width: 7px; height: 7px; rotate: 45deg; background: currentColor; box-shadow: 0 0 6px currentColor; }
+.item-rarity::before { content: ""; width: 7px; height: 7px; clip-path: var(--px-diamond); background: currentColor; }
 .item-head:not([class*="r-"]) .item-rarity { color: var(--muted); }
 .item-meta { font-size: 12px; color: var(--muted); }
 .item-off { display: none; margin-left: 8px; vertical-align: 1px; }
@@ -1693,16 +1710,18 @@ button.cal-day:hover { transform: translateY(-2px); border-color: var(--accent);
 /* Character status sheet: the level card heads it, attributes read as stat plaques until 编辑属性 */
 .char-panel .level-card { margin: 14px 16px 0; }
 /* Portrait on the left, stat plaques (or the edit form) beside it */
-.char-sheet { display: grid; grid-template-columns: 192px minmax(0, 1fr); align-items: start; padding-left: 16px; }
+.char-sheet { display: grid; grid-template-columns: 192px minmax(0, 1fr); align-items: start; padding-left: 16px; container-type: inline-size; }
 .char-sheet > :is(.char-stats, .settings-form) { grid-column: 2; grid-row: 1; }
 .char-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding: 14px 16px 6px; }
+/* Three plaques beside the portrait get too narrow for their notes in a tight panel (about 117px each with the note) */
+@container (max-width: 620px) { .char-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .stat-tile {
     display: grid;
     grid-template-columns: 34px minmax(0, 1fr);
-    column-gap: 10px;
+    column-gap: 8px;
     align-items: center;
     min-width: 0;
-    padding: 10px 12px;
+    padding: 10px;
     border-radius: 10px;
     background: var(--well);
     box-shadow: inset 0 0 0 1px var(--well-line), inset 0 2px 4px var(--well-shadow);
@@ -1732,7 +1751,7 @@ button.cal-day:hover { transform: translateY(-2px); border-color: var(--accent);
 .char-panel.is-editing .char-stats, .char-panel.is-editing .view-only,
 .char-panel:not(.is-editing) .settings-form, .char-panel:not(.is-editing) .edit-only { display: none; }
 .char-panel.is-editing .settings-form { animation: panelIn .3s var(--ease-out); }
-.settings-form .field > span::before { content: ""; display: inline-block; width: 5px; height: 5px; margin: 0 6px 1px 1px; rotate: 45deg; background: var(--accent-deep); }
+.settings-form .field > span::before { content: ""; display: inline-block; width: 7px; height: 7px; margin: 0 5px 0 0; clip-path: var(--px-diamond); background: var(--accent-deep); }
 .settings-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 12px; padding: 0 16px 16px; }
 .dirty-note { font-size: 12px; color: var(--under); margin-right: auto; display: flex; align-items: center; gap: 4px; animation: pageIn .25s var(--ease-out); }
 .dirty-note .ms { font-size: 16px; }
@@ -1981,9 +2000,8 @@ button.cal-day:hover { transform: translateY(-2px); border-color: var(--accent);
     width: 14px;
     height: 14px;
     margin-left: 4px;
-    rotate: 45deg;
+    clip-path: var(--px-diamond);
     background: linear-gradient(135deg, color-mix(in srgb, var(--c) 45%, #fff), var(--c) 55%, color-mix(in srgb, var(--c) 65%, #000));
-    box-shadow: 0 0 10px color-mix(in srgb, var(--c) 60%, transparent);
 }
 .gem-name { font-size: 12px; color: var(--muted); }
 .gem-socket b { font-size: 22px; line-height: 1.15; }
@@ -2210,7 +2228,7 @@ button.cal-day:hover { transform: translateY(-2px); border-color: var(--accent);
     width: 12px;
     height: 12px;
     background: var(--arcane);
-    clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
+    clip-path: var(--px-sparkle);
     opacity: 0;
     animation: twinkle 2.4s ease-in-out infinite;
     pointer-events: none;
@@ -2296,7 +2314,8 @@ button.cal-day:hover { transform: translateY(-2px); border-color: var(--accent);
     transition: transform .3s var(--ease-out);
 }
 /* The ring keeps the grid's 3 / 48 proportion, so the landing lines up */
-#badge-dialog .medal img { width: calc(var(--m) * 42 / 48 * 1px); height: calc(var(--m) * 42 / 48 * 1px); }
+/* Badges are pixel art; the large view keeps their pixels hard (the 42px grid scales smoothly, where nearest-neighbour would drop pixels) */
+#badge-dialog .medal img { width: calc(var(--m) * 42 / 48 * 1px); height: calc(var(--m) * 42 / 48 * 1px); image-rendering: pixelated; }
 #badge-dialog .spark { zoom: var(--k); }
 .bd-card {
     position: relative;
@@ -2349,7 +2368,7 @@ button.cal-day:hover { transform: translateY(-2px); border-color: var(--accent);
 .bd-ring { width: calc(var(--m) * 1px); height: calc(var(--m) * 1px); margin: calc(var(--m) * -.5px); border-radius: 50%; border: 3px solid var(--ray); opacity: 0; animation: shock .7s var(--ease-out) var(--impact); }
 .bd-ring + .bd-ring { animation-delay: calc(var(--impact) + 140ms); }
 .bd-bit { width: 8px; height: 8px; margin: -4px; border-radius: 2px; background: var(--ray); opacity: 0; animation: bit .9s cubic-bezier(.12, .8, .3, 1) calc(var(--impact) + var(--t)) forwards; }
-.bd-bit:nth-child(3n) { width: 12px; height: 12px; margin: -6px; background: #fff; clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%); }
+.bd-bit:nth-child(3n) { width: 12px; height: 12px; margin: -6px; background: #fff; clip-path: var(--px-sparkle); }
 /* `scale` and `translate` compose with the flight's `transform`, so these never fight the FLIP */
 .bd-stage:not(.m-locked) .medal { --medal-in: impact .5s var(--ease-out) var(--impact); }
 .bd-stage.m-locked .medal { --medal-in: lockShake .5s ease-in-out calc(var(--impact) + 60ms); }
@@ -2647,7 +2666,7 @@ dialog[open]::backdrop { animation: fade .2s ease; }
     }
     .brand-mark, .rail-level { display: none; }
     .rail-item { width: auto; flex: 1; }
-    .rail-item[aria-current="page"]::before { left: 50%; top: -5px; width: 10px; height: 6px; margin: 0 0 0 -5px; clip-path: polygon(0 0, 100% 0, 50% 100%); animation: chipIn .3s var(--ease-spring), promptBob 1s ease-in-out .3s infinite; }
+    .rail-item[aria-current="page"]::before { left: 50%; top: -5px; width: 10px; height: 6px; margin: 0 0 0 -5px; clip-path: var(--px-cursor-down); animation: chipIn .3s var(--ease-spring), promptBob 1s ease-in-out .3s infinite; }
     main { overflow: visible; padding: 12px 12px calc(96px + env(safe-area-inset-bottom)); }
     #toast-container { bottom: 88px; }
     .mini-hud { padding-top: calc(10px + env(safe-area-inset-top)); }

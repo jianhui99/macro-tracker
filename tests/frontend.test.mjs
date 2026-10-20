@@ -614,3 +614,16 @@ test('food sprites are complete 16x16 grids and keywords beat the macro fallback
     assert.equal(spriteKey({ name: '神秘食物', category: '' }, 'fat'), 'oil');
     assert.equal(spriteKey({ name: '神秘食物' }, 'kcal'), 'sweet');
 });
+
+test('every icon the pages request has a 12x12 pixel drawing', async () => {
+    const { ICONS } = await import('../public/js/pixel-icons.js');
+    const pages = await Promise.all(['public/index.html', 'public/login.html', 'lib/admin-page.js']
+        .map(file => readFile(new URL(`../${file}`, import.meta.url), 'utf8')));
+    const requested = pages.flatMap(page => [...page.matchAll(/icon_names=([a-z_,0-9]+)/g)]).flatMap(match => match[1].split(','));
+    assert.ok(requested.length > 50);
+    for (const name of requested) assert.ok(Object.hasOwn(ICONS, name), `${name} has no pixel drawing`);
+    for (const [name, rows] of Object.entries(ICONS)) {
+        assert.equal(rows.length, 12, name);
+        for (const row of rows) assert.match(row, /^[#.]{12}$/, name);
+    }
+});

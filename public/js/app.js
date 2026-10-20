@@ -16,6 +16,7 @@ import { initLevel } from './level.js';
 import { initSkins } from './skins.js';
 import { initBackup } from './backup.js';
 import { startI18n } from './i18n.js';
+import { startPixelIcons } from './pixel-icons.js';
 import { initSound } from './sound.js';
 
 // ── Navigation ──
@@ -100,6 +101,7 @@ async function start() {
     $('reload-rules').addEventListener('click', () => location.reload());
     // First, so every module renders into an already-translated page and the observer catches the rest
     startI18n();
+    startPixelIcons();
     initSession();
     initAccount();
     initDiary(() => switchPage('warehouse'));

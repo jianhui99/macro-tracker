@@ -49,9 +49,14 @@ Run `npm run db:migrate` once before the first `npm start`, and after adding a m
 - **Global rewards** come from `public/js/rules.js` defaults and the versioned D1 `game_rules` row. Defaults keep compliance at `[-300, +50]` kcal; protein threshold affects stars and achievements without changing nutrition targets. Admin edits recalculate historical rewards and preserve unlocked medals. Open pages prompt to refresh.
 - **Achievements are evaluated client-side** by `evaluateAchievements`, which replays history day by day.
   Newly reached tiers are POSTed as `series:threshold` ids and stored with `INSERT OR IGNORE`; unlocked badges are never revoked even if the stats later drop.
-  Adding a series means adding it to `ACHIEVEMENTS` plus an image at `public/badges/<id>.webp` (crop/size notes in `public/badges/CREDITS.txt`).
+  Adding a series means adding it to `ACHIEVEMENTS` plus an image at `public/badges/<id>.webp` (crop/size notes in `public/badges/CREDITS.txt`), pixelated with `scripts/pixelate-badge.py` to match the pixel-art UI.
   Every new series must also get a `<id> | <subject>` line in the subject list of `docs/generate-badge.md`, matching the existing RPG-mascot style, so the owner can generate its artwork.
 - **Level and XP are derived, never stored.** `level.js` replays history (calendar stars, water goals, weigh-ins, unlocked medal tiers) on every `syncAchievements`, so deleting records can lower the level; only the last-seen level sits in `localStorage`, keyed by account and rules version, to replay a missed level-up.
+  The one stored exception is `user_settings.max_level`, the highest level ever reached, which only rises: it keeps hero skins (`skins.js`, one per level title) unlocked after the level drops.
+- **Every icon, image and ornament is pixel art**, buttons included; never add a smooth vector icon, photo or illustration.
+  - Icons: keep writing `<span class="ms">name</span>`; `pixel-icons.js` swaps it for a 12×12 one-colour drawing in `currentColor`. A new icon name needs a drawing in `ICONS` and its name in the pages' Material Symbols `icon_names` lists, which a test checks against `ICONS`.
+  - Pictures: sprites and avatars are palette grids drawn with `spriteRects` (`sprites.js`, `avatar.js`, hero skins in `SKINS`); badge artwork goes through `scripts/pixelate-badge.py`.
+  - Small ornaments use the stepped `--px-*` clip-path shapes in `app.css` (diamond, sparkle, cursors), not rotated squares or smooth polygons; pixel art is never rotated by angles that are not multiples of 90°.
 - **New UI must ship with matching animation.** Every element that appears, changes, or disappears gets motion consistent with the rest of the app, reusing what already exists before adding new keyframes:
   - Easing tokens `--ease-out` (entrances/exits) and `--ease-spring` (pops, bars, thumbs).
   - Existing keyframes such as `pageIn`, `panelIn`, `chipIn` / `chipOut`, `wordIn`, `bump`.

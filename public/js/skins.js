@@ -41,7 +41,7 @@ function openWardrobe() {
     $('skin-grid').innerHTML = [0, ...SKINS.map((_, i) => i + 1)].map(skin => {
         const locked = skin > unlocked;
         const label = skin ? titleOf(skin) : '跟随等级';
-        const sub = !skin ? '升级时自动换装' : locked ? `Lv ${skin} 解锁` : `Lv ${skin}`;
+        const sub = !skin ? '升级时自动换装' : locked ? `<span class="ms" aria-hidden="true">lock</span>Lv ${skin} 解锁` : `Lv ${skin}`;
         return `<li style="--j:${Math.min(skin, 14)}"><button type="button" class="skin-slot${locked ? ' is-locked' : ''}" data-skin="${skin}"
             aria-pressed="${skin === picked}"${locked ? ' disabled' : ''}><span class="avatar-stage skin-art"></span><b>${label}</b><small>${sub}</small></button></li>`;
     }).join('');

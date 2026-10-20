@@ -1,9 +1,11 @@
 import { api, errorMessage } from './api.js';
 import { startI18n, toggleLang } from './i18n.js';
+import { startPixelIcons } from './pixel-icons.js';
 import { withBusy } from './ui.js';
 import { $ } from './helpers.js';
 
 startI18n();
+startPixelIcons();
 $('lang-toggle').addEventListener('click', toggleLang);
 const params = new URLSearchParams(location.search);
 const message = $('login-error');

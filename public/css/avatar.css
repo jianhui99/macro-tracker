@@ -119,7 +119,7 @@
 .skin-slot.is-locked { cursor: not-allowed; }
 .skin-slot.is-locked .avatar-art { filter: brightness(0); opacity: .35; }
 .skin-slot.is-locked b { color: var(--subtle); }
-.skin-slot.is-locked small::before { content: "lock"; font-family: 'Material Symbols Rounded'; font-size: 12px; vertical-align: -2px; margin-right: 2px; }
+.skin-slot small .ms { font-size: 12px; vertical-align: -2px; margin-right: 2px; }
 
 @media (max-width: 720px) {
     .character-page main { grid-template-columns: minmax(0, 1fr); gap: 16px; }

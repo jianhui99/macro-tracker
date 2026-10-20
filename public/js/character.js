@@ -2,11 +2,13 @@ import { CLASSES, renderAvatar } from './avatar.js';
 import { api } from './api.js';
 import { loadSession, initSession, expireSession } from './session.js';
 import { startI18n, toggleLang } from './i18n.js';
+import { startPixelIcons } from './pixel-icons.js';
 import { withBusy, initTips } from './ui.js';
 import { esc, reduceMotion } from './helpers.js';
 import { sfx, initSound } from './sound.js';
 
 startI18n();
+startPixelIcons();
 initTips();
 initSound();
 document.getElementById('lang-toggle').addEventListener('click', toggleLang);
