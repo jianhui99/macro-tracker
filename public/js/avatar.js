@@ -1,33 +1,8 @@
 import { spriteRects } from './sprites.js';
 import { esc } from './helpers.js';
+import { CLASSES, avatarTraits } from './avatar-traits.js';
 
-export const CLASSES = {
-    '1.2': ['学者', 'menu_book', '久坐不动', '久坐不动（基本不运动）'],
-    '1.375': ['旅人', 'hiking', '轻度活动', '轻度活动（每周运动 1-3 天）'],
-    '1.55': ['冒险者', 'explore', '中度活动', '中度活动（每周运动 3-5 天）'],
-    '1.725': ['战士', 'swords', '重度活动', '重度活动（每周运动 6-7 天）']
-};
-
-const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
-function number(value, min, max) {
-    if (value === '' || value == null) return null;
-    const n = Number(value);
-    return Number.isFinite(n) && n >= min && n <= max ? n : null;
-}
-
-export function avatarTraits(profile) {
-    const height = number(profile.height, 100, 250);
-    const weight = number(profile.weight, 20, 400);
-    const age = number(profile.age, 10, 100);
-    return {
-        height: height === null ? 1 : clamp(height / 170, .85, 1.15),
-        width: height === null || weight === null ? 1 : clamp(Math.sqrt(weight / ((height / 100) ** 2 * 22)), .85, 1.25),
-        age: age === null || !Number.isInteger(age) ? 'neutral' : age < 18 ? 'young' : age < 50 ? 'adult' : 'mature',
-        gender: ['male', 'female'].includes(profile.gender) ? profile.gender : 'neutral',
-        job: Object.hasOwn(CLASSES, String(profile.activity)) ? String(profile.activity) : '',
-        skin: Number.isInteger(profile.skin) && profile.skin >= 1 && profile.skin <= SKINS.length ? profile.skin : 0
-    };
-}
+export { CLASSES, avatarTraits };
 
 const PALETTE = { h: '#594139', H: '#8A6250', s: '#F4C59A', S: '#D89468', w: '#FFF1CF',
     c: '#8173C5', C: '#504482', l: '#B6A1E8', g: '#E8B04B', G: '#99632E', b: '#73503C', B: '#43302C',
@@ -176,7 +151,11 @@ export const SKINS = [
 // A container with data-pose="peek" gets the hero leaning over a card's top edge: the svg ends just below the
 // chest line, the body is clipped there, and two hands overlap the edge (see .home-avatar in avatar.css)
 export function renderAvatar(container, profile, nickname = '') {
-    const t = avatarTraits(profile);
+    renderAvatarTraits(container, avatarTraits(profile), nickname);
+}
+
+// Draws from ready-made traits, e.g. a guild member's, whose body measurements never reach the client
+export function renderAvatarTraits(container, t, nickname = '') {
     const signature = JSON.stringify([t, nickname]);
     if (container.dataset.avatar === signature) return;
     container.dataset.avatar = signature;
@@ -192,8 +171,8 @@ export function renderAvatar(container, profile, nickname = '') {
     const has = extra => skin.extras?.includes(extra);
     // Add or remove whole grid cells so body proportions never stretch the pixels.
     const body = AVATAR_PARTS.body.flatMap((row, y) => {
-        const adjusted = [...row].map((cell, x) => [5, 10].includes(x) ? t.width > 1.08 ? cell + cell : t.width < .94 ? '' : cell : cell).join('');
-        return [5, 11].includes(y) ? t.height > 1.06 ? [adjusted, adjusted] : t.height < .94 ? [] : [adjusted] : [adjusted];
+        const adjusted = [...row].map((cell, x) => [5, 10].includes(x) ? t.build === 'broad' ? cell + cell : t.build === 'slim' ? '' : cell : cell).join('');
+        return [5, 11].includes(y) ? t.height === 'tall' ? [adjusted, adjusted] : t.height === 'short' ? [] : [adjusted] : [adjusted];
     });
     const bodyY = 35 - body.length;
     const headY = bodyY - 13;
