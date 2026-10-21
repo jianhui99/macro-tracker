@@ -106,6 +106,7 @@ async function start() {
     if (data.account.onboarded) return location.replace('/');
     initSession();
     for (const [key, value] of Object.entries(data.draft)) if (form.elements.namedItem(key)) form.elements.namedItem(key).value = value ?? '';
+    form.elements.namedItem('gender').value ||= 'male';
     preview();
     document.body.removeAttribute('data-auth-loading');
     form.addEventListener('input', () => {
