@@ -133,6 +133,8 @@
     .char-avatar { grid-template-columns: 132px minmax(0, 1fr); align-items: center; justify-items: start; gap: 14px; padding: 14px 16px 0; }
     .char-avatar .avatar-art { width: 132px; }
     .char-avatar .avatar-caption { text-align: left; }
+    .char-avatar:focus-visible { outline: none; }
+    .char-avatar:focus-visible .avatar-caption b { text-decoration: underline; }
     /* Too narrow to share the drop with the hero, so the date nav takes its own row above the board */
     .diary-grid { grid-template-areas: "nav" "board" "side" "log"; }
     .diary-nav { grid-area: nav; height: auto; flex-wrap: wrap; }
