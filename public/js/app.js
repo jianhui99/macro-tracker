@@ -19,6 +19,7 @@ import { initBackup } from './backup.js';
 import { startI18n } from './i18n.js';
 import { startPixelIcons } from './pixel-icons.js';
 import { initSound } from './sound.js';
+import { initOnboarding } from './onboarding.js';
 
 // ── Navigation ──
 // The page lives in the URL hash so a reload stays on it
@@ -63,7 +64,10 @@ function playArrival() {
     } catch { return; }
     if (reduceMotion.matches) return;
     document.body.classList.add('is-arriving');
-    setTimeout(() => document.body.classList.remove('is-arriving'), 1400);
+    return new Promise(resolve => setTimeout(() => {
+        document.body.classList.remove('is-arriving');
+        resolve();
+    }, 1400));
 }
 
 async function init() {
@@ -71,10 +75,11 @@ async function init() {
     // Only the DOM here: page renderers need the loaded state
     showPage(startPage);
     setMeal(getDefaultMeal());
+    let arrival;
     try {
         await loadState();
         document.body.removeAttribute('data-auth-loading');
-        playArrival();
+        arrival = playArrival();
         $('diary-date').value = localDate();
         fillSettingsForm();
         fillCustomWater();
@@ -89,6 +94,8 @@ async function init() {
     if (startPage !== 'diary') switchPage(startPage);
     syncAchievements();
     loadQuote();
+    await arrival;
+    return true;
 }
 
 async function start() {
@@ -120,7 +127,7 @@ async function start() {
         btn.addEventListener('click', () => switchPage(btn.dataset.page)));
     initBackup();
 
-    await init();
+    if (await init()) void initOnboarding(switchPage);
     async function checkRules() {
         if (document.hidden) return;
         try {

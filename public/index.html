@@ -15,9 +15,14 @@
     <link rel="stylesheet" href="/css/app.css">
     <link rel="stylesheet" href="/css/auth.css">
     <link rel="stylesheet" href="/css/avatar.css">
+    <link rel="stylesheet" href="/vendor/driver.js-1.10.2/driver.css">
+    <link rel="stylesheet" href="/vendor/driver.js-1.10.2/checklist.css">
+    <link rel="stylesheet" href="/css/onboarding.css">
 </head>
 <body data-auth-loading>
     <aside id="rules-update" class="rules-update" hidden role="status"><span>全站规则已更新，刷新页面后生效。</span><button class="btn btn-ghost" id="reload-rules">刷新页面</button></aside>
+
+    <aside id="onboarding-error" class="onboarding-error" hidden role="status"><span>新手指南暂不可用或进度未同步，请重试。</span><button type="button" class="btn btn-ghost btn-sm" id="retry-onboarding">重试指南</button></aside>
 
     <div id="toast-container" role="status" aria-live="polite"></div>
     <div id="float-tip" class="chart-tip is-floating" hidden></div>
@@ -497,6 +502,11 @@
                         <a href="/admin" class="btn btn-ghost" id="admin-link" hidden><span class="ms" aria-hidden="true">shield_person</span>管理公会</a>
                         <button type="button" class="btn btn-ghost" id="logout"><span class="ms" aria-hidden="true">logout</span>退出登录</button>
                     </div>
+                </div>
+                <div class="sys-row">
+                    <span class="sys-icon" aria-hidden="true"><span class="ms">menu_book</span></span>
+                    <div class="sys-text"><b>新手指南</b><small>重看教学，继续未完成的新手任务</small></div>
+                    <div class="sys-actions"><button type="button" class="btn btn-ghost" id="open-onboarding">打开新手指南</button></div>
                 </div>
                 <form class="sys-row" id="account-form">
                     <span class="sys-icon" aria-hidden="true"><span class="ms">badge</span></span>

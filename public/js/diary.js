@@ -1,3 +1,4 @@
+import { refreshOnboarding } from './onboarding.js';
 import { rules } from './rules.js';
 import { parseLocalDate, diaryDate, $, localDate, reduceMotion, esc, fmt, fmt1, WEEKDAYS } from './helpers.js';
 import { MEAL_ORDER, MEALS, macroIcon, targetsFor, sumEntries, recordingStreak, MACRO_KEYS, FINISH_SCALE, dayStars } from './nutrition.js';
@@ -383,6 +384,7 @@ function addDiaryEntry() {
             ...scaleFood(food, userAmount)
         });
         (state.diary[date] ||= []).push(created);
+        void refreshOnboarding();
         food.lastAmount = userAmount;
         lastAddedId = created.id;
         renderDiary({ celebrate: true });
@@ -409,6 +411,7 @@ function addTemporaryDiaryEntry() {
             fat:     parseFloat($('temp-food-fat').value)     || 0
         });
         (state.diary[date] ||= []).push(created);
+        void refreshOnboarding();
         lastAddedId = created.id;
         renderDiary({ celebrate: true });
         floatGain(created.kcal);

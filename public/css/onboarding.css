@@ -1,0 +1,45 @@
+.adventure-checklist, .adventure-tour {
+    --driver-checklist-color: var(--accent);
+    --driver-popover-font-family: inherit;
+    color: var(--ink);
+    font-family: inherit;
+}
+.adventure-checklist .driver-checklist-panel, .adventure-tour {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 0;
+    box-shadow: 0 -2px 0 var(--rim), 0 2px 0 var(--rim), -2px 0 var(--rim), 2px 0 var(--rim), 0 12px 32px #0005;
+}
+.adventure-checklist .driver-checklist-launcher {
+    background: var(--surface-2);
+    color: var(--accent);
+    border-color: var(--accent);
+    border-radius: 0;
+}
+.adventure-checklist .driver-checklist-launcher:hover { background: var(--accent-soft); }
+.adventure-checklist :is(.driver-checklist-description, .driver-checklist-progress-text, .driver-checklist-launcher-count, .driver-checklist-item-description),
+.adventure-checklist .driver-checklist-item-done .driver-checklist-item-title,
+.adventure-tour .driver-popover-progress-text { color: var(--muted); }
+.adventure-checklist .driver-checklist-item { border-radius: 0; }
+.adventure-checklist .driver-checklist-item:has(.driver-checklist-item-trigger:hover, .driver-checklist-item-trigger:focus-visible) { background: var(--surface-2); }
+.adventure-checklist .driver-checklist-check { border-radius: 0; border-color: var(--muted); }
+.adventure-checklist .driver-checklist-progress-bar { background: var(--track); }
+.adventure-checklist .driver-checklist-item-trigger:focus-visible,
+.adventure-checklist .driver-checklist-close-btn:focus-visible,
+.adventure-tour button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.adventure-checklist .driver-checklist-close-btn, .adventure-tour .driver-popover-close-btn { color: var(--muted); }
+.adventure-checklist .driver-checklist-close-btn:hover, .adventure-tour .driver-popover-close-btn:hover { color: var(--ink); }
+.adventure-tour .driver-popover-footer-btn { color: var(--ink); background: var(--surface-2); border-color: var(--line); border-radius: 0; padding: 8px 12px; }
+.adventure-tour .driver-popover-footer-btn:hover { background: var(--accent-soft); }
+.adventure-tour .driver-popover-arrow { display: none; }
+.adventure-tour { min-width: 0; max-width: min(320px, calc(100vw - 32px)); }
+.onboarding-error {
+    position: fixed; z-index: 1000000001; top: 12px; right: 12px;
+    display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
+    max-width: min(420px, calc(100vw - 24px)); padding: 12px;
+    color: var(--ink); background: var(--surface); border: 1px solid var(--accent);
+}
+.onboarding-error[hidden] { display: none; }
+@media (max-width: 720px) {
+    .adventure-checklist { --driver-checklist-offset-y: 86px; }
+}

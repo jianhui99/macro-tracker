@@ -4,6 +4,7 @@ import { handleAuth, requireSession } from '../../lib/auth.js';
 import { fail, json, rateLimit, readBody } from '../../lib/http.js';
 import { saveProfile, validateProfile, validateEntry, validDate } from '../../lib/account.js';
 import { handleAdmin, getRules } from '../../lib/admin.js';
+import { getOnboarding, patchOnboarding } from '../../lib/onboarding.js';
 
 // ── Row <-> API shape mapping (keeps the frontend's `state` object unchanged) ──
 function foodToJson(row) {
@@ -262,6 +263,7 @@ async function postDiary({ db, userId, body }) {
     if (!isTemporary && foodId) {
         statements.push(db.prepare('UPDATE foods SET last_amount = ? WHERE user_id = ? AND id = ?').bind(rawAmount, userId, foodId));
     }
+    statements.push(db.prepare('UPDATE user_onboarding SET meal = 1 WHERE user_id = ?').bind(userId));
     const [, inserted] = await db.batch(statements);
     return json(entryToJson(inserted.results[0]), 201);
 }
@@ -325,6 +327,7 @@ async function postWater({ db, userId, body }) {
     if (customUnit) {
         statements.push(db.prepare('UPDATE user_settings SET last_water_ml = ?, last_water_unit = ? WHERE user_id = ?').bind(ml, customUnit, userId));
     }
+    statements.push(db.prepare('UPDATE user_onboarding SET water = 1 WHERE user_id = ?').bind(userId));
     const [, inserted] = await db.batch(statements);
     return json(inserted.results[0], 201);
 }
@@ -454,6 +457,8 @@ async function getQuote({ env }) {
 }
 
 const ROUTES = [
+    ['GET',    /^\/api\/onboarding$/,           getOnboarding],
+    ['PATCH',  /^\/api\/onboarding$/,           patchOnboarding],
     ['GET',    /^\/api\/state$/,                getState],
     ['POST',   /^\/api\/import$/,               importState],
     ['PUT',    /^\/api\/user$/,                 putUser],

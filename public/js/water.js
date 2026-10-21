@@ -1,3 +1,4 @@
+import { refreshOnboarding } from './onboarding.js';
 import { state } from './state.js';
 import { diaryDate, $, fmt, localDate, reduceMotion } from './helpers.js';
 import { targetsFor } from './nutrition.js';
@@ -52,6 +53,7 @@ function addWater(ml, btn, customUnit = null) {
         const time = date === localDate() ? new Date().toTimeString().slice(0, 5) : null;
         const created = await api('/api/water', 'POST', { date, ml, time, customUnit });
         (state.water[date] ||= []).push(created);
+        void refreshOnboarding();
         if (customUnit) state.user.lastWater = { ml, unit: customUnit };
         lastWaterId = created.id;
         replay($('water-vis'), 'is-pouring');
