@@ -2496,7 +2496,14 @@ button.hm-cell:hover, button.hm-cell:focus-visible { transform: scale(1.35); pos
 .ins-track.has-goal::after { content: ""; position: absolute; left: 80%; top: -3px; bottom: -3px; width: 2px; border-radius: 0; background: var(--ink); }
 .insight-grid.is-entering .ins-track i { animation: growX .6s var(--ease-out) backwards; }
 @keyframes growX { from { transform: scaleX(0); } }
-.chart-tip.is-floating { position: fixed; z-index: 9000; }
+.chart-tip.is-floating {
+    position: fixed;
+    z-index: 9000;
+    width: max-content;
+    max-width: calc(100vw - 16px);
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
 
 /* Trend */
 .trend-panel { margin-top: 14px; }
