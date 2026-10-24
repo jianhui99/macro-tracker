@@ -411,7 +411,7 @@ main { overflow-y: auto; padding: 18px 22px 28px; }
 .panel-head h2:has(+ .hint-info) { margin-right: 0; }
 .panel-head .hint-info { margin: -4px auto -4px 0; }
 /* (i): a filled pixel tag with the i cut out; it only brightens on hover */
-.hint-info { display: inline-grid; place-items: center; width: 24px; height: 24px; color: var(--subtle); opacity: .8; cursor: help; transition: color .15s, opacity .15s, transform .15s var(--ease-spring); }
+.hint-info { display: inline-grid; place-items: center; width: 24px; height: 24px; color: var(--subtle); opacity: .8; cursor: help; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; transition: color .15s, opacity .15s, transform .15s var(--ease-spring); }
 .hint-info:hover, .hint-info:focus-visible { color: var(--accent); opacity: 1; transform: translateY(-1px); }
 .hint-info:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .hint-info .ms { font-size: 15px; }

@@ -73,7 +73,10 @@ async function withBusy(btn, fn) {
 }
 
 // One floating tooltip for charts and hint icons: any [data-tip] shows it on hover, tap or keyboard focus
+let pinnedHint = null;
+
 function showFloatTipAt(html, cx, top, bottom = top) {
+    pinnedHint = null;
     const tip = $('float-tip');
     tip.innerHTML = html;
     tip.hidden = false;
@@ -87,7 +90,10 @@ function showFloatTip(el) {
     showFloatTipAt(el.dataset.tip, r.left + r.width / 2, r.top, r.bottom);
 }
 
-function hideFloatTip() { $('float-tip').hidden = true; }
+function hideFloatTip() {
+    pinnedHint = null;
+    $('float-tip').hidden = true;
+}
 
 // ── Collapsible panels ──
 // Keyed by panel title, which is static markup
@@ -104,21 +110,34 @@ function initTips() {
     const tipScope = document.querySelector('main');
 
     tipScope.addEventListener('pointerover', e => {
+        if (pinnedHint) return;
         if (e.target.closest('[data-tip-host]')) return;
         const el = e.target.closest('[data-tip]');
         if (el) showFloatTip(el); else hideFloatTip();
     });
 
-    tipScope.addEventListener('pointerleave', hideFloatTip);
+    tipScope.addEventListener('pointerleave', () => { if (!pinnedHint) hideFloatTip(); });
 
-    tipScope.addEventListener('focusin', e => { const el = e.target.closest('[data-tip]'); if (el) showFloatTip(el); });
+    tipScope.addEventListener('focusin', e => {
+        const el = e.target.closest('[data-tip]');
+        if (el) showFloatTip(el); else hideFloatTip();
+    });
 
-    tipScope.addEventListener('focusout', hideFloatTip);
+    tipScope.addEventListener('focusout', () => { if (!pinnedHint) hideFloatTip(); });
 
     // The icon can sit inside clickable headers or option labels; tapping it shows the tip without toggling them
-    tipScope.addEventListener('click', e => { if (e.target.closest('.hint-info')) e.preventDefault(); });
+    document.addEventListener('click', e => {
+        const el = e.target.closest('.hint-info');
+        if (!el) { hideFloatTip(); return; }
+        e.preventDefault();
+        if (pinnedHint === el) { hideFloatTip(); return; }
+        showFloatTip(el);
+        pinnedHint = el;
+    });
 
-    tipScope.addEventListener('scroll', hideFloatTip, { passive: true });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') hideFloatTip(); });
+
+    document.addEventListener('scroll', hideFloatTip, { capture: true, passive: true });
 
     window.addEventListener('scroll', hideFloatTip, { passive: true });
 }

@@ -51,6 +51,94 @@ async function loadApp(overrides = {}) {
     return { get, element };
 }
 
+async function tooltipUi() {
+    const listeners = new Map();
+    const surface = name => ({ addEventListener(type, fn) { listeners.set(`${name}:${type}`, fn); } });
+    const main = surface('main');
+    const app = await loadApp({
+        document: { ...surface('document'), querySelector: () => main, getElementById: () => app.element('float-tip') },
+        window: surface('window'), innerWidth: 390
+    });
+    const tip = app.element('float-tip');
+    Object.assign(tip, { hidden: true, style: {}, offsetWidth: 160, offsetHeight: 40 });
+    const ui = await app.get('ui.js');
+    ui.initTips();
+    const hint = text => ({ dataset: { tip: text },
+        closest(selector) { return ['.hint-info', '[data-tip]'].includes(selector) ? this : null; },
+        getBoundingClientRect: () => ({ left: 100, top: 100, bottom: 124, width: 24 }) });
+    const outside = { closest: () => null };
+    const fire = (name, type, target = outside, extra = {}) => {
+        const event = { target, preventDefault() { this.defaultPrevented = true; }, ...extra };
+        listeners.get(`${name}:${type}`)?.(event);
+        return event;
+    };
+    const click = target => {
+        const event = fire('main', 'click', target);
+        listeners.get('document:click')?.(event);
+        return event;
+    };
+    return { tip, ui, hint, fire, click, outside };
+}
+
+test('touch hints stay open after release, toggle and switch without activating their label', async () => {
+    const { tip, hint, fire, click } = await tooltipUi();
+    const first = hint('First'), second = hint('Second');
+    const tap = target => {
+        fire('main', 'pointerover', target, { pointerType: 'touch' });
+        fire('main', 'pointerleave', target, { pointerType: 'touch' });
+        return click(target);
+    };
+    assert.equal(tap(first).defaultPrevented, true);
+    assert.equal(tip.hidden, false);
+    fire('main', 'pointerleave', first, { pointerType: 'touch' });
+    assert.equal(tip.hidden, false);
+    tap(second);
+    assert.equal(tip.innerHTML, 'Second');
+    assert.equal(tip.hidden, false);
+    tap(second);
+    assert.equal(tip.hidden, true);
+});
+
+test('hints dismiss on outside click, nested scroll, Escape and explicit navigation cleanup', async () => {
+    const { tip, ui, hint, fire, click, outside } = await tooltipUi();
+    const target = hint('Hint');
+    for (const dismiss of [() => click(outside), () => fire('document', 'scroll'),
+        () => fire('document', 'keydown', outside, { key: 'Escape' }), () => ui.hideFloatTip()]) {
+        click(target);
+        assert.equal(tip.hidden, false);
+        dismiss();
+        assert.equal(tip.hidden, true);
+        click(target);
+        assert.equal(tip.hidden, false);
+        ui.hideFloatTip();
+    }
+});
+
+test('mouse hover, chart tooltips and keyboard focus still work', async () => {
+    const { tip, ui, hint, fire, click, outside } = await tooltipUi();
+    const target = hint('Hint');
+    fire('main', 'pointerover', target, { pointerType: 'mouse' });
+    assert.equal(tip.hidden, false);
+    fire('main', 'pointerleave', target, { pointerType: 'mouse' });
+    assert.equal(tip.hidden, true);
+    fire('main', 'focusin', target);
+    assert.equal(tip.hidden, false);
+    fire('main', 'focusout', target);
+    assert.equal(tip.hidden, true);
+    click(target);
+    fire('main', 'focusin', outside);
+    assert.equal(tip.hidden, true);
+    click(target);
+    ui.showFloatTipAt('Chart', 100, 100);
+    fire('main', 'pointerover', outside, { pointerType: 'mouse' });
+    assert.equal(tip.hidden, true);
+    const chart = { ...target, closest: selector => selector === '[data-tip]' ? chart : null };
+    fire('main', 'pointerover', chart, { pointerType: 'touch' });
+    assert.equal(tip.hidden, false);
+    fire('main', 'pointerleave', chart, { pointerType: 'touch' });
+    assert.equal(tip.hidden, true);
+});
+
 test('avatar traits are stable, bounded and ignore incomplete or invalid attributes', async () => {
     const { avatarTraits, CLASSES } = await (await loadApp()).get('avatar.js');
     const profile = { height: '170', weight: '64', age: '27', gender: 'female', activity: '1.55' };
