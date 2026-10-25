@@ -2681,6 +2681,8 @@ dialog[open]::backdrop { animation: fade .2s ease; }
     .wsum-stats { border-right: 0; border-bottom: 1px solid var(--line-soft); }
 }
 @media (max-width: 720px) {
+    /* Keep Safari from zooming the page when a form control receives focus. */
+    .input, .date-input, .day-type-chip select { font-size: 16px; }
     .quote-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 8px; padding: 4px 4px 10px 14px; }
     .quote-card h2 { padding-right: 0; border-right: 0; }
     .quote-text { grid-column: 1 / -1; grid-row: 2; margin: 0 10px 0 0; }
