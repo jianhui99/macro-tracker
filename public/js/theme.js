@@ -3,8 +3,8 @@
 (() => {
     const system = matchMedia('(prefers-color-scheme: light)');
     function apply() {
-        let pref = 'dark';
-        try { pref = localStorage.getItem('macro_tracker_theme') || 'dark'; } catch { /* storage unavailable */ }
+        let pref = 'light';
+        try { pref = localStorage.getItem('macro_tracker_theme') || 'light'; } catch { /* storage unavailable */ }
         const light = pref === 'light' || (pref === 'system' && system.matches);
         document.documentElement.dataset.theme = light ? 'light' : 'dark';
         document.querySelector('meta[name="theme-color"]')?.setAttribute('content', light ? '#F1E8D8' : '#110E18');

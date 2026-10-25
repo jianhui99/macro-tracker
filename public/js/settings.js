@@ -406,8 +406,8 @@ async function deleteWeight(date) {
 
 // theme.js (loaded in <head>) owns applying the theme; this control only saves the choice and signals it
 function initThemePicker() {
-    let pref = 'dark';
-    try { pref = localStorage.getItem('macro_tracker_theme') || 'dark'; } catch { /* storage unavailable */ }
+    let pref = 'light';
+    try { pref = localStorage.getItem('macro_tracker_theme') || 'light'; } catch { /* storage unavailable */ }
     (document.querySelector(`input[name="theme"][value="${pref}"]`) || document.querySelector('input[name="theme"]')).checked = true;
     $('theme-seg').addEventListener('change', e => {
         try { localStorage.setItem('macro_tracker_theme', e.target.value); } catch { /* storage unavailable */ }

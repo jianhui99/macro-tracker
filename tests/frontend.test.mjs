@@ -51,6 +51,33 @@ async function loadApp(overrides = {}) {
     return { get, element };
 }
 
+test('theme defaults to light and preserves saved dark and system preferences', async () => {
+    for (const [saved, systemLight, expected] of [[null, false, 'light'], ['dark', true, 'dark'],
+        ['light', false, 'light'], ['system', false, 'dark'], ['system', true, 'light'], [undefined, false, 'light']]) {
+        const documentElement = { dataset: {} };
+        const meta = {};
+        const app = await loadApp({
+            localStorage: { getItem() { if (saved === undefined) throw new Error('unavailable'); return saved; } },
+            matchMedia: () => ({ matches: systemLight, addEventListener() {} }),
+            document: { documentElement, addEventListener() {},
+                querySelector: () => ({ setAttribute: (key, value) => { meta[key] = value; } }) }
+        });
+        await app.get('theme.js');
+        assert.equal(documentElement.dataset.theme, expected);
+        assert.equal(meta.content, expected === 'light' ? '#F1E8D8' : '#110E18');
+    }
+});
+
+test('sound defaults to effects only and preserves saved preferences', async () => {
+    for (const saved of [null, 'all', 'sfx', 'off', undefined]) {
+        const app = await loadApp({
+            localStorage: { getItem() { if (saved === undefined) throw new Error('unavailable'); return saved; } }
+        });
+        const sound = await app.get('sound.js');
+        assert.equal(sound.soundPref(), saved || 'sfx');
+    }
+});
+
 async function tooltipUi() {
     const listeners = new Map();
     const surface = name => ({ addEventListener(type, fn) { listeners.set(`${name}:${type}`, fn); } });

@@ -14,7 +14,7 @@ const DEMO_MEMBERS = [
     // { nickname: '燕麦战神', level: 12, joinedAt: day('2026-09-02'), streak: 41, medals: 26, avatar: hero('1.725', 'male', 'broad', 'tall', 'adult', 12) },
     { nickname: 'danny0423', level: 10, joinedAt: day('2026-09-08'), streak: 19, medals: 21, avatar: hero('1.55', 'male', 'slim', 'normal', 'adult', 10) },
     { nickname: 'chloe', level: 9, joinedAt: day('2026-09-15'), streak: 12, medals: 17, avatar: hero('1.725', 'female', 'normal', 'normal', 'adult', 9) },
-    { nickname: 'yyyao', level: 7, joinedAt: day('2026-09-21'), streak: 8, medals: 12, avatar: hero('1.2', 'female', 'normal', 'short', 'young', 7) }
+    // { nickname: 'yyyao', level: 7, joinedAt: day('2026-09-21'), streak: 8, medals: 12, avatar: hero('1.2', 'female', 'normal', 'short', 'young', 7) }
     // { nickname: '深蹲小王子', level: 6, joinedAt: day('2026-09-29'), streak: 5, medals: 9, avatar: hero('1.375', 'male', 'slim', 'tall', 'young', 6) },
     // { nickname: '低碳游侠', level: 5, joinedAt: day('2026-10-06'), streak: 3, medals: 6, avatar: hero('1.375', 'female', 'normal', 'normal', 'mature', 5) }
 ].map(m => ({ ...m, leader: false, me: false }));

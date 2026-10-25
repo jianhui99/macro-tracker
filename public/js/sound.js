@@ -4,8 +4,8 @@ const PREF_KEY = 'macro_tracker_sound';
 const MUSIC_VOL = 0.32;
 const SFX_VOL = 0.7;
 
-let pref = 'all';
-try { pref = localStorage.getItem(PREF_KEY) || 'all'; } catch { /* storage unavailable */ }
+let pref = 'sfx';
+try { pref = localStorage.getItem(PREF_KEY) || 'sfx'; } catch { /* storage unavailable */ }
 
 let ctx = null, sfxBus, musicBus, padBus, noiseBuf;
 

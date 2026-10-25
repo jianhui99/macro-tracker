@@ -45,6 +45,7 @@ test('migration preserves every legacy business row and assigns it only to owner
 
 test('onboarding saves drafts, validates boundaries and creates independent defaults atomically', async t => {
     const app = await backend(t);
+    const existingFoods = (await (await app.request('state')).json()).foods;
     await app.addUser('new', false);
     assert.equal((await app.request('state', undefined, 'new')).status, 409);
     const draft = { nickname: 'Ranger', height: '175', role: 'admin', weight: '' };
@@ -62,6 +63,10 @@ test('onboarding saves drafts, validates boundaries and creates independent defa
     assert.equal((await app.request('profile/complete', profile, 'new')).status, 200);
     const state = await (await app.request('state', undefined, 'new')).json();
     assert.equal(state.foods.length, 6);
+    assert.deepEqual(Object.fromEntries(state.foods.map(food => [food.id, food.category])), {
+        '1': '补剂', '2': '蛋类', '2_b': '蛋类', '3': '肉类', '4': '饭类', '5': '燕麦类'
+    });
+    assert.deepEqual((await (await app.request('state')).json()).foods, existingFoods);
     assert.deepEqual(state.diary, {});
     assert.equal((await app.request('profile/complete', profile, 'new')).status, 409);
 });
