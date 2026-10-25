@@ -21,8 +21,9 @@ if (params.get('error')) {
     message.hidden = false;
     history.replaceState(null, '', location.pathname);
 }
-if (params.get('invite')) {
-    $('register-form').elements.invite.setAttribute('value', params.get('invite'));
+const invite = params.get('inv_code') || params.get('invite');
+if (invite) {
+    $('register-form').elements.invite.setAttribute('value', invite);
     setMode('register');
 }
 document.addEventListener('click', event => {

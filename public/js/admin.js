@@ -18,7 +18,7 @@ async function refresh() {
     $('user-list').innerHTML = current.users.map(user => `<div class="admin-row"><b translate="no">${esc(user.nickname || user.username || user.id)}</b> <span>${user.role === 'admin' ? '管理员' : user.disabled ? '已停用' : '正常'}</span>
         <small translate="no">${esc(user.username || '-')} · ${esc(user.id)}</small><div class="auth-actions">${user.role === 'admin' ? '' : `<button class="btn btn-ghost" data-user="${esc(user.id)}" data-disabled="${!user.disabled}">${user.disabled ? '恢复用户' : '停用用户'}</button>`}
         ${user.id === account.id ? '' : `<button class="btn btn-ghost" data-reset="${esc(user.id)}">重置为临时密码</button>`}</div></div>`).join('');
-    $('invite-list').innerHTML = current.invites.map(invite => `<div class="admin-row">${invite.code ? `<b translate="no">${esc(invite.code)}</b><button class="btn btn-ghost" type="button" data-copy-code="${esc(invite.code)}">复制邀请码</button>` : '<span>旧邀请码，请使用原链接</span>'} <span>已使用 ${invite.uses} / ${invite.max_uses}</span>
+    $('invite-list').innerHTML = current.invites.map(invite => `<div class="admin-row">${invite.code ? `<b translate="no">${esc(invite.code)}</b><button class="btn btn-ghost" type="button" data-copy-code="${esc(invite.code)}">复制邀请链接</button>` : '<span>旧邀请码，请使用原链接</span>'} <span>已使用 ${invite.uses} / ${invite.max_uses}</span>
         ${invite.disabled ? '<span>已停用</span>' : `<button class="btn btn-ghost" data-invite="${esc(invite.code_hash)}">停用邀请码</button>`}</div>`).join('');
     $('rule-fields').innerHTML = Object.entries(RULE_LABELS).map(([key, label]) => {
         const [min, max] = ruleBounds(key);
@@ -62,13 +62,13 @@ async function start() {
             await refresh();
         }).catch(() => {});
     });
-    $('invite-copy').addEventListener('click', () => navigator.clipboard.writeText($('invite-output').textContent)
-        .then(() => showToast('邀请码已复制'), () => showToast('复制失败，请手动复制邀请码', 'error')));
+    $('invite-copy').addEventListener('click', () => navigator.clipboard.writeText(`${location.origin}/login?inv_code=${encodeURIComponent($('invite-output').textContent)}`)
+        .then(() => showToast('邀请链接已复制'), () => showToast('复制失败，请手动复制邀请码', 'error')));
     $('invite-list').addEventListener('click', event => {
         const button = event.target.closest('[data-copy-code]');
         if (!button) return;
-        navigator.clipboard.writeText(button.dataset.copyCode)
-            .then(() => showToast('邀请码已复制'), () => showToast('复制失败，请手动复制邀请码', 'error'));
+        navigator.clipboard.writeText(`${location.origin}/login?inv_code=${encodeURIComponent(button.dataset.copyCode)}`)
+            .then(() => showToast('邀请链接已复制'), () => showToast('复制失败，请手动复制邀请码', 'error'));
     });
     $('rules-form').addEventListener('submit', event => {
         event.preventDefault();
