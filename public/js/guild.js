@@ -12,7 +12,7 @@ const day = date => Date.parse(`${date}T12:00:00+08:00`) / 1000;
 const hero = (job, gender, build, height, age, skin) => ({ job, gender, build, height, age, skin });
 const DEMO_MEMBERS = [
     // { nickname: '燕麦战神', level: 12, joinedAt: day('2026-09-02'), streak: 41, medals: 26, avatar: hero('1.725', 'male', 'broad', 'tall', 'adult', 12) },
-    { nickname: 'danny0423', level: 10, joinedAt: day('2026-09-08'), streak: 19, medals: 21, avatar: hero('1.55', 'male', 'slim', 'normal', 'adult', 10) },
+    // { nickname: 'danny0423', level: 10, joinedAt: day('2026-09-08'), streak: 19, medals: 21, avatar: hero('1.55', 'male', 'slim', 'normal', 'adult', 10) },
     { nickname: 'chloe', level: 9, joinedAt: day('2026-09-15'), streak: 12, medals: 17, avatar: hero('1.725', 'female', 'normal', 'normal', 'adult', 9) },
     // { nickname: 'yyyao', level: 7, joinedAt: day('2026-09-21'), streak: 8, medals: 12, avatar: hero('1.2', 'female', 'normal', 'short', 'young', 7) }
     // { nickname: '深蹲小王子', level: 6, joinedAt: day('2026-09-29'), streak: 5, medals: 9, avatar: hero('1.375', 'male', 'slim', 'tall', 'young', 6) },
