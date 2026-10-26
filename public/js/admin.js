@@ -3,20 +3,22 @@ import { loadSession, initSession, account } from './session.js';
 import { startI18n, toggleLang, lookup, lang } from './i18n.js';
 import { startPixelIcons } from './pixel-icons.js';
 import { showConfirm, showToast, withBusy } from './ui.js';
-import { $, esc } from './helpers.js';
+import { $, esc, fmt1, localDate } from './helpers.js';
 import { RULE_LABELS, ruleBounds } from './rules.js';
+import { MEAL_ORDER, MEALS, sumEntries } from './nutrition.js';
 
 startI18n();
 startPixelIcons();
 $('lang-toggle').addEventListener('click', toggleLang);
 const stage = document.body.dataset.adminStage;
 let current;
+let diaryUser, diaryRequest = 0;
 const actions = { invite_created: '生成邀请码', invite_disabled: '停用邀请码', user_disabled: '停用用户', user_enabled: '恢复用户', password_reset_requested: '请求密码重置', rules_updated: '修改奖励规则' };
 
 async function refresh() {
     current = await api('/api/admin/state');
     $('user-list').innerHTML = current.users.map(user => `<div class="admin-row"><b translate="no">${esc(user.nickname || user.username || user.id)}</b> <span>${user.role === 'admin' ? '管理员' : user.disabled ? '已停用' : '正常'}</span>
-        <small translate="no">${esc(user.username || '-')} · ${esc(user.id)}</small><div class="auth-actions">${user.role === 'admin' ? '' : `<button class="btn btn-ghost" data-user="${esc(user.id)}" data-disabled="${!user.disabled}">${user.disabled ? '恢复用户' : '停用用户'}</button>`}
+        <small translate="no">${esc(user.username || '-')} · ${esc(user.id)}</small><div class="auth-actions"><button class="btn btn-ghost" type="button" data-diary="${esc(user.id)}">查看饮食</button>${user.role === 'admin' ? '' : `<button class="btn btn-ghost" data-user="${esc(user.id)}" data-disabled="${!user.disabled}">${user.disabled ? '恢复用户' : '停用用户'}</button>`}
         ${user.id === account.id ? '' : `<button class="btn btn-ghost" data-reset="${esc(user.id)}">重置为临时密码</button>`}</div></div>`).join('');
     $('invite-list').innerHTML = current.invites.map(invite => `<div class="admin-row">${invite.code ? `<b translate="no">${esc(invite.code)}</b><button class="btn btn-ghost" type="button" data-copy-code="${esc(invite.code)}">复制邀请链接</button>` : '<span>旧邀请码，请使用原链接</span>'} <span>已使用 ${invite.uses} / ${invite.max_uses}</span>
         ${invite.disabled ? '<span>已停用</span>' : `<button class="btn btn-ghost" data-invite="${esc(invite.code_hash)}">停用邀请码</button>`}</div>`).join('');
@@ -26,6 +28,31 @@ async function refresh() {
     }).join('');
     $('audit-list').innerHTML = current.logs.map(log => `<div class="admin-row"><span>${actions[log.action] || esc(log.action)}</span> <time>${new Date(log.created_at * 1000).toISOString()}</time>
         <small translate="no">${esc(log.actor)} / ${esc(log.target)}</small><pre translate="no">${esc(log.details)}</pre></div>`).join('');
+}
+
+function diaryMacros(totals) {
+    return `<span>${fmt1(totals.kcal)} kcal</span> · <span>蛋白 ${fmt1(totals.protein)}g</span> · <span>碳水 ${fmt1(totals.carbs)}g</span> · <span>脂肪 ${fmt1(totals.fat)}g</span>`;
+}
+
+async function loadDiary(userId, date) {
+    const request = ++diaryRequest;
+    diaryUser = userId;
+    const user = current.users.find(user => user.id === userId);
+    $('user-diary-name').textContent = user.nickname || user.username || user.id;
+    $('user-diary').hidden = false;
+    $('user-diary-date').value = date || '';
+    $('user-diary-content').textContent = '正在加载饮食记录';
+    try {
+        const result = await api(`/api/admin/users/${encodeURIComponent(userId)}/diary${date ? `?date=${encodeURIComponent(date)}` : ''}`);
+        if (request !== diaryRequest) return;
+        $('user-diary-date').value = result.date || localDate();
+        $('user-diary-content').innerHTML = result.entries.length ? `<p><b>当日合计</b> · ${diaryMacros(sumEntries(result.entries))}</p>` + MEAL_ORDER.map(meal => {
+            const entries = result.entries.filter(entry => entry.meal === meal);
+            return entries.length ? `<h4>${MEALS[meal].label}</h4>` + entries.map(entry => `<div class="admin-row"><b translate="no">${esc(entry.name)}</b><span translate="no">${esc(entry.displayAmount)}</span><small>${diaryMacros(entry)}</small></div>`).join('') : '';
+        }).join('') : '<p>当天没有饮食记录</p>';
+    } catch (error) {
+        if (request === diaryRequest) $('user-diary-content').textContent = errorMessage(error.message);
+    }
 }
 
 async function start() {
@@ -53,6 +80,15 @@ async function start() {
     await loadSession();
     initSession();
     await refresh();
+    $('user-list').addEventListener('click', event => {
+        const button = event.target.closest('[data-diary]');
+        if (!button) return;
+        loadDiary(button.dataset.diary);
+        $('user-diary').scrollIntoView({ block: 'nearest' });
+    });
+    $('user-diary-date').addEventListener('change', event => {
+        if (event.target.value && event.target.validity.valid) loadDiary(diaryUser, event.target.value);
+    });
     $('invite-form').addEventListener('submit', event => {
         event.preventDefault();
         withBusy(event.submitter, async () => {

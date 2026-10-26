@@ -39,7 +39,8 @@ test('both admin copy buttons share an absolute login URL with the invitation co
         }, errorMessage: value => value },
         './session.js': { loadSession: async () => {}, initSession: noop, account: { id: 'owner' } },
         './ui.js': { showConfirm: noop, showToast: (...args) => toasts.push(args), withBusy: (button, fn) => fn() },
-        './helpers.js': { $: element, esc: value => value },
+        './helpers.js': { $: element, esc: value => value, fmt1: String, localDate: noop },
+        './nutrition.js': { MEAL_ORDER: [], MEALS: {}, sumEntries: noop },
         './rules.js': { RULE_LABELS: {}, ruleBounds: noop }
     });
     await element('invite-form').listeners.submit({ preventDefault: noop, target: {} });

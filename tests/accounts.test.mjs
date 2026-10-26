@@ -148,6 +148,38 @@ async function admin(app) {
     return { Cookie: `__Host-macro-session=${app.tokens.get('owner')}` };
 }
 
+test('admin food logs are read-only, scoped by user and date and require an admin session', async t => {
+    const app = await backend(t);
+    await app.addUser('friend');
+    await app.addUser('empty', false);
+    for (const user of ['owner', 'friend']) await app.request('import', fixture, user);
+    const date = '2026-10-26';
+    const entry = { ...Object.values(fixture.diary).flat()[0], date, meal: 'lunch', name: '<script>food</script>', isTemporary: true };
+    await app.request('diary', entry, 'friend');
+    const before = app.snapshot();
+    const path = 'admin/users/friend/diary';
+    const latest = await app.request(path);
+    assert.equal(latest.status, 200);
+    assert.equal(latest.headers.get('Cache-Control'), 'no-store');
+    const result = await latest.json();
+    assert.equal(result.date, date);
+    assert.deepEqual(result.entries.map(({ id, ...row }) => row), [{
+        meal: entry.meal, name: entry.name, displayAmount: entry.displayAmount,
+        kcal: entry.kcal, protein: entry.protein, carbs: entry.carbs, fat: entry.fat
+    }]);
+    assert.deepEqual(await (await app.request(`${path}?date=2026-10-25`)).json(), { date: '2026-10-25', entries: [] });
+    const historicalDate = Object.keys(fixture.diary)[0];
+    const historical = await (await app.request(`${path}?date=${historicalDate}`)).json();
+    assert.equal(historical.entries.length, fixture.diary[historicalDate].length);
+    assert.deepEqual(await (await app.request('admin/users/empty/diary')).json(), { date: null, entries: [] });
+    assert.equal((await app.request('admin/users/missing/diary')).status, 404);
+    for (const invalid of ['', '2026-02-30', 'invalid']) assert.equal((await app.request(`${path}?date=${invalid}`)).status, 400);
+    assert.equal((await app.request(path, undefined, 'friend')).status, 403);
+    assert.equal((await app.raw(`/api/${path}`)).status, 401);
+    assert.equal((await app.request(path, {})).status, 404);
+    assert.deepEqual(app.snapshot(), before);
+});
+
 test('admin pages and APIs use the logged-in account role and reject logged-out sessions', async t => {
     const app = await backend(t);
     await app.addUser('friend');
