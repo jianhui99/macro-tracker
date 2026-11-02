@@ -251,6 +251,7 @@ function mealHtml(meal, items) {
            </div>`;
     if (!items.length) return `<section class="meal is-empty">${head}</section>`;
 
+    const amountWidth = Math.max(...items.map(({ e }) => String(e.displayAmount).length));
     const rows = items.map(({ e, idx }) => {
         const name = esc(e.name);
         const cls = [e.isTemporary && 'is-temp', e.id === lastAddedId && 'is-new', e.id === changedEntryId && 'is-changed'].filter(Boolean).join(' ');
@@ -259,7 +260,7 @@ function mealHtml(meal, items) {
                 <div class="entry-main">
                     <span class="entry-name" title="${name}">${name}</span>
                     ${e.isTemporary ? '<span class="tag">临时</span>' : ''}
-                    <span class="entry-amt">${esc(e.displayAmount)}</span>
+                    <span class="entry-amt" style="width:${amountWidth}ch">${esc(e.displayAmount)}</span>
                 </div>
                 <span class="entry-kcal num">${fmt(e.kcal)}</span>
                 <span class="entry-m">${fmt1(e.protein)}</span>
